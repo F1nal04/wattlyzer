@@ -1,4 +1,10 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Legal Notice",
+  description: "Legal notice and contact information for wattlyzer",
+};
 
 export default function Legal() {
   return (
