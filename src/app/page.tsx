@@ -6,6 +6,11 @@ import { useState, useEffect } from "react";
 export default function Home() {
   const [sliderValue, setSliderValue] = useState(3);
   const [displayText, setDisplayText] = useState("");
+  const [position, setPosition] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const fullText = "wattlyzer";
 
   useEffect(() => {
@@ -20,6 +25,42 @@ export default function Home() {
     }, 150);
 
     return () => clearInterval(typingInterval);
+  }, []);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setPosition({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        (error) => {
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              setLocationError("Location access denied by user");
+              break;
+            case error.POSITION_UNAVAILABLE:
+              setLocationError("Location information unavailable");
+              break;
+            case error.TIMEOUT:
+              setLocationError("Location request timed out");
+              break;
+            default:
+              setLocationError("Unknown location error");
+              break;
+          }
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000,
+        }
+      );
+    } else {
+      setLocationError("Geolocation not supported by browser");
+    }
   }, []);
 
   const calculateValue = (value: number) => {
@@ -48,7 +89,7 @@ export default function Home() {
           <Slider
             id="hours-slider"
             min={1}
-            max={6}
+            max={5}
             defaultValue={[3]}
             onValueChange={(value) => setSliderValue(value[0])}
           />
@@ -58,7 +99,6 @@ export default function Home() {
             <span>3</span>
             <span>4</span>
             <span>5</span>
-            <span>6</span>
           </div>
         </div>
 
@@ -86,6 +126,12 @@ export default function Home() {
           className="text-sm text-gray-400 hover:text-gray-300 transition-colors"
         >
           Legal Notice
+        </a>
+        <a
+          href="/settings"
+          className="text-sm text-gray-400 hover:text-gray-300 transition-colors"
+        >
+          Settings
         </a>
       </div>
     </div>
