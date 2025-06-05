@@ -19,7 +19,13 @@ export default function Settings() {
           <section>
             <div className="flex items-start gap-6">
               <div className="flex-1 text-sm text-gray-400 pt-2">
-                <p>The compass direction your solar panels face (0° = North, 180° = South)</p>
+                <p>The compass direction your solar panels face:</p>
+                <ul className="mt-2 space-y-1">
+                  <li>0° = North</li>
+                  <li>90° = East</li>
+                  <li>180° = South</li>
+                  <li>270° = West</li>
+                </ul>
               </div>
               <div className="flex-1 text-center">
                 <label
@@ -37,11 +43,11 @@ export default function Settings() {
                 className="mb-2"
               />
               <div className="flex justify-between text-sm text-gray-300 mt-2">
-                <span>0°</span>
-                <span>90°</span>
-                <span>180°</span>
-                <span>270°</span>
-                <span>360°</span>
+                <span>N<br/>0°</span>
+                <span>E<br/>90°</span>
+                <span>S<br/>180°</span>
+                <span>W<br/>270°</span>
+                <span>N<br/>360°</span>
               </div>
               </div>
             </div>

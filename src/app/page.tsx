@@ -6,13 +6,13 @@ import { useSettings } from "@/lib/settings-context";
 
 export default function Home() {
   const { settings } = useSettings();
-  const [sliderValue, setSliderValue] = useState(3);
+  const [consumerDuration, setConsumerDuration] = useState(3);
   const [displayText, setDisplayText] = useState("");
   const [position, setPosition] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
-  const [locationError, setLocationError] = useState<string | null>(null);
+  const [, setLocationError] = useState<string | null>(null);
   const [solarData, setSolarData] = useState<{
     result: Record<string, number>;
     message: {
@@ -49,56 +49,106 @@ export default function Home() {
   } | null>(null);
   const [apiLoading, setApiLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [schedulingResult, setSchedulingResult] = useState<{
+    bestTime: Date;
+    reason: "solar" | "price";
+    avgSolarProduction?: number;
+    avgPrice?: number;
+  } | null>(null);
   const fullText = "wattlyzer";
 
   const calculatePowerGeneration = (hoursFromNow: number) => {
     if (!solarData) return 0;
-    
+
     const now = new Date();
     const targetTime = new Date(now.getTime() + hoursFromNow * 60 * 60 * 1000);
-    
-    // Find the closest timestamp in the solar data
-    const timestamps = Object.keys(solarData.result);
-    const currentClosestTimestamp = timestamps.reduce((closest, current) => {
-      const currentDiff = Math.abs(new Date(current).getTime() - now.getTime());
-      const closestDiff = Math.abs(new Date(closest).getTime() - now.getTime());
-      return currentDiff < closestDiff ? current : closest;
-    });
-    
-    const targetClosestTimestamp = timestamps.reduce((closest, current) => {
-      const currentDiff = Math.abs(new Date(current).getTime() - targetTime.getTime());
-      const closestDiff = Math.abs(new Date(closest).getTime() - targetTime.getTime());
-      return currentDiff < closestDiff ? current : closest;
-    });
-    
-    // Since solar data is cumulative, calculate the difference
-    const currentValue = solarData.result[currentClosestTimestamp] || 0;
-    const targetValue = solarData.result[targetClosestTimestamp] || 0;
-    
-    return Math.max(0, targetValue - currentValue);
+
+    // Convert solar data timestamps to array and sort
+    const timestamps = Object.keys(solarData.result)
+      .map((ts) => ({
+        timestamp: new Date(ts).getTime(),
+        dateStr: ts,
+        value: solarData.result[ts],
+        date: new Date(ts).toDateString(), // For grouping by day
+      }))
+      .sort((a, b) => a.timestamp - b.timestamp);
+
+    if (timestamps.length === 0) return 0;
+
+    // Find the closest timestamp at or before our target time
+    let closestBeforeIndex = -1;
+    let closestAfterIndex = -1;
+
+    for (let i = 0; i < timestamps.length; i++) {
+      if (timestamps[i].timestamp <= targetTime.getTime()) {
+        closestBeforeIndex = i;
+      }
+      if (
+        timestamps[i].timestamp > targetTime.getTime() &&
+        closestAfterIndex === -1
+      ) {
+        closestAfterIndex = i;
+        break;
+      }
+    }
+
+    // If no data available for this time, return 0
+    if (closestBeforeIndex === -1) return 0;
+
+    // Get the hour production by finding the next timestamp and calculating difference
+    let nextIndex = closestAfterIndex;
+    if (nextIndex === -1) {
+      // If no next timestamp, try to find the next hour within same day
+      for (let i = closestBeforeIndex + 1; i < timestamps.length; i++) {
+        if (timestamps[i].date === timestamps[closestBeforeIndex].date) {
+          nextIndex = i;
+          break;
+        }
+      }
+    }
+
+    if (nextIndex === -1 || nextIndex <= closestBeforeIndex) {
+      // No next data point available, estimate based on typical solar curve
+      return 0;
+    }
+
+    // Ensure both timestamps are from the same day (solar data resets daily)
+    if (timestamps[closestBeforeIndex].date !== timestamps[nextIndex].date) {
+      return 0;
+    }
+
+    const startValue = timestamps[closestBeforeIndex].value;
+    const endValue = timestamps[nextIndex].value;
+    const timeDiffHours =
+      (timestamps[nextIndex].timestamp -
+        timestamps[closestBeforeIndex].timestamp) /
+      (1000 * 60 * 60);
+
+    // Calculate hourly rate and return production for 1 hour
+    const hourlyProduction = Math.max(
+      0,
+      (endValue - startValue) / timeDiffHours
+    );
+
+    return hourlyProduction;
   };
 
   const calculateMarketPrice = (hoursFromNow: number) => {
-    if (!marketData) return 0;
-    
+    if (!marketData || !marketData.data) return 0;
+
     const now = new Date();
     const targetTime = new Date(now.getTime() + hoursFromNow * 60 * 60 * 1000);
     const targetTimestamp = targetTime.getTime();
-    
-    // Find the market price data that contains the target time
-    const priceData = marketData.data.find(item => 
-      targetTimestamp >= item.start_timestamp && targetTimestamp < item.end_timestamp
-    );
-    
-    return priceData ? priceData.marketprice : 0;
-  };
 
-  const calculateEarnings = (hoursFromNow: number) => {
-    const watthours = calculatePowerGeneration(hoursFromNow);
-    const marketPrice = calculateMarketPrice(hoursFromNow);
-    
-    // Convert watthours to MWh (divide by 1,000,000) and multiply by market price
-    return (watthours / 1000000) * marketPrice;
+    // Find the market price data that contains the target time
+    // Market data timestamps are in milliseconds
+    const priceData = marketData.data.find(
+      (item) =>
+        targetTimestamp >= item.start_timestamp &&
+        targetTimestamp < item.end_timestamp
+    );
+
+    return priceData ? priceData.marketprice : 0;
   };
 
   useEffect(() => {
@@ -120,22 +170,36 @@ export default function Home() {
       const fetchSolarData = async () => {
         setApiLoading(true);
         setApiError(null);
-        
+
         try {
           const { latitude, longitude } = position;
-          const { angle, azimut, kwh } = settings;
-          
-          const url = `https://api.forecast.solar/estimate/watthours/${latitude}/${longitude}/${angle}/${azimut}/${kwh}`;
-          
+          const { angle, kwh, azimut } = settings;
+
+          // Convert compass azimut (0-360) to API format (-180 to 180)
+          let apiAzimut;
+          if (azimut === 0 || azimut === 360) {
+            apiAzimut = -180; // North
+          } else if (azimut <= 180) {
+            apiAzimut = azimut - 180; // 90->-90, 180->0
+          } else {
+            apiAzimut = azimut - 180; // 270->90
+          }
+
+          const url = `https://api.forecast.solar/estimate/watthours/${latitude}/${longitude}/${angle}/${apiAzimut}/${kwh}`;
+
           const response = await fetch(url);
           if (!response.ok) {
             throw new Error(`API error: ${response.status}`);
           }
-          
+
           const data = await response.json();
           setSolarData(data);
         } catch (error) {
-          setApiError(error instanceof Error ? error.message : 'Failed to fetch solar data');
+          setApiError(
+            error instanceof Error
+              ? error.message
+              : "Failed to fetch solar data"
+          );
         } finally {
           setApiLoading(false);
         }
@@ -143,15 +207,19 @@ export default function Home() {
 
       const fetchMarketData = async () => {
         try {
-          const response = await fetch('https://api.awattar.de/v1/marketdata');
+          const response = await fetch("https://api.awattar.de/v1/marketdata");
           if (!response.ok) {
             throw new Error(`Market API error: ${response.status}`);
           }
-          
+
           const data = await response.json();
           setMarketData(data);
         } catch (error) {
-          setApiError(error instanceof Error ? error.message : 'Failed to fetch market data');
+          setApiError(
+            error instanceof Error
+              ? error.message
+              : "Failed to fetch market data"
+          );
         }
       };
 
@@ -159,6 +227,96 @@ export default function Home() {
       fetchMarketData();
     }
   }, [position, settings]);
+
+  useEffect(() => {
+    const calculateSchedule = () => {
+      if (!solarData || !marketData) return null;
+
+      const now = new Date();
+      const results: Array<{
+        startTime: Date;
+        avgSolarProduction: number;
+        avgPrice: number;
+        solarQualifies: boolean;
+      }> = [];
+
+      // Check every hour in the next 24 hours, but ensure we don't go beyond available data
+      const maxStartHour = Math.min(24, 24 - consumerDuration + 1);
+
+      for (let h = 0; h < maxStartHour; h++) {
+        const startTime = new Date(now.getTime() + h * 60 * 60 * 1000);
+
+        // Calculate total solar production and price over the consumer duration
+        let totalSolarProduction = 0;
+        let totalPrice = 0;
+        let validHours = 0;
+
+        for (let i = 0; i < consumerDuration; i++) {
+          const hoursFromNow = h + i;
+
+          // Only process if within our 24-hour window
+          if (hoursFromNow >= 0 && hoursFromNow < 24) {
+            const solarProduction = calculatePowerGeneration(hoursFromNow);
+            const price = calculateMarketPrice(hoursFromNow);
+
+            totalSolarProduction += solarProduction;
+            totalPrice += price;
+            validHours++;
+          }
+        }
+
+        // Only include slots where we have complete data for the entire duration
+        if (validHours === consumerDuration) {
+          const avgSolarProduction = totalSolarProduction / validHours;
+          const avgPrice = totalPrice / validHours;
+          const solarQualifies = avgSolarProduction >= 1200; // 1.2kWh = 1200Wh
+
+          results.push({
+            startTime,
+            avgSolarProduction,
+            avgPrice,
+            solarQualifies,
+          });
+        }
+      }
+
+      if (results.length === 0) return null;
+
+      // First priority: Find slots with solar production >= 1.2kWh average
+      const solarQualifiedSlots = results.filter((r) => r.solarQualifies);
+
+      if (solarQualifiedSlots.length > 0) {
+        // Among solar-qualified slots, pick the one with highest solar production
+        const best = solarQualifiedSlots.reduce((best, current) =>
+          current.avgSolarProduction > best.avgSolarProduction ? current : best
+        );
+
+        return {
+          bestTime: best.startTime,
+          reason: "solar" as const,
+          avgSolarProduction: best.avgSolarProduction,
+          avgPrice: best.avgPrice,
+        };
+      }
+
+      // If no solar-qualified slots, find the cheapest price slot
+      const cheapest = results.reduce((best, current) =>
+        current.avgPrice < best.avgPrice ? current : best
+      );
+
+      return {
+        bestTime: cheapest.startTime,
+        reason: "price" as const,
+        avgSolarProduction: cheapest.avgSolarProduction,
+        avgPrice: cheapest.avgPrice,
+      };
+    };
+
+    if (solarData && marketData) {
+      const result = calculateSchedule();
+      setSchedulingResult(result);
+    }
+  }, [solarData, marketData, consumerDuration]);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -206,21 +364,21 @@ export default function Home() {
         </h1>
       </div>
 
-      {/* Hours slider section */}
+      {/* Energy consumer scheduling section */}
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <label
-            htmlFor="hours-slider"
+            htmlFor="consumer-duration-slider"
             className="block text-2xl font-semibold text-white mb-4"
           >
-            hours: {sliderValue}
+            Consumer Duration: {consumerDuration} hours
           </label>
           <Slider
-            id="hours-slider"
+            id="consumer-duration-slider"
             min={1}
             max={5}
             defaultValue={[3]}
-            onValueChange={(value) => setSliderValue(value[0])}
+            onValueChange={(value) => setConsumerDuration(value[0])}
           />
           <div className="flex justify-between text-sm text-gray-300 mt-2">
             <span>1</span>
@@ -231,24 +389,68 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Big calculated number */}
-        <div className="text-center">
-          <div className="text-8xl md:text-9xl font-bold text-yellow-400 font-sans">
-            {apiLoading ? "..." : `€${calculateEarnings(sliderValue).toFixed(3)}`}
-          </div>
-          <div className="text-xl text-gray-300 mt-2">
-            {apiLoading ? "Loading..." : `earnings in ${sliderValue} hours`}
-          </div>
-          <div className="text-sm text-gray-400 mt-2 space-y-1">
-            <div>{calculatePowerGeneration(sliderValue)} Wh</div>
-            <div>{calculateMarketPrice(sliderValue).toFixed(2)} €/MWh</div>
-          </div>
-          {apiError && (
-            <div className="text-red-400 text-sm mt-2">
-              Error: {apiError}
+        {schedulingResult && !apiLoading ? (
+          <div className="text-center">
+            <div className="text-8xl md:text-9xl font-bold text-yellow-400 font-sans">
+              {schedulingResult.bestTime.toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              })}
             </div>
-          )}
-        </div>
+            <div className="text-xl text-gray-300 mt-2">
+              {schedulingResult.bestTime.toLocaleDateString("en-US", {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+              })}
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <div
+                className={`px-4 py-2 rounded-full inline-block ${
+                  schedulingResult.reason === "solar"
+                    ? "bg-yellow-500/20 text-yellow-300"
+                    : "bg-blue-500/20 text-blue-300"
+                }`}
+              >
+                {schedulingResult.reason === "solar"
+                  ? "☀️ Solar Optimized"
+                  : "💰 Price Optimized"}
+              </div>
+
+              <div className="text-sm text-gray-400 space-y-1">
+                <div>
+                  Avg Solar:{" "}
+                  {(schedulingResult.avgSolarProduction || 0).toFixed(0)} Wh
+                </div>
+                <div>
+                  Avg Price: {(schedulingResult.avgPrice || 0).toFixed(1)} €/MWh
+                </div>
+                {schedulingResult.reason === "solar" && (
+                  <div className="text-yellow-300">✓ Meets 1.2kWh minimum</div>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center">
+            <div className="text-8xl md:text-9xl font-bold text-gray-500 font-sans">
+              --:--
+            </div>
+            <div className="text-xl text-gray-400 mt-2">
+              {apiLoading
+                ? "Calculating optimal schedule..."
+                : "Waiting for data..."}
+            </div>
+          </div>
+        )}
+
+        {apiError && (
+          <div className="text-red-400 text-sm text-center mt-4">
+            Error: {apiError}
+          </div>
+        )}
       </div>
 
       {/* Footer links */}
