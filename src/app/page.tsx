@@ -1,5 +1,6 @@
 "use client";
 
+import { Slider } from "@/components/ui/slider";
 import { useState, useEffect } from "react";
 
 export default function Home() {
@@ -26,7 +27,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-800 to-yellow-800 flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-800 to-yellow-700 flex flex-col items-center justify-center px-4">
       {/* Title with typewriter effect */}
       <div className="mb-16">
         <h1 className="text-6xl md:text-8xl font-bold text-white text-center font-sans">
@@ -44,17 +45,14 @@ export default function Home() {
           >
             hours: {sliderValue}
           </label>
-          <input
+          <Slider
             id="hours-slider"
-            type="range"
-            min="0"
-            max="6"
-            value={sliderValue}
-            onChange={(e) => setSliderValue(Number(e.target.value))}
-            className="w-full h-3 bg-gray-700 rounded-lg range-slider"
+            min={1}
+            max={6}
+            defaultValue={[3]}
+            onValueChange={(value) => setSliderValue(value[0])}
           />
           <div className="flex justify-between text-sm text-gray-300 mt-2">
-            <span>0</span>
             <span>1</span>
             <span>2</span>
             <span>3</span>
