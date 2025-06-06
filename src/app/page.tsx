@@ -4,6 +4,59 @@ import { Slider } from "@/components/ui/slider";
 import { useState, useEffect, Suspense, useMemo, use, Component, ReactNode, useCallback, useRef } from "react";
 import { useSettings } from "@/lib/settings-context";
 
+// Cache utilities
+type CachedData<T> = {
+  data: T;
+  timestamp: number;
+  key: string;
+};
+
+const CACHE_DURATION_MS = 2 * 60 * 60 * 1000; // 2 hours
+const SOLAR_CACHE_KEY = 'wattlyzer_solar_cache';
+const MARKET_CACHE_KEY = 'wattlyzer_market_cache';
+
+// Helper function to round coordinates for consistent cache keys
+const roundCoordinate = (coord: number) => Math.round(coord * 1000) / 1000; // Round to 3 decimal places (~100m precision)
+
+function getCachedData<T>(cacheKey: string, dataKey: string): T | null {
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (!cached) return null;
+    
+    const parsedCache: CachedData<T> = JSON.parse(cached);
+    const now = Date.now();
+    const age = now - parsedCache.timestamp;
+    
+    // Check if cache is expired
+    if (age > CACHE_DURATION_MS) {
+      localStorage.removeItem(cacheKey);
+      return null;
+    }
+    
+    // Check if key matches (for solar data with different parameters)
+    if (parsedCache.key !== dataKey) {
+      return null;
+    }
+    
+    return parsedCache.data;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedData<T>(cacheKey: string, dataKey: string, data: T): void {
+  try {
+    const cacheData: CachedData<T> = {
+      data,
+      timestamp: Date.now(),
+      key: dataKey
+    };
+    localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
 type SolarData = {
   result: Record<string, number>;
   message: {
@@ -110,10 +163,31 @@ export default function Home() {
   const [, setLocationError] = useState<string | null>(null);
   const [solarData, setSolarData] = useState<SolarData | null>(null);
   const [marketData, setMarketData] = useState<MarketData | null>(null);
-  const [apiLoading, setApiLoading] = useState(false);
+  
+  // Load cached data immediately on component mount
+  useEffect(() => {
+    if (position && settings) {
+      const { latitude, longitude } = position;
+      const { angle, kwh, azimut } = settings;
+      const roundedLat = roundCoordinate(latitude);
+      const roundedLng = roundCoordinate(longitude);
+      const solarKey = `${roundedLat},${roundedLng},${angle},${azimut},${kwh}`;
+      const cachedSolarData = getCachedData<SolarData>(SOLAR_CACHE_KEY, solarKey);
+      if (cachedSolarData) {
+        setSolarData(cachedSolarData);
+      }
+    }
+    
+    if (position) {
+      const cachedMarketData = getCachedData<MarketData>(MARKET_CACHE_KEY, 'market');
+      if (cachedMarketData) {
+        setMarketData(cachedMarketData);
+      }
+    }
+  }, [position, settings]);
   const [apiError, setApiError] = useState<string | null>(null);
   
-  // Create promises for render-while-fetch using useRef to prevent recreation
+  // Create promises for render-while-fetch with caching
   const solarDataPromiseRef = useRef<Promise<SolarData> | null>(null);
   const marketDataPromiseRef = useRef<Promise<MarketData> | null>(null);
   const lastSolarKey = useRef<string>('');
@@ -122,57 +196,91 @@ export default function Home() {
   const solarDataPromise = useMemo(() => {
     if (!position || !settings) return null;
     
+    // If we already have cached data loaded, don't create a promise
+    if (solarData) return null;
+    
     const { latitude, longitude } = position;
     const { angle, kwh, azimut } = settings;
     
-    // Create a key to detect if parameters changed
-    const key = `${latitude},${longitude},${angle},${azimut},${kwh}`;
+    // Create a key with rounded coordinates to match cache
+    const roundedLat = roundCoordinate(latitude);
+    const roundedLng = roundCoordinate(longitude);
+    const key = `${roundedLat},${roundedLng},${angle},${azimut},${kwh}`;
     
-    // Only create new promise if parameters changed
-    if (key !== lastSolarKey.current || !solarDataPromiseRef.current) {
-      lastSolarKey.current = key;
-      
-      let apiAzimut;
-      if (azimut === 0 || azimut === 360) {
-        apiAzimut = -180;
-      } else if (azimut <= 180) {
-        apiAzimut = azimut - 180;
-      } else {
-        apiAzimut = azimut - 180;
-      }
-      
-      const url = `https://api.forecast.solar/estimate/watthours/${latitude}/${longitude}/${angle}/${apiAzimut}/${kwh}`;
-      
-      solarDataPromiseRef.current = fetch(url).then(response => {
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
-        }
-        return response.json();
-      });
+    // Check if we already have a promise for this key
+    if (key === lastSolarKey.current && solarDataPromiseRef.current) {
+      return solarDataPromiseRef.current;
     }
     
+    // Always check cache first
+    const cachedData = getCachedData<SolarData>(SOLAR_CACHE_KEY, key);
+    if (cachedData) {
+      lastSolarKey.current = key;
+      solarDataPromiseRef.current = Promise.resolve(cachedData);
+      return solarDataPromiseRef.current;
+    }
+    lastSolarKey.current = key;
+    
+    let apiAzimut;
+    if (azimut === 0 || azimut === 360) {
+      apiAzimut = -180;
+    } else if (azimut <= 180) {
+      apiAzimut = azimut - 180;
+    } else {
+      apiAzimut = azimut - 180;
+    }
+    
+    const url = `https://api.forecast.solar/estimate/watthours/${latitude}/${longitude}/${angle}/${apiAzimut}/${kwh}`;
+    
+    solarDataPromiseRef.current = fetch(url).then(response => {
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      return response.json();
+    }).then(data => {
+      // Cache the fetched data
+      setCachedData(SOLAR_CACHE_KEY, key, data);
+      return data;
+    });
+    
     return solarDataPromiseRef.current;
-  }, [position, settings]);
+  }, [position, settings, solarData]);
   
   const marketDataPromise = useMemo(() => {
     if (!position) return null;
     
+    // If we already have cached data loaded, don't create a promise
+    if (marketData) return null;
+    
     const key = 'market';
     
-    // Only create new promise if not already created
-    if (key !== lastMarketKey.current || !marketDataPromiseRef.current) {
-      lastMarketKey.current = key;
-      
-      marketDataPromiseRef.current = fetch("https://api.awattar.de/v1/marketdata").then(response => {
-        if (!response.ok) {
-          throw new Error(`Market API error: ${response.status}`);
-        }
-        return response.json();
-      });
+    // Check if we already have a promise for this key
+    if (key === lastMarketKey.current && marketDataPromiseRef.current) {
+      return marketDataPromiseRef.current;
     }
     
+    // Always check cache first
+    const cachedData = getCachedData<MarketData>(MARKET_CACHE_KEY, key);
+    if (cachedData) {
+      lastMarketKey.current = key;
+      marketDataPromiseRef.current = Promise.resolve(cachedData);
+      return marketDataPromiseRef.current;
+    }
+    lastMarketKey.current = key;
+    
+    marketDataPromiseRef.current = fetch("https://api.awattar.de/v1/marketdata").then(response => {
+      if (!response.ok) {
+        throw new Error(`Market API error: ${response.status}`);
+      }
+      return response.json();
+    }).then(data => {
+      // Cache the fetched data
+      setCachedData(MARKET_CACHE_KEY, key, data);
+      return data;
+    });
+    
     return marketDataPromiseRef.current;
-  }, [position]);
+  }, [position, marketData]);
   const [schedulingResult, setSchedulingResult] = useState<{
     bestTime: Date;
     reason: "solar" | "price";
@@ -292,7 +400,6 @@ export default function Home() {
   // Callbacks for handling data from Suspense components
   const handleSolarData = useCallback((data: SolarData) => {
     setSolarData(data);
-    setApiLoading(false);
   }, []);
   
   const handleMarketData = useCallback((data: MarketData) => {
@@ -301,13 +408,11 @@ export default function Home() {
   
   const handleError = useCallback((error: Error) => {
     setApiError(error.message);
-    setApiLoading(false);
   }, []);
   
-  // Set loading state when promises are created
+  // Clear error when promises are created
   useEffect(() => {
     if (solarDataPromise) {
-      setApiLoading(true);
       setApiError(null);
     }
   }, [solarDataPromise]);
@@ -510,7 +615,7 @@ export default function Home() {
             ) : null}
           </Suspense>
           
-          {schedulingResult && !apiLoading ? (
+          {schedulingResult ? (
             <div className="text-center">
               <div className="text-8xl md:text-9xl font-bold text-yellow-400 font-sans">
                 {schedulingResult.bestTime.toLocaleTimeString("en-US", {
@@ -554,18 +659,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="text-center">
-              <div className="text-8xl md:text-9xl font-bold text-gray-500 font-sans">
-                --:--
-              </div>
-              <div className="text-xl text-gray-400 mt-2">
-                {apiLoading
-                  ? "Calculating optimal schedule..."
-                  : "Waiting for data..."}
-              </div>
-            </div>
-          )}
+          ) : null}
         </ErrorBoundary>
 
         {apiError && (
