@@ -13,7 +13,7 @@ export default function Home() {
     latitude: number;
     longitude: number;
   } | null>(null);
-  const [, setLocationError] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const [showRemainingTime, setShowRemainingTime] = useState<boolean>(false);
   
   const {
@@ -154,7 +154,7 @@ export default function Home() {
                 --:--
               </div>
               <div className="text-xl text-gray-400 mt-2">
-                Loading data...
+                {locationError ? "Location required" : "Loading data..."}
               </div>
             </div>
           }>
@@ -171,6 +171,31 @@ export default function Home() {
               />
             ) : null}
           </Suspense>
+          
+          {!position && !locationError && (
+            <div className="text-center">
+              <div className="text-8xl md:text-9xl font-bold text-gray-500 font-sans">
+                --:--
+              </div>
+              <div className="text-xl text-gray-400 mt-2">
+                Requesting location...
+              </div>
+            </div>
+          )}
+          
+          {!position && locationError && (
+            <div className="text-center">
+              <div className="text-8xl md:text-9xl font-bold text-red-400 font-sans">
+                --:--
+              </div>
+              <div className="text-xl text-red-400 mt-2">
+                Location access required
+              </div>
+              <div className="text-sm text-gray-400 mt-2">
+                Please enable location services to get solar estimates
+              </div>
+            </div>
+          )}
           
           {schedulingResult ? (
             <div className="text-center">
@@ -228,7 +253,7 @@ export default function Home() {
 
         {apiError && (
           <div className="text-red-400 text-sm text-center mt-4">
-            Error: {apiError}
+            API Error: {apiError}
           </div>
         )}
       </div>
