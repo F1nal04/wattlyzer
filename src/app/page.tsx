@@ -716,6 +716,12 @@ export default function Home() {
           Legal Notice
         </a>
         <a
+          href="/privacy"
+          className="text-sm text-gray-400 hover:text-gray-300 transition-colors"
+        >
+          Privacy Policy
+        </a>
+        <a
           href="/settings"
           className="text-sm text-gray-400 hover:text-gray-300 transition-colors"
         >
