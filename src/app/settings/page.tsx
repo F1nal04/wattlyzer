@@ -8,8 +8,8 @@ export default function Settings() {
   const { settings, updateSettings } = useSettings();
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-black via-gray-800 to-yellow-800 flex flex-col items-center justify-center px-4">
-      <div className="max-w-2xl mx-auto bg-gray-900/50 rounded-lg p-8 backdrop-blur-sm">
+    <div className="min-h-screen bg-gradient-to-r from-black via-gray-800 to-yellow-800 flex flex-col items-center justify-center px-4 py-8">
+      <div className="max-w-2xl mx-auto bg-gray-900/50 rounded-lg p-6 md:p-8 backdrop-blur-sm">
         <h1 className="text-4xl font-bold text-white text-center mb-8 font-sans">
           Settings
         </h1>
@@ -17,8 +17,8 @@ export default function Settings() {
         <div className="space-y-8 text-gray-300">
           {/* Azimut Slider */}
           <section>
-            <div className="flex items-start gap-6">
-              <div className="flex-1 text-sm text-gray-400 pt-2">
+            <div className="flex flex-col md:flex-row md:items-start gap-6">
+              <div className="md:flex-1 text-sm text-gray-400">
                 <p>The compass direction your solar panels face:</p>
                 <ul className="mt-2 space-y-1">
                   <li>0° = North</li>
@@ -27,10 +27,10 @@ export default function Settings() {
                   <li>270° = West</li>
                 </ul>
               </div>
-              <div className="flex-1 text-center">
+              <div className="md:flex-1 text-center">
                 <label
                   htmlFor="azimut-slider"
-                  className="block text-2xl font-semibold text-white mb-4"
+                  className="block text-xl md:text-2xl font-semibold text-white mb-4"
                 >
                   Azimut: {settings.azimut}°
                 </label>
@@ -55,14 +55,14 @@ export default function Settings() {
 
           {/* Angle Slider */}
           <section>
-            <div className="flex items-start gap-6">
-              <div className="flex-1 text-sm text-gray-400 pt-2">
+            <div className="flex flex-col md:flex-row md:items-start gap-6">
+              <div className="md:flex-1 text-sm text-gray-400">
                 <p>The tilt angle of your solar panels from horizontal (0° = flat, 90° = vertical)</p>
               </div>
-              <div className="flex-1 text-center">
+              <div className="md:flex-1 text-center">
                 <label
                   htmlFor="angle-slider"
-                  className="block text-2xl font-semibold text-white mb-4"
+                  className="block text-xl md:text-2xl font-semibold text-white mb-4"
                 >
                   Angle: {settings.angle}°
                 </label>
@@ -87,14 +87,14 @@ export default function Settings() {
 
           {/* kWh Slider */}
           <section>
-            <div className="flex items-start gap-6">
-              <div className="flex-1 text-sm text-gray-400 pt-2">
+            <div className="flex flex-col md:flex-row md:items-start gap-6">
+              <div className="md:flex-1 text-sm text-gray-400">
                 <p>Your total solar panel system capacity in kilowatts</p>
               </div>
-              <div className="flex-1 text-center">
+              <div className="md:flex-1 text-center">
                 <label
                   htmlFor="kwh-slider"
-                  className="block text-2xl font-semibold text-white mb-4"
+                  className="block text-xl md:text-2xl font-semibold text-white mb-4"
                 >
                   kWh: {settings.kwh}
                 </label>
@@ -112,6 +112,40 @@ export default function Settings() {
                 <span>5</span>
                 <span>7</span>
                 <span>10</span>
+              </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Minimum kWh Requirement Slider */}
+          <section>
+            <div className="flex flex-col md:flex-row md:items-start gap-6">
+              <div className="md:flex-1 text-sm text-gray-400">
+                <p>Set the minimum energy threshold for choosing solar over price optimization.</p>
+              </div>
+              <div className="md:flex-1 text-center">
+                <label
+                  htmlFor="min-kwh-slider"
+                  className="block text-xl md:text-2xl font-semibold text-white mb-4 md:whitespace-nowrap"
+                >
+                  Min Requirement: {(settings.minKwh / 1000).toFixed(1)} kWh
+                </label>
+              <Slider
+                id="min-kwh-slider"
+                min={500}
+                max={3000}
+                step={100}
+                value={[settings.minKwh]}
+                onValueChange={(value) => updateSettings({ minKwh: value[0] })}
+                className="mb-2"
+              />
+              <div className="flex justify-between text-sm text-gray-300 mt-2">
+                <span>0.5</span>
+                <span>1.0</span>
+                <span>1.5</span>
+                <span>2.0</span>
+                <span>2.5</span>
+                <span>3.0</span>
               </div>
               </div>
             </div>

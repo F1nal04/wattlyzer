@@ -6,6 +6,7 @@ interface SettingsData {
   azimut: number; // Stored in compass format (0-360)
   angle: number;
   kwh: number;
+  minKwh: number; // Minimum kWh requirement in Wh (500-3000)
 }
 
 interface SettingsContextType {
@@ -18,6 +19,7 @@ const defaultSettings: SettingsData = {
   azimut: 180, // 180° = South in compass format
   angle: 45,
   kwh: 5,
+  minKwh: 1200, // 1.2 kWh = 1200 Wh
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(

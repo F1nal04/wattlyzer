@@ -5,8 +5,10 @@ import { useState, useEffect, Suspense, useCallback } from "react";
 import { SolarDataFetcher, MarketDataFetcher } from "@/components/data-fetchers";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { useScheduling } from "@/hooks/use-scheduling";
+import { useSettings } from "@/lib/settings-context";
 
 export default function Home() {
+  const { settings } = useSettings();
   const [consumerDuration, setConsumerDuration] = useState(3);
   const [displayText, setDisplayText] = useState("");
   const [position, setPosition] = useState<{
@@ -240,10 +242,10 @@ export default function Home() {
                     {(schedulingResult.avgSolarProduction || 0).toFixed(0)} Wh
                   </div>
                   <div>
-                    Avg Price: {(schedulingResult.avgPrice || 0).toFixed(1)} €/MWh
+                    Avg Price: {((schedulingResult.avgPrice || 0) / 1000).toFixed(3)} €/kWh
                   </div>
                   {schedulingResult.reason === "solar" && (
-                    <div className="text-yellow-300">✓ Meets 1.2kWh minimum</div>
+                    <div className="text-yellow-300">✓ Meets {(settings.minKwh / 1000).toFixed(1)}kWh minimum</div>
                   )}
                 </div>
               </div>
