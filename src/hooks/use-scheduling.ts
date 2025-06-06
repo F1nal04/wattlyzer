@@ -229,11 +229,15 @@ export function useScheduling(position: { latitude: number; longitude: number } 
     bestResult: { avgSolarProduction: number; avgPrice: number; solarQualifies: boolean },
     allResults: Array<{ startTime: Date; avgSolarProduction: number; avgPrice: number; solarQualifies: boolean }>
   ) => {
+    const now = new Date();
     const currentHour = new Date(bestTime);
     currentHour.setMinutes(0, 0, 0);
     
     const nextHour = new Date(currentHour);
     nextHour.setHours(nextHour.getHours() + 1);
+    
+    // Check if current hour is reachable (not in the past)
+    const isCurrentHourReachable = currentHour.getTime() >= now.getTime();
     
     // Find results for current hour and next hour
     const currentHourResult = allResults.find(r => 
@@ -246,7 +250,16 @@ export function useScheduling(position: { latitude: number; longitude: number } 
       r.startTime.getDate() === nextHour.getDate()
     );
     
-    // If we only have one option, use it
+    // If current hour is not reachable, only consider next hour
+    if (!isCurrentHourReachable) {
+      if (nextHourResult) {
+        return { time: nextHour, ...nextHourResult };
+      }
+      // If neither is available, return the original best time
+      return { time: bestTime, ...bestResult };
+    }
+    
+    // If we only have one option, use it (current hour is reachable)
     if (!currentHourResult && !nextHourResult) {
       return { time: currentHour, ...bestResult };
     }
