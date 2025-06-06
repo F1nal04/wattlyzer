@@ -33,7 +33,7 @@ export default function Privacy() {
             </h2>
             <p>
               Your application settings and API results are cached locally in your
-              browser's storage to improve performance and reduce unnecessary API
+              browser&apos;s storage to improve performance and reduce unnecessary API
               calls. This data remains on your device and is never transmitted to
               any server except for the solar estimation API.
             </p>
