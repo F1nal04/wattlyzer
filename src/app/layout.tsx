@@ -13,6 +13,17 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: { default: "wattlyzer", template: "%s | wattlyzer" },
   description: "wattlyzer",
+  manifest: "/site.webmanifest",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml", sizes: "any" },
+      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/favicon.ico", type: "image/x-icon" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -24,9 +35,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${poppins.variable} antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <SettingsProvider>
-            {children}
-          </SettingsProvider>
+          <SettingsProvider>{children}</SettingsProvider>
         </ThemeProvider>
       </body>
     </html>
