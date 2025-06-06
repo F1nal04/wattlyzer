@@ -16,7 +16,7 @@ const SOLAR_CACHE_KEY = 'wattlyzer_solar_cache';
 const MARKET_CACHE_KEY = 'wattlyzer_market_cache';
 
 // Helper function to round coordinates for consistent cache keys
-const roundCoordinate = (coord: number) => Math.round(coord * 1000) / 1000; // Round to 3 decimal places (~100m precision)
+const roundCoordinate = (coord: number) => Math.round(coord * 100) / 100; // Round to 2 decimal places (~1km precision)
 
 function getCachedData<T>(cacheKey: string, dataKey: string): T | null {
   try {
