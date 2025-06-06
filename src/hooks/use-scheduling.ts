@@ -223,6 +223,75 @@ export function useScheduling(position: { latitude: number; longitude: number } 
     return marketDataPromiseRef.current;
   }, [position, marketData]);
 
+  // Helper function to normalize time to full hour
+  const normalizeToFullHour = useCallback((
+    bestTime: Date, 
+    bestResult: { avgSolarProduction: number; avgPrice: number; solarQualifies: boolean },
+    allResults: Array<{ startTime: Date; avgSolarProduction: number; avgPrice: number; solarQualifies: boolean }>
+  ) => {
+    const currentHour = new Date(bestTime);
+    currentHour.setMinutes(0, 0, 0);
+    
+    const nextHour = new Date(currentHour);
+    nextHour.setHours(nextHour.getHours() + 1);
+    
+    // Find results for current hour and next hour
+    const currentHourResult = allResults.find(r => 
+      r.startTime.getHours() === currentHour.getHours() &&
+      r.startTime.getDate() === currentHour.getDate()
+    );
+    
+    const nextHourResult = allResults.find(r => 
+      r.startTime.getHours() === nextHour.getHours() &&
+      r.startTime.getDate() === nextHour.getDate()
+    );
+    
+    // If we only have one option, use it
+    if (!currentHourResult && !nextHourResult) {
+      return { time: currentHour, ...bestResult };
+    }
+    
+    if (!nextHourResult) {
+      return { time: currentHour, ...bestResult };
+    }
+    
+    if (!currentHourResult) {
+      return { time: nextHour, ...nextHourResult };
+    }
+    
+    // Compare which hour is better based on the reason
+    // For solar optimization: prefer higher solar production
+    // For price optimization: prefer lower price
+    let betterResult;
+    let betterTime;
+    
+    if (bestResult.solarQualifies) {
+      // Solar optimization - prefer higher solar production
+      if (currentHourResult.avgSolarProduction >= nextHourResult.avgSolarProduction) {
+        betterResult = currentHourResult;
+        betterTime = currentHour;
+      } else {
+        betterResult = nextHourResult;
+        betterTime = nextHour;
+      }
+    } else {
+      // Price optimization - prefer lower price
+      if (currentHourResult.avgPrice <= nextHourResult.avgPrice) {
+        betterResult = currentHourResult;
+        betterTime = currentHour;
+      } else {
+        betterResult = nextHourResult;
+        betterTime = nextHour;
+      }
+    }
+    
+    return {
+      time: betterTime,
+      avgSolarProduction: betterResult.avgSolarProduction,
+      avgPrice: betterResult.avgPrice
+    };
+  }, []);
+
   // Calculate scheduling result
   useEffect(() => {
     const calculateSchedule = () => {
@@ -287,11 +356,14 @@ export function useScheduling(position: { latitude: number; longitude: number } 
           current.avgSolarProduction > best.avgSolarProduction ? current : best
         );
 
+        // Normalize to full hour - compare current hour vs next hour
+        const normalizedTime = normalizeToFullHour(best.startTime, best, results);
+
         return {
-          bestTime: best.startTime,
+          bestTime: normalizedTime.time,
           reason: "solar" as const,
-          avgSolarProduction: best.avgSolarProduction,
-          avgPrice: best.avgPrice,
+          avgSolarProduction: normalizedTime.avgSolarProduction,
+          avgPrice: normalizedTime.avgPrice,
         };
       }
 
@@ -300,11 +372,14 @@ export function useScheduling(position: { latitude: number; longitude: number } 
         current.avgPrice < best.avgPrice ? current : best
       );
 
+      // Normalize to full hour - compare current hour vs next hour
+      const normalizedTime = normalizeToFullHour(cheapest.startTime, cheapest, results);
+
       return {
-        bestTime: cheapest.startTime,
+        bestTime: normalizedTime.time,
         reason: "price" as const,
-        avgSolarProduction: cheapest.avgSolarProduction,
-        avgPrice: cheapest.avgPrice,
+        avgSolarProduction: normalizedTime.avgSolarProduction,
+        avgPrice: normalizedTime.avgPrice,
       };
     };
 
