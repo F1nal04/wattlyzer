@@ -1,8 +1,103 @@
 "use client";
 
 import { Slider } from "@/components/ui/slider";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense, useMemo, use, Component, ReactNode, useCallback, useRef } from "react";
 import { useSettings } from "@/lib/settings-context";
+
+type SolarData = {
+  result: Record<string, number>;
+  message: {
+    code: number;
+    type: string;
+    text: string;
+    pid: string;
+    info: {
+      latitude: number;
+      longitude: number;
+      distance: number;
+      place: string;
+      timezone: string;
+      time: string;
+      time_utc: string;
+    };
+    ratelimit: {
+      zone: string;
+      period: number;
+      limit: number;
+      remaining: number;
+    };
+  };
+};
+
+type MarketData = {
+  object: string;
+  data: Array<{
+    start_timestamp: number;
+    end_timestamp: number;
+    marketprice: number;
+    unit: string;
+  }>;
+  url: string;
+};
+
+// Error Boundary component
+class ErrorBoundary extends Component<
+  { children: ReactNode; fallback: ReactNode; onError?: (error: Error) => void },
+  { hasError: boolean; error?: Error }
+> {
+  constructor(props: { children: ReactNode; fallback: ReactNode; onError?: (error: Error) => void }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error) {
+    this.props.onError?.(error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
+}
+
+// Data fetching component that throws promises for Suspense
+function SolarDataFetcher({ 
+  promise, 
+  onData 
+}: { 
+  promise: Promise<SolarData>; 
+  onData: (data: SolarData) => void;
+}) {
+  const data = use(promise);
+  
+  useEffect(() => {
+    onData(data);
+  }, [data, onData]);
+  
+  return null;
+}
+
+function MarketDataFetcher({ 
+  promise, 
+  onData 
+}: { 
+  promise: Promise<MarketData>; 
+  onData: (data: MarketData) => void;
+}) {
+  const data = use(promise);
+  
+  useEffect(() => {
+    onData(data);
+  }, [data, onData]);
+  
+  return null;
+}
 
 export default function Home() {
   const { settings } = useSettings();
@@ -13,42 +108,71 @@ export default function Home() {
     longitude: number;
   } | null>(null);
   const [, setLocationError] = useState<string | null>(null);
-  const [solarData, setSolarData] = useState<{
-    result: Record<string, number>;
-    message: {
-      code: number;
-      type: string;
-      text: string;
-      pid: string;
-      info: {
-        latitude: number;
-        longitude: number;
-        distance: number;
-        place: string;
-        timezone: string;
-        time: string;
-        time_utc: string;
-      };
-      ratelimit: {
-        zone: string;
-        period: number;
-        limit: number;
-        remaining: number;
-      };
-    };
-  } | null>(null);
-  const [marketData, setMarketData] = useState<{
-    object: string;
-    data: Array<{
-      start_timestamp: number;
-      end_timestamp: number;
-      marketprice: number;
-      unit: string;
-    }>;
-    url: string;
-  } | null>(null);
+  const [solarData, setSolarData] = useState<SolarData | null>(null);
+  const [marketData, setMarketData] = useState<MarketData | null>(null);
   const [apiLoading, setApiLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  
+  // Create promises for render-while-fetch using useRef to prevent recreation
+  const solarDataPromiseRef = useRef<Promise<SolarData> | null>(null);
+  const marketDataPromiseRef = useRef<Promise<MarketData> | null>(null);
+  const lastSolarKey = useRef<string>('');
+  const lastMarketKey = useRef<string>('');
+  
+  const solarDataPromise = useMemo(() => {
+    if (!position || !settings) return null;
+    
+    const { latitude, longitude } = position;
+    const { angle, kwh, azimut } = settings;
+    
+    // Create a key to detect if parameters changed
+    const key = `${latitude},${longitude},${angle},${azimut},${kwh}`;
+    
+    // Only create new promise if parameters changed
+    if (key !== lastSolarKey.current || !solarDataPromiseRef.current) {
+      lastSolarKey.current = key;
+      
+      let apiAzimut;
+      if (azimut === 0 || azimut === 360) {
+        apiAzimut = -180;
+      } else if (azimut <= 180) {
+        apiAzimut = azimut - 180;
+      } else {
+        apiAzimut = azimut - 180;
+      }
+      
+      const url = `https://api.forecast.solar/estimate/watthours/${latitude}/${longitude}/${angle}/${apiAzimut}/${kwh}`;
+      
+      solarDataPromiseRef.current = fetch(url).then(response => {
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        return response.json();
+      });
+    }
+    
+    return solarDataPromiseRef.current;
+  }, [position, settings]);
+  
+  const marketDataPromise = useMemo(() => {
+    if (!position) return null;
+    
+    const key = 'market';
+    
+    // Only create new promise if not already created
+    if (key !== lastMarketKey.current || !marketDataPromiseRef.current) {
+      lastMarketKey.current = key;
+      
+      marketDataPromiseRef.current = fetch("https://api.awattar.de/v1/marketdata").then(response => {
+        if (!response.ok) {
+          throw new Error(`Market API error: ${response.status}`);
+        }
+        return response.json();
+      });
+    }
+    
+    return marketDataPromiseRef.current;
+  }, [position]);
   const [schedulingResult, setSchedulingResult] = useState<{
     bestTime: Date;
     reason: "solar" | "price";
@@ -57,7 +181,7 @@ export default function Home() {
   } | null>(null);
   const fullText = "wattlyzer";
 
-  const calculatePowerGeneration = (hoursFromNow: number) => {
+  const calculatePowerGeneration = useCallback((hoursFromNow: number) => {
     if (!solarData) return 0;
 
     const now = new Date();
@@ -131,9 +255,9 @@ export default function Home() {
     );
 
     return hourlyProduction;
-  };
+  }, [solarData]);
 
-  const calculateMarketPrice = (hoursFromNow: number) => {
+  const calculateMarketPrice = useCallback((hoursFromNow: number) => {
     if (!marketData || !marketData.data) return 0;
 
     const now = new Date();
@@ -149,7 +273,7 @@ export default function Home() {
     );
 
     return priceData ? priceData.marketprice : 0;
-  };
+  }, [marketData]);
 
   useEffect(() => {
     let currentIndex = 0;
@@ -165,68 +289,28 @@ export default function Home() {
     return () => clearInterval(typingInterval);
   }, []);
 
+  // Callbacks for handling data from Suspense components
+  const handleSolarData = useCallback((data: SolarData) => {
+    setSolarData(data);
+    setApiLoading(false);
+  }, []);
+  
+  const handleMarketData = useCallback((data: MarketData) => {
+    setMarketData(data);
+  }, []);
+  
+  const handleError = useCallback((error: Error) => {
+    setApiError(error.message);
+    setApiLoading(false);
+  }, []);
+  
+  // Set loading state when promises are created
   useEffect(() => {
-    if (position && settings) {
-      const fetchSolarData = async () => {
-        setApiLoading(true);
-        setApiError(null);
-
-        try {
-          const { latitude, longitude } = position;
-          const { angle, kwh, azimut } = settings;
-
-          // Convert compass azimut (0-360) to API format (-180 to 180)
-          let apiAzimut;
-          if (azimut === 0 || azimut === 360) {
-            apiAzimut = -180; // North
-          } else if (azimut <= 180) {
-            apiAzimut = azimut - 180; // 90->-90, 180->0
-          } else {
-            apiAzimut = azimut - 180; // 270->90
-          }
-
-          const url = `https://api.forecast.solar/estimate/watthours/${latitude}/${longitude}/${angle}/${apiAzimut}/${kwh}`;
-
-          const response = await fetch(url);
-          if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
-          }
-
-          const data = await response.json();
-          setSolarData(data);
-        } catch (error) {
-          setApiError(
-            error instanceof Error
-              ? error.message
-              : "Failed to fetch solar data"
-          );
-        } finally {
-          setApiLoading(false);
-        }
-      };
-
-      const fetchMarketData = async () => {
-        try {
-          const response = await fetch("https://api.awattar.de/v1/marketdata");
-          if (!response.ok) {
-            throw new Error(`Market API error: ${response.status}`);
-          }
-
-          const data = await response.json();
-          setMarketData(data);
-        } catch (error) {
-          setApiError(
-            error instanceof Error
-              ? error.message
-              : "Failed to fetch market data"
-          );
-        }
-      };
-
-      fetchSolarData();
-      fetchMarketData();
+    if (solarDataPromise) {
+      setApiLoading(true);
+      setApiError(null);
     }
-  }, [position, settings]);
+  }, [solarDataPromise]);
 
   useEffect(() => {
     const calculateSchedule = () => {
@@ -316,7 +400,7 @@ export default function Home() {
       const result = calculateSchedule();
       setSchedulingResult(result);
     }
-  }, [solarData, marketData, consumerDuration]);
+  }, [solarData, marketData, consumerDuration, calculatePowerGeneration, calculateMarketPrice]);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -389,62 +473,100 @@ export default function Home() {
           </div>
         </div>
 
-        {schedulingResult && !apiLoading ? (
-          <div className="text-center">
-            <div className="text-8xl md:text-9xl font-bold text-yellow-400 font-sans">
-              {schedulingResult.bestTime.toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: false,
-              })}
-            </div>
-            <div className="text-xl text-gray-300 mt-2">
-              {schedulingResult.bestTime.toLocaleDateString("en-US", {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
-              })}
-            </div>
-
-            <div className="mt-4 space-y-2">
-              <div
-                className={`px-4 py-2 rounded-full inline-block ${
-                  schedulingResult.reason === "solar"
-                    ? "bg-yellow-500/20 text-yellow-300"
-                    : "bg-blue-500/20 text-blue-300"
-                }`}
-              >
-                {schedulingResult.reason === "solar"
-                  ? "☀️ Solar Optimized"
-                  : "💰 Price Optimized"}
+        <ErrorBoundary 
+          fallback={
+            <div className="text-center">
+              <div className="text-8xl md:text-9xl font-bold text-red-400 font-sans">
+                --:--
               </div>
-
-              <div className="text-sm text-gray-400 space-y-1">
-                <div>
-                  Avg Solar:{" "}
-                  {(schedulingResult.avgSolarProduction || 0).toFixed(0)} Wh
-                </div>
-                <div>
-                  Avg Price: {(schedulingResult.avgPrice || 0).toFixed(1)} €/MWh
-                </div>
-                {schedulingResult.reason === "solar" && (
-                  <div className="text-yellow-300">✓ Meets 1.2kWh minimum</div>
-                )}
+              <div className="text-xl text-red-400 mt-2">
+                Failed to load data
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="text-center">
-            <div className="text-8xl md:text-9xl font-bold text-gray-500 font-sans">
-              --:--
+          }
+          onError={handleError}
+        >
+          <Suspense fallback={
+            <div className="text-center">
+              <div className="text-8xl md:text-9xl font-bold text-gray-500 font-sans">
+                --:--
+              </div>
+              <div className="text-xl text-gray-400 mt-2">
+                Loading data...
+              </div>
             </div>
-            <div className="text-xl text-gray-400 mt-2">
-              {apiLoading
-                ? "Calculating optimal schedule..."
-                : "Waiting for data..."}
+          }>
+            {solarDataPromise ? (
+              <SolarDataFetcher 
+                promise={solarDataPromise} 
+                onData={handleSolarData} 
+              />
+            ) : null}
+            {marketDataPromise ? (
+              <MarketDataFetcher 
+                promise={marketDataPromise} 
+                onData={handleMarketData} 
+              />
+            ) : null}
+          </Suspense>
+          
+          {schedulingResult && !apiLoading ? (
+            <div className="text-center">
+              <div className="text-8xl md:text-9xl font-bold text-yellow-400 font-sans">
+                {schedulingResult.bestTime.toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                })}
+              </div>
+              <div className="text-xl text-gray-300 mt-2">
+                {schedulingResult.bestTime.toLocaleDateString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </div>
+
+              <div className="mt-4 space-y-2">
+                <div
+                  className={`px-4 py-2 rounded-full inline-block ${
+                    schedulingResult.reason === "solar"
+                      ? "bg-yellow-500/20 text-yellow-300"
+                      : "bg-blue-500/20 text-blue-300"
+                  }`}
+                >
+                  {schedulingResult.reason === "solar"
+                    ? "☀️ Solar Optimized"
+                    : "💰 Price Optimized"}
+                </div>
+
+                <div className="text-sm text-gray-400 space-y-1">
+                  <div>
+                    Avg Solar:{" "}
+                    {(schedulingResult.avgSolarProduction || 0).toFixed(0)} Wh
+                  </div>
+                  <div>
+                    Avg Price: {(schedulingResult.avgPrice || 0).toFixed(1)} €/MWh
+                  </div>
+                  {schedulingResult.reason === "solar" && (
+                    <div className="text-yellow-300">✓ Meets 1.2kWh minimum</div>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="text-center">
+              <div className="text-8xl md:text-9xl font-bold text-gray-500 font-sans">
+                --:--
+              </div>
+              <div className="text-xl text-gray-400 mt-2">
+                {apiLoading
+                  ? "Calculating optimal schedule..."
+                  : "Waiting for data..."}
+              </div>
+            </div>
+          )}
+        </ErrorBoundary>
 
         {apiError && (
           <div className="text-red-400 text-sm text-center mt-4">
