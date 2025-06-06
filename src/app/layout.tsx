@@ -14,6 +14,18 @@ export const metadata: Metadata = {
   title: { default: "wattlyzer", template: "%s | wattlyzer" },
   description: "wattlyzer",
   manifest: "/site.webmanifest",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: "cover"
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "wattlyzer"
+  },
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml", sizes: "any" },
@@ -33,9 +45,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="theme-color" content="#000000" />
+      </head>
       <body className={`${poppins.variable} antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <SettingsProvider>{children}</SettingsProvider>
+          <SettingsProvider>
+            <div className="min-h-[100dvh] w-full overflow-hidden">
+              {children}
+            </div>
+          </SettingsProvider>
         </ThemeProvider>
       </body>
     </html>

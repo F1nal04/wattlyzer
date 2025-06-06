@@ -103,7 +103,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-800 to-yellow-700 flex flex-col items-center justify-center px-4">
+    <div className="min-h-[100dvh] bg-gradient-to-br from-black via-gray-800 to-yellow-700 flex flex-col items-center justify-center px-4 relative">
       {/* Title with typewriter effect */}
       <div className="mb-16">
         <h1 className="text-6xl md:text-8xl font-bold text-white text-center font-sans">
@@ -261,33 +261,35 @@ export default function Home() {
       </div>
 
       {/* Footer links */}
-      <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-6">
-        <a
-          href="https://github.com/F1nal04/wattlyzer"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-gray-400 hover:text-gray-300 transition-colors"
-        >
-          GitHub
-        </a>
-        <a
-          href="/legal"
-          className="text-sm text-gray-400 hover:text-gray-300 transition-colors"
-        >
-          Legal Notice
-        </a>
-        <a
-          href="/privacy"
-          className="text-sm text-gray-400 hover:text-gray-300 transition-colors"
-        >
-          Privacy Policy
-        </a>
-        <a
-          href="/settings"
-          className="text-sm text-gray-400 hover:text-gray-300 transition-colors"
-        >
-          Settings
-        </a>
+      <div className="fixed bottom-0 left-0 right-0 pb-safe-bottom">
+        <div className="flex justify-center space-x-4 px-2 py-4 bg-gradient-to-t from-black/50 to-transparent">
+          <a
+            href="https://github.com/F1nal04/wattlyzer"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-gray-300 hover:text-white transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
+          >
+            GitHub
+          </a>
+          <a
+            href="/legal"
+            className="text-sm text-gray-300 hover:text-white transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
+          >
+            Legal
+          </a>
+          <a
+            href="/privacy"
+            className="text-sm text-gray-300 hover:text-white transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
+          >
+            Privacy
+          </a>
+          <a
+            href="/settings"
+            className="text-sm text-gray-300 hover:text-white transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
+          >
+            Settings
+          </a>
+        </div>
       </div>
     </div>
   );
