@@ -20,14 +20,16 @@ const defaultSettings: SettingsData = {
   kwh: 5,
 };
 
-const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
+const SettingsContext = createContext<SettingsContextType | undefined>(
+  undefined
+);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<SettingsData>(defaultSettings);
 
   useEffect(() => {
     // Load settings from localStorage on mount
-    const savedSettings = localStorage.getItem("wattlyzer-settings");
+    const savedSettings = localStorage.getItem("wattlyzer_settings");
     if (savedSettings) {
       try {
         const parsed = JSON.parse(savedSettings);
@@ -41,7 +43,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const updateSettings = (newSettings: Partial<SettingsData>) => {
     const updatedSettings = { ...settings, ...newSettings };
     setSettings(updatedSettings);
-    localStorage.setItem("wattlyzer-settings", JSON.stringify(updatedSettings));
+    localStorage.setItem("wattlyzer_settings", JSON.stringify(updatedSettings));
   };
 
   // Convert compass azimut (0-360) to API format (-180 to 180)
@@ -49,14 +51,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     const compass = settings.azimut;
     // API expects: -180=North, -90=East, 0=South, 90=West, 180=North
     // Compass shows: 0=North, 90=East, 180=South, 270=West, 360=North
-    
+
     // Conversion mapping:
     // Compass 0° (North) -> API -180°
     // Compass 90° (East) -> API -90°
     // Compass 180° (South) -> API 0°
     // Compass 270° (West) -> API 90°
     // Compass 360° (North) -> API -180°
-    
+
     if (compass === 0 || compass === 360) {
       return -180; // North
     } else if (compass <= 180) {
@@ -67,7 +69,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings, getApiAzimut }}>
+    <SettingsContext.Provider
+      value={{ settings, updateSettings, getApiAzimut }}
+    >
       {children}
     </SettingsContext.Provider>
   );

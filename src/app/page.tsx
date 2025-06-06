@@ -186,6 +186,7 @@ export default function Home() {
     }
   }, [position, settings]);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [showRemainingTime, setShowRemainingTime] = useState<boolean>(false);
   
   // Create promises for render-while-fetch with caching
   const solarDataPromiseRef = useRef<Promise<SolarData> | null>(null);
@@ -288,6 +289,28 @@ export default function Home() {
     avgPrice?: number;
   } | null>(null);
   const fullText = "wattlyzer";
+
+  // Function to calculate remaining time in hours and minutes
+  const formatRemainingTime = useCallback((targetTime: Date) => {
+    const now = new Date();
+    const diffMs = targetTime.getTime() - now.getTime();
+    
+    if (diffMs <= 0) {
+      return "now";
+    }
+    
+    const totalMinutes = Math.floor(diffMs / (1000 * 60));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    
+    if (hours === 0) {
+      return `${minutes}m`;
+    } else if (minutes === 0) {
+      return `${hours}h`;
+    } else {
+      return `${hours}h ${minutes}m`;
+    }
+  }, []);
 
   const calculatePowerGeneration = useCallback((hoursFromNow: number) => {
     if (!solarData) return 0;
@@ -617,12 +640,19 @@ export default function Home() {
           
           {schedulingResult ? (
             <div className="text-center">
-              <div className="text-8xl md:text-9xl font-bold text-yellow-400 font-sans">
-                {schedulingResult.bestTime.toLocaleTimeString("en-US", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: false,
-                })}
+              <div 
+                className="text-8xl md:text-9xl font-bold text-yellow-400 font-sans cursor-pointer hover:text-yellow-300 transition-colors"
+                onClick={() => setShowRemainingTime(!showRemainingTime)}
+                title={showRemainingTime ? "Click to show time" : "Click to show remaining time"}
+              >
+                {showRemainingTime 
+                  ? formatRemainingTime(schedulingResult.bestTime)
+                  : schedulingResult.bestTime.toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false,
+                    })
+                }
               </div>
               <div className="text-xl text-gray-300 mt-2">
                 {schedulingResult.bestTime.toLocaleDateString("en-US", {
