@@ -12,7 +12,7 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: { default: "wattlyzer", template: "%s | wattlyzer" },
-  description: "wattlyzer",
+  description: "Smart energy scheduling tool that optimizes when to run your appliances based on solar production and electricity prices.",
   manifest: "/site.webmanifest",
   appleWebApp: {
     capable: true,

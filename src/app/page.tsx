@@ -2,7 +2,10 @@
 
 import { Slider } from "@/components/ui/slider";
 import { useState, useEffect, Suspense, useCallback } from "react";
-import { SolarDataFetcher, MarketDataFetcher } from "@/components/data-fetchers";
+import {
+  SolarDataFetcher,
+  MarketDataFetcher,
+} from "@/components/data-fetchers";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { useScheduling } from "@/hooks/use-scheduling";
 import { useSettings } from "@/lib/settings-context";
@@ -17,7 +20,7 @@ export default function Home() {
   } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [showRemainingTime, setShowRemainingTime] = useState<boolean>(false);
-  
+
   const {
     schedulingResult,
     apiError,
@@ -25,7 +28,7 @@ export default function Home() {
     marketDataPromise,
     handleSolarData,
     handleMarketData,
-    handleError
+    handleError,
   } = useScheduling(position, consumerDuration);
 
   const fullText = "wattlyzer";
@@ -34,15 +37,15 @@ export default function Home() {
   const formatRemainingTime = useCallback((targetTime: Date) => {
     const now = new Date();
     const diffMs = targetTime.getTime() - now.getTime();
-    
+
     if (diffMs <= 0) {
       return "now";
     }
-    
+
     const totalMinutes = Math.floor(diffMs / (1000 * 60));
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
-    
+
     if (hours === 0) {
       return `${minutes}m`;
     } else if (minutes === 0) {
@@ -107,8 +110,13 @@ export default function Home() {
       {/* Title with typewriter effect */}
       <div className="mb-16">
         <h1 className="text-6xl md:text-8xl font-bold text-white text-center font-sans">
-          {displayText}
-          <span className="cursor-blink">|</span>
+          <span className="sr-only">wattlyzer - energy optimization tool</span>
+          <span aria-hidden="true">
+            {displayText}
+            <span aria-hidden="true" className="cursor-blink">
+              |
+            </span>
+          </span>
         </h1>
       </div>
 
@@ -137,7 +145,7 @@ export default function Home() {
           </div>
         </div>
 
-        <ErrorBoundary 
+        <ErrorBoundary
           fallback={
             <div className="text-center">
               <div className="text-8xl md:text-9xl font-bold text-red-400 font-sans">
@@ -150,30 +158,32 @@ export default function Home() {
           }
           onError={handleError}
         >
-          <Suspense fallback={
-            <div className="text-center">
-              <div className="text-8xl md:text-9xl font-bold text-gray-500 font-sans">
-                --:--
+          <Suspense
+            fallback={
+              <div className="text-center">
+                <div className="text-8xl md:text-9xl font-bold text-gray-500 font-sans">
+                  --:--
+                </div>
+                <div className="text-xl text-gray-400 mt-2">
+                  {locationError ? "Location required" : "Loading data..."}
+                </div>
               </div>
-              <div className="text-xl text-gray-400 mt-2">
-                {locationError ? "Location required" : "Loading data..."}
-              </div>
-            </div>
-          }>
+            }
+          >
             {solarDataPromise ? (
-              <SolarDataFetcher 
-                promise={solarDataPromise} 
-                onData={handleSolarData} 
+              <SolarDataFetcher
+                promise={solarDataPromise}
+                onData={handleSolarData}
               />
             ) : null}
             {marketDataPromise ? (
-              <MarketDataFetcher 
-                promise={marketDataPromise} 
-                onData={handleMarketData} 
+              <MarketDataFetcher
+                promise={marketDataPromise}
+                onData={handleMarketData}
               />
             ) : null}
           </Suspense>
-          
+
           {!position && !locationError && (
             <div className="text-center">
               <div className="text-8xl md:text-9xl font-bold text-gray-500 font-sans">
@@ -184,7 +194,7 @@ export default function Home() {
               </div>
             </div>
           )}
-          
+
           {!position && locationError && (
             <div className="text-center">
               <div className="text-8xl md:text-9xl font-bold text-red-400 font-sans">
@@ -198,22 +208,25 @@ export default function Home() {
               </div>
             </div>
           )}
-          
+
           {schedulingResult ? (
             <div className="text-center">
-              <div 
+              <div
                 className="text-8xl md:text-9xl font-bold text-yellow-400 font-sans cursor-pointer hover:text-yellow-300 transition-colors"
                 onClick={() => setShowRemainingTime(!showRemainingTime)}
-                title={showRemainingTime ? "Click to show time" : "Click to show remaining time"}
+                title={
+                  showRemainingTime
+                    ? "Click to show time"
+                    : "Click to show remaining time"
+                }
               >
-                {showRemainingTime 
+                {showRemainingTime
                   ? formatRemainingTime(schedulingResult.bestTime)
                   : schedulingResult.bestTime.toLocaleTimeString("en-US", {
                       hour: "2-digit",
                       minute: "2-digit",
                       hour12: false,
-                    })
-                }
+                    })}
               </div>
               <div className="text-xl text-gray-300 mt-2">
                 {schedulingResult.bestTime.toLocaleDateString("en-US", {
@@ -242,10 +255,13 @@ export default function Home() {
                     {(schedulingResult.avgSolarProduction || 0).toFixed(0)} Wh
                   </div>
                   <div>
-                    Avg Price: {((schedulingResult.avgPrice || 0) / 1000).toFixed(3)} €/kWh
+                    Avg Price:{" "}
+                    {((schedulingResult.avgPrice || 0) / 1000).toFixed(3)} €/kWh
                   </div>
                   {schedulingResult.reason === "solar" && (
-                    <div className="text-yellow-300">✓ Meets {(settings.minKwh / 1000).toFixed(1)}kWh minimum</div>
+                    <div className="text-yellow-300">
+                      ✓ Meets {(settings.minKwh / 1000).toFixed(1)}kWh minimum
+                    </div>
                   )}
                 </div>
               </div>
