@@ -9,6 +9,7 @@ import {
 import { ErrorBoundary } from "@/components/error-boundary";
 import { useScheduling } from "@/hooks/use-scheduling";
 import { useSettings } from "@/lib/settings-context";
+import Link from "next/link";
 
 export default function Home() {
   const { settings } = useSettings();
@@ -279,32 +280,33 @@ export default function Home() {
       {/* Footer links */}
       <div className="fixed bottom-0 left-0 right-0 pb-safe-bottom">
         <div className="flex justify-center space-x-4 px-2 py-4 bg-gradient-to-t from-black/50 to-transparent">
-          <a
+          <Link
             href="https://github.com/F1nal04/wattlyzer"
             target="_blank"
             rel="noopener noreferrer"
+            prefetch={false}
             className="text-sm text-gray-300 hover:text-white transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
           >
             GitHub
-          </a>
-          <a
+          </Link>
+          <Link
             href="/legal"
             className="text-sm text-gray-300 hover:text-white transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
           >
             Legal
-          </a>
-          <a
+          </Link>
+          <Link
             href="/privacy"
             className="text-sm text-gray-300 hover:text-white transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
           >
             Privacy
-          </a>
-          <a
+          </Link>
+          <Link
             href="/settings"
             className="text-sm text-gray-300 hover:text-white transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
           >
             Settings
-          </a>
+          </Link>
         </div>
       </div>
     </div>
