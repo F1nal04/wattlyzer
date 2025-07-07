@@ -9,6 +9,7 @@ import {
 import { ErrorBoundary } from "@/components/error-boundary";
 import { useScheduling } from "@/hooks/use-scheduling";
 import { useSettings } from "@/lib/settings-context";
+import { isDebugMode } from "@/lib/utils";
 import Link from "next/link";
 
 export default function Home() {
@@ -21,6 +22,7 @@ export default function Home() {
   } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [showRemainingTime, setShowRemainingTime] = useState<boolean>(false);
+  const [showDebugLink, setShowDebugLink] = useState<boolean>(false);
 
   const {
     schedulingResult,
@@ -104,6 +106,22 @@ export default function Home() {
     } else {
       setLocationError("Geolocation not supported by browser");
     }
+  }, []);
+
+  // Check if debug mode should be enabled
+  useEffect(() => {
+    setShowDebugLink(isDebugMode());
+
+    // Listen for URL changes to update debug mode
+    const handleUrlChange = () => {
+      setShowDebugLink(isDebugMode());
+    };
+
+    window.addEventListener("popstate", handleUrlChange);
+
+    return () => {
+      window.removeEventListener("popstate", handleUrlChange);
+    };
   }, []);
 
   return (
@@ -307,12 +325,14 @@ export default function Home() {
           >
             Settings
           </Link>
-          <Link
-            href="/debug"
-            className="text-sm text-gray-300 hover:text-white transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
-          >
-            Debug
-          </Link>
+          {showDebugLink && (
+            <Link
+              href="/debug"
+              className="text-sm text-gray-300 hover:text-white transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
+            >
+              Debug
+            </Link>
+          )}
         </div>
       </div>
     </div>
