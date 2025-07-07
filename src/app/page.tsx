@@ -307,6 +307,12 @@ export default function Home() {
           >
             Settings
           </Link>
+          <Link
+            href="/debug"
+            className="text-sm text-gray-300 hover:text-white transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
+          >
+            Debug
+          </Link>
         </div>
       </div>
     </div>
