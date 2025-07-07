@@ -7,6 +7,7 @@ interface SettingsData {
   angle: number;
   kwh: number;
   minKwh: number; // Minimum kWh requirement in Wh (500-3000)
+  betaCalculations: boolean; // Enable beta calculations
 }
 
 interface SettingsContextType {
@@ -20,6 +21,7 @@ const defaultSettings: SettingsData = {
   angle: 45,
   kwh: 5,
   minKwh: 1200, // 1.2 kWh = 1200 Wh
+  betaCalculations: false, // Beta calculations disabled by default
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(
