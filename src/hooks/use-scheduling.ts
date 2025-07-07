@@ -135,9 +135,14 @@ export function useScheduling(
       // Apply general 30% reduction for solar estimation accuracy
       hourlyProduction *= 0.7;
 
+      // Beta calculations: Apply 50% reduction for estimates before 10:00 AM
+      if (settings.betaCalculations && targetTime.getHours() < 10) {
+        hourlyProduction *= 0.5;
+      }
+
       return hourlyProduction;
     },
-    [solarData]
+    [solarData, settings.betaCalculations]
   );
 
   const calculateMarketPrice = useCallback(
