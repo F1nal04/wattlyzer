@@ -56,20 +56,15 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     // API expects: -180=North, -90=East, 0=South, 90=West, 180=North
     // Compass shows: 0=North, 90=East, 180=South, 270=West, 360=North
 
-    // Conversion mapping:
+    // Simple conversion: API_azimuth = compass_azimuth - 180
+    // This works for all compass values:
     // Compass 0° (North) -> API -180°
     // Compass 90° (East) -> API -90°
     // Compass 180° (South) -> API 0°
     // Compass 270° (West) -> API 90°
-    // Compass 360° (North) -> API -180°
+    // Compass 360° (North) -> API -180° (same as 0°)
 
-    if (compass === 0 || compass === 360) {
-      return -180; // North
-    } else if (compass <= 180) {
-      return compass - 180; // 90->-90, 180->0
-    } else {
-      return compass - 180; // 270->90, but this gives us the correct West direction
-    }
+    return compass - 180;
   };
 
   return (
