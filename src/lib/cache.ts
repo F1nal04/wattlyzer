@@ -63,3 +63,49 @@ export function clearCache(): void {
     // Ignore localStorage errors
   }
 }
+
+export function getCacheInfo<T>(
+  cacheKey: string,
+  dataKey: string
+): {
+  data: T | null;
+  timestamp: number | null;
+  age: number | null;
+  isExpired: boolean;
+  exists: boolean;
+} {
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (!cached) {
+      return {
+        data: null,
+        timestamp: null,
+        age: null,
+        isExpired: false,
+        exists: false,
+      };
+    }
+
+    const parsedCache: CachedData<T> = JSON.parse(cached);
+    const now = Date.now();
+    const age = now - parsedCache.timestamp;
+    const isExpired = age > CACHE_DURATION_MS;
+    const keyMatches = parsedCache.key === dataKey;
+
+    return {
+      data: keyMatches && !isExpired ? parsedCache.data : null,
+      timestamp: parsedCache.timestamp,
+      age,
+      isExpired,
+      exists: true,
+    };
+  } catch {
+    return {
+      data: null,
+      timestamp: null,
+      age: null,
+      isExpired: false,
+      exists: false,
+    };
+  }
+}

@@ -214,7 +214,7 @@ export function useScheduling(
       });
 
     return solarDataPromiseRef.current;
-  }, [position, settings, solarData]);
+  }, [position, settings, solarData, getApiAzimut]);
 
   const marketDataPromise = useMemo(() => {
     if (!position) return null;

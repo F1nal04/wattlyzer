@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSettings } from "@/lib/settings-context";
 import { useScheduling } from "@/hooks/use-scheduling";
 import {
-  getCachedData,
+  getCacheInfo,
   SOLAR_CACHE_KEY,
   MARKET_CACHE_KEY,
   roundCoordinate,
@@ -14,14 +14,43 @@ import { SolarData, MarketData } from "@/lib/types";
 
 export default function Debug() {
   const { settings, getApiAzimut } = useSettings();
+
+  // Helper function to format cache age
+  const formatCacheAge = (ageMs: number): string => {
+    const minutes = Math.floor(ageMs / 1000 / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) {
+      return `${days}d ${hours % 24}h ago`;
+    } else if (hours > 0) {
+      return `${hours}h ${minutes % 60}m ago`;
+    } else if (minutes > 0) {
+      return `${minutes}m ago`;
+    } else {
+      return "Just now";
+    }
+  };
   const [position, setPosition] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [cacheInfo, setCacheInfo] = useState<{
-    solar: SolarData | null;
-    market: MarketData | null;
+    solar: {
+      data: SolarData | null;
+      timestamp: number | null;
+      age: number | null;
+      isExpired: boolean;
+      exists: boolean;
+    };
+    market: {
+      data: MarketData | null;
+      timestamp: number | null;
+      age: number | null;
+      isExpired: boolean;
+      exists: boolean;
+    };
     solarKey: string;
   } | null>(null);
 
@@ -58,12 +87,15 @@ export default function Debug() {
       const roundedLng = roundCoordinate(longitude);
       const solarKey = `${roundedLat},${roundedLng},${angle},${azimut},${kwh}`;
 
-      const solarCache = getCachedData<SolarData>(SOLAR_CACHE_KEY, solarKey);
-      const marketCache = getCachedData<MarketData>(MARKET_CACHE_KEY, "market");
+      const solarCacheInfo = getCacheInfo<SolarData>(SOLAR_CACHE_KEY, solarKey);
+      const marketCacheInfo = getCacheInfo<MarketData>(
+        MARKET_CACHE_KEY,
+        "market"
+      );
 
       setCacheInfo({
-        solar: solarCache,
-        market: marketCache,
+        solar: solarCacheInfo,
+        market: marketCacheInfo,
         solarKey,
       });
     }
@@ -146,11 +178,47 @@ export default function Debug() {
                 </div>
                 <div>
                   <strong>Solar Cache:</strong>{" "}
-                  {cacheInfo.solar ? "✅ Cached" : "❌ Not cached"}
+                  {cacheInfo.solar.exists ? (
+                    <span>
+                      {cacheInfo.solar.data
+                        ? "✅ Cached"
+                        : "❌ Expired/Invalid"}
+                      {cacheInfo.solar.timestamp && (
+                        <div className="text-xs text-gray-400 mt-1">
+                          Cached:{" "}
+                          {new Date(cacheInfo.solar.timestamp).toLocaleString()}
+                          <br />
+                          Age: {formatCacheAge(cacheInfo.solar.age || 0)}
+                          {cacheInfo.solar.isExpired && " (expired)"}
+                        </div>
+                      )}
+                    </span>
+                  ) : (
+                    "❌ Not cached"
+                  )}
                 </div>
                 <div>
                   <strong>Market Cache:</strong>{" "}
-                  {cacheInfo.market ? "✅ Cached" : "❌ Not cached"}
+                  {cacheInfo.market.exists ? (
+                    <span>
+                      {cacheInfo.market.data
+                        ? "✅ Cached"
+                        : "❌ Expired/Invalid"}
+                      {cacheInfo.market.timestamp && (
+                        <div className="text-xs text-gray-400 mt-1">
+                          Cached:{" "}
+                          {new Date(
+                            cacheInfo.market.timestamp
+                          ).toLocaleString()}
+                          <br />
+                          Age: {formatCacheAge(cacheInfo.market.age || 0)}
+                          {cacheInfo.market.isExpired && " (expired)"}
+                        </div>
+                      )}
+                    </span>
+                  ) : (
+                    "❌ Not cached"
+                  )}
                 </div>
               </div>
             ) : (
@@ -232,23 +300,37 @@ export default function Debug() {
               <div>
                 <strong>User Agent:</strong>
                 <div className="text-xs text-gray-400 mt-1 break-all">
-                  {navigator.userAgent}
+                  {typeof navigator !== "undefined"
+                    ? navigator.userAgent
+                    : "Unknown"}
                 </div>
               </div>
               <div>
-                <strong>Screen Size:</strong> {window.innerWidth}x
-                {window.innerHeight}
+                <strong>Screen Size:</strong>{" "}
+                {typeof window !== "undefined"
+                  ? `${window.innerWidth}x${window.innerHeight}`
+                  : "Unknown"}
               </div>
               <div>
                 <strong>Timezone:</strong>{" "}
-                {Intl.DateTimeFormat().resolvedOptions().timeZone}
+                {typeof Intl !== "undefined"
+                  ? Intl.DateTimeFormat().resolvedOptions().timeZone
+                  : "Unknown"}
               </div>
               <div>
-                <strong>Language:</strong> {navigator.language}
+                <strong>Language:</strong>{" "}
+                {typeof navigator !== "undefined"
+                  ? navigator.language
+                  : "Unknown"}
               </div>
               <div>
                 <strong>Online:</strong>{" "}
-                {navigator.onLine ? "✅ Online" : "❌ Offline"}
+                {typeof navigator !== "undefined" &&
+                navigator.onLine !== undefined
+                  ? navigator.onLine
+                    ? "✅ Online"
+                    : "❌ Offline"
+                  : "Unknown"}
               </div>
               <div>
                 <strong>Local Storage:</strong>{" "}
