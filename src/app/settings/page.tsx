@@ -4,9 +4,19 @@ import Link from "next/link";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { useSettings } from "@/lib/settings-context";
+import { clearCache } from "@/lib/cache";
+import { useState } from "react";
 
 export default function Settings() {
   const { settings, updateSettings } = useSettings();
+  const [cacheCleared, setCacheCleared] = useState(false);
+
+  const handleClearCache = () => {
+    clearCache();
+    setCacheCleared(true);
+    // Reset the message after 3 seconds
+    setTimeout(() => setCacheCleared(false), 3000);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-black via-gray-800 to-yellow-800 flex flex-col items-center justify-center px-4 py-8">
@@ -200,6 +210,33 @@ export default function Settings() {
                     updateSettings({ betaCalculations: checked })
                   }
                 />
+              </div>
+            </div>
+          </section>
+
+          {/* Cache Clear Button */}
+          <section>
+            <div className="flex flex-col md:flex-row md:items-start gap-6">
+              <div className="md:flex-1 text-sm text-gray-400">
+                <p>
+                  Clear cached solar and market data to force fresh API calls.
+                  This can help if you&apos;re experiencing outdated data
+                  issues.
+                </p>
+              </div>
+              <div className="md:flex-1 flex flex-col items-center justify-center gap-4">
+                <button
+                  onClick={handleClearCache}
+                  className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                  disabled={cacheCleared}
+                >
+                  {cacheCleared ? "Cache Cleared!" : "Clear Cache"}
+                </button>
+                {cacheCleared && (
+                  <p className="text-green-400 text-sm">
+                    ✓ Cache cleared successfully
+                  </p>
+                )}
               </div>
             </div>
           </section>
