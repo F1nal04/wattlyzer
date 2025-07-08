@@ -49,4 +49,4 @@ The app is deployed on Netlify with separate environments:
 
 ## License
 
-MIT License
+Released under [Apache 2.0](/LICENSE) by [@F1nal04](https://github.com/F1nal04).
