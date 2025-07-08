@@ -1,6 +1,6 @@
 [![Version](https://img.shields.io/badge/version-0.24.0-yellow.svg?style=flat-square)](https://github.com/your-repo/tikkit-backend)
+[![License](https://img.shields.io/badge/license-Apache_2.0-yellow.svg?style=flat-square)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-15.3.3-black?logo=next.js&style=flat-square)](https://nextjs.org/)
-[![License](https://img.shields.io/badge/license-MIT-yellow.svg?style=flat-square)](LICENSE)
 
 [![Production](https://img.shields.io/badge/Production-brightgreen?logo=netlify&label=Env&style=flat-square)](https://wattlyzer.com) [![Netlify Status](https://api.netlify.com/api/v1/badges/9dfe6264-94a3-42a6-b729-dd4b84819d8d/deploy-status?style=flat-square)](https://app.netlify.com/projects/wattlyzer/deploys)
 
