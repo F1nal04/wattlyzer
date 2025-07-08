@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/version-0.24.0-yellow.svg?style=flat-square)](https://github.com/your-repo/tikkit-backend)
+[![Version](https://img.shields.io/github/package-json/v/f1nal04/wattlyzer?style=flat-square&color=yellow)](https://github.com/F1nal04/wattlyzer/releases)
 [![License](https://img.shields.io/badge/license-Apache_2.0-yellow.svg?style=flat-square)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-15.3.3-black?logo=next.js&style=flat-square)](https://nextjs.org/)
 
