@@ -36,7 +36,7 @@ jobs:
         id: get_version
         run: |
           # Extract version from package.json
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          CURRENT_VERSION=$(bun -p "require('./package.json').version")
           echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           echo "Current version: $CURRENT_VERSION"
 
@@ -133,8 +133,8 @@ jobs:
       - name: Update version in package.json
         run: |
           NEW_VERSION="${{ steps.calc_version.outputs.new_version }}"
-          # Use Node.js to update package.json version
-          node -e "
+          # Use Bun to update package.json version
+          bun -e "
             const fs = require('fs');
             const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
             pkg.version = '$NEW_VERSION';

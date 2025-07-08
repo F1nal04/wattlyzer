@@ -18,14 +18,13 @@ jobs:
         with:
           fetch-depth: 0 # Fetch full history for release notes generation
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: "18"
-          cache: "npm"
+          bun-version: latest
 
       - name: Install conventional-changelog-cli
-        run: npm install -g conventional-changelog-cli
+        run: bun add -g conventional-changelog-cli
 
       - name: Get tag name
         id: tag
