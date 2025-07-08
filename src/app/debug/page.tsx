@@ -11,6 +11,7 @@ import {
 } from "@/lib/cache";
 import { useState, useEffect } from "react";
 import { SolarData, MarketData } from "@/lib/types";
+import packageJson from "../../../package.json";
 
 export default function Debug() {
   const { settings, getApiAzimut } = useSettings();
@@ -109,6 +110,16 @@ export default function Debug() {
         </h1>
 
         <div className="space-y-6 text-gray-300">
+          {/* App Version */}
+          <section className="bg-gray-800/50 rounded-lg p-4">
+            <h2 className="text-2xl font-semibold text-white mb-4">
+              App Version
+            </h2>
+            <div className="text-lg">
+              <strong>Version:</strong> {packageJson.version}
+            </div>
+          </section>
+
           {/* Settings Information */}
           <section className="bg-gray-800/50 rounded-lg p-4">
             <h2 className="text-2xl font-semibold text-white mb-4">Settings</h2>
