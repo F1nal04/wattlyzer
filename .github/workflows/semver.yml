@@ -164,3 +164,17 @@ jobs:
           git add package.json
           git commit -m "bump: bump version to $NEW_VERSION ($VERSION_TYPE)"
           git push
+
+      - name: Create and push git tag
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          NEW_VERSION="${{ steps.calc_version.outputs.new_version }}"
+          VERSION_TYPE="${{ steps.determine_bump.outputs.version_type }}"
+
+          # Create annotated tag with release information
+          git tag -a "v$NEW_VERSION" -m "Release version $NEW_VERSION ($VERSION_TYPE bump)"
+
+          # Push the tag to remote
+          git push origin "v$NEW_VERSION"
+
+          echo "Created and pushed tag: v$NEW_VERSION"
