@@ -22,7 +22,7 @@ export function isDebugMode(): boolean {
 
   // Check for debug search parameter
   const searchParams = new URLSearchParams(window.location.search);
-  const hasDebugParam = searchParams.get("env") === "debug";
+  const hasDebugParam = searchParams.get("debug") === "true";
 
   // Also check NODE_ENV for local development
   const isLocalDev = process.env.NODE_ENV === "development";

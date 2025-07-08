@@ -25,12 +25,12 @@ The debug link is only visible in the following scenarios:
 
 1. **Local development**: When running `bun dev` (NODE_ENV=development)
 2. **Development subdomain**: When the hostname contains "dev" or "development" (e.g., `development.wattlyzer.com`)
-3. **Debug parameter**: When URL contains `?env=debug` parameter
+3. **Debug parameter**: When URL contains `?debug=true` parameter
 
 Examples:
 
 - `https://development.wattlyzer.com/` - Shows debug link
-- `https://wattlyzer.com/?env=debug` - Shows debug link
+- `https://wattlyzer.com/?debug=true` - Shows debug link
 - `https://wattlyzer.com/` - No debug link
 
 ### Running locally
