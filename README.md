@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/version-0.1.0-yellow.svg?style=flat-square)](https://github.com/your-repo/tikkit-backend)
+[![Version](https://img.shields.io/badge/version-0.24.0-yellow.svg?style=flat-square)](https://github.com/your-repo/tikkit-backend)
 [![Next.js](https://img.shields.io/badge/Next.js-15.3.3-black?logo=next.js&style=flat-square)](https://nextjs.org/)
 [![License](https://img.shields.io/badge/license-MIT-yellow.svg?style=flat-square)](LICENSE)
 
