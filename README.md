@@ -1,3 +1,11 @@
+[![Version](https://img.shields.io/badge/version-0.1.0-yellow.svg?style=flat-square)](https://github.com/your-repo/tikkit-backend)
+[![Next.js](https://img.shields.io/badge/Next.js-15.3.3-black?logo=next.js&style=flat-square)](https://nextjs.org/)
+[![License](https://img.shields.io/badge/license-MIT-yellow.svg?style=flat-square)](LICENSE)
+
+[![Production](https://img.shields.io/badge/Production-brightgreen?logo=netlify&label=Env&style=flat-square)](https://wattlyzer.com) [![Netlify Status](https://api.netlify.com/api/v1/badges/9dfe6264-94a3-42a6-b729-dd4b84819d8d/deploy-status?style=flat-square)](https://app.netlify.com/projects/wattlyzer/deploys)
+
+[![Development](https://img.shields.io/badge/Development-orange?logo=netlify&label=Env&style=flat-square)](https://development.wattlyzer.com) [![Netlify Dev Status](https://api.netlify.com/api/v1/badges/9dfe6264-94a3-42a6-b729-dd4b84819d8d/deploy-status?branch=development&style=flat-square)](https://app.netlify.com/projects/wattlyzer/deploys)
+
 # Wattlyzer
 
 Solar energy optimization tool for smart scheduling.
