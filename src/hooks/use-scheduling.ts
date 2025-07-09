@@ -15,7 +15,7 @@ export function useScheduling(
   position: { latitude: number; longitude: number } | null,
   consumerDuration: number
 ) {
-  const { settings } = useSettings();
+  const { settings, getApiAzimut } = useSettings();
   const [solarData, setSolarData] = useState<SolarData | null>(null);
   const [marketData, setMarketData] = useState<MarketData | null>(null);
   const [schedulingResult, setSchedulingResult] =
@@ -135,9 +135,14 @@ export function useScheduling(
       // Apply general 30% reduction for solar estimation accuracy
       hourlyProduction *= 0.7;
 
+      // Beta calculations: Apply 50% reduction for estimates before 10:00 AM
+      if (settings.betaCalculations && targetTime.getHours() < 10) {
+        hourlyProduction *= 0.5;
+      }
+
       return hourlyProduction;
     },
-    [solarData]
+    [solarData, settings.betaCalculations]
   );
 
   const calculateMarketPrice = useCallback(
@@ -191,14 +196,7 @@ export function useScheduling(
     }
     lastSolarKey.current = key;
 
-    let apiAzimut;
-    if (azimut === 0 || azimut === 360) {
-      apiAzimut = -180;
-    } else if (azimut <= 180) {
-      apiAzimut = azimut - 180;
-    } else {
-      apiAzimut = azimut - 180;
-    }
+    const apiAzimut = getApiAzimut();
 
     const url = `https://api.forecast.solar/estimate/watthours/${latitude}/${longitude}/${angle}/${apiAzimut}/${kwh}`;
 
@@ -216,7 +214,7 @@ export function useScheduling(
       });
 
     return solarDataPromiseRef.current;
-  }, [position, settings, solarData]);
+  }, [position, settings, solarData, getApiAzimut]);
 
   const marketDataPromise = useMemo(() => {
     if (!position) return null;

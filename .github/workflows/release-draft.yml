@@ -1,0 +1,96 @@
+name: Create Release Draft
+
+on:
+  push:
+    tags:
+      - "v*" # Triggers on version tags like v1.0.0, v2.1.3, etc.
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  create-release-draft:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch full history for release notes generation
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install conventional-changelog-cli
+        run: bun add -g conventional-changelog-cli
+
+      - name: Get tag name
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Get previous tag
+        id: prev_tag
+        run: |
+          # Get the second most recent tag (previous release)
+          PREV_TAG=$(git tag --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+' | sed -n '2p')
+          if [ -z "$PREV_TAG" ]; then
+            # If no previous tag, use first commit
+            PREV_TAG=$(git rev-list --max-parents=0 HEAD)
+          fi
+          echo "prev_tag=$PREV_TAG" >> $GITHUB_OUTPUT
+
+      - name: Generate release notes with conventional-changelog
+        id: release_notes
+        run: |
+          # Generate changelog using conventional-changelog
+          if [ "${{ steps.prev_tag.outputs.prev_tag }}" != "" ]; then
+            # Generate changelog from previous tag to current tag
+            conventional-changelog -p angular -r 2 > CHANGELOG_TEMP.md
+          else
+            # Generate changelog for all commits if no previous tag
+            conventional-changelog -p angular -r 0 > CHANGELOG_TEMP.md
+          fi
+
+          # Extract the latest release section and clean it up
+          # Remove the first line (version header) and any empty lines at the start
+          tail -n +2 CHANGELOG_TEMP.md | sed '/^$/d' > release_notes.md
+
+          # If the file is empty or only contains whitespace, fall back to commit list
+          if [ ! -s release_notes.md ] || [ "$(tr -d '[:space:]' < release_notes.md)" = "" ]; then
+            echo "## What's Changed" > release_notes.md
+            echo "" >> release_notes.md
+            if [ "${{ steps.prev_tag.outputs.prev_tag }}" != "" ]; then
+              git log --pretty=format:"- %s (%h)" ${{ steps.prev_tag.outputs.prev_tag }}..${{ steps.tag.outputs.tag }} >> release_notes.md
+            else
+              git log --pretty=format:"- %s (%h)" ${{ steps.tag.outputs.tag }} >> release_notes.md
+            fi
+          fi
+
+          # Add full changelog link
+          echo "" >> release_notes.md
+          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.prev_tag.outputs.prev_tag }}...${{ steps.tag.outputs.tag }}" >> release_notes.md
+
+      - name: Create Release Draft
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          # Determine if this is a prerelease (contains hyphen like v1.0.0-beta)
+          PRERELEASE_FLAG=""
+          if [[ "${{ steps.tag.outputs.tag }}" == *"-"* ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          # Create release draft using GitHub CLI
+          gh release create "${{ steps.tag.outputs.tag }}" \
+            --draft \
+            --title "Release ${{ steps.tag.outputs.tag }}" \
+            --notes-file release_notes.md \
+            $PRERELEASE_FLAG
+
+      - name: Output release info
+        run: |
+          echo "✅ Release draft created for tag: ${{ steps.tag.outputs.tag }}"
+          echo "📝 Release notes generated from commits since: ${{ steps.prev_tag.outputs.prev_tag }}"
+          echo "🔗 Check your releases at: https://github.com/${{ github.repository }}/releases"
