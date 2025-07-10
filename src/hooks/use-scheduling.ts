@@ -58,7 +58,9 @@ export function useScheduling(
 
   const calculatePowerGeneration = useCallback(
     (hoursFromNow: number) => {
-      if (!solarData) return 0;
+      if (!solarData || !settings) {
+        return 0;
+      }
 
       const now = new Date();
       const targetTime = new Date(
@@ -136,18 +138,20 @@ export function useScheduling(
       hourlyProduction *= 0.7;
 
       // Beta calculations: Apply 50% reduction for estimates before 10:00 AM
-      if (settings.betaCalculations && targetTime.getHours() < 10) {
+      if (settings?.betaCalculations && targetTime.getHours() < 10) {
         hourlyProduction *= 0.5;
       }
 
       return hourlyProduction;
     },
-    [solarData, settings.betaCalculations]
+    [solarData, settings]
   );
 
   const calculateMarketPrice = useCallback(
     (hoursFromNow: number) => {
-      if (!marketData || !marketData.data) return 0;
+      if (!marketData || !marketData.data) {
+        return 0;
+      }
 
       const now = new Date();
       const targetTime = new Date(
@@ -304,7 +308,7 @@ export function useScheduling(
 
       // If we only have one option, use it (current hour is reachable)
       if (!currentHourResult && !nextHourResult) {
-        return { time: currentHour, ...bestResult };
+        return { time: bestTime, ...bestResult };
       }
 
       if (!nextHourResult) {
@@ -356,7 +360,9 @@ export function useScheduling(
   // Calculate scheduling result
   useEffect(() => {
     const calculateSchedule = () => {
-      if (!solarData || !marketData) return null;
+      if (!solarData || !marketData || !settings) {
+        return null;
+      }
 
       const now = new Date();
       const results: Array<{
@@ -397,6 +403,7 @@ export function useScheduling(
           const avgPrice = totalPrice / validHours;
           const solarQualifies = avgSolarProduction >= settings.minKwh;
 
+
           results.push({
             startTime,
             avgSolarProduction,
@@ -406,7 +413,9 @@ export function useScheduling(
         }
       }
 
-      if (results.length === 0) return null;
+      if (results.length === 0) {
+        return null;
+      }
 
       // First priority: Find slots with solar production >= 1.2kWh average
       const solarQualifiedSlots = results.filter((r) => r.solarQualifies);
@@ -424,12 +433,13 @@ export function useScheduling(
           results
         );
 
-        return {
+        const result = {
           bestTime: normalizedTime.time,
           reason: "solar" as const,
           avgSolarProduction: normalizedTime.avgSolarProduction,
           avgPrice: normalizedTime.avgPrice,
         };
+        return result;
       }
 
       // If no solar-qualified slots, find the cheapest price slot
@@ -444,17 +454,20 @@ export function useScheduling(
         results
       );
 
-      return {
+      const result = {
         bestTime: normalizedTime.time,
         reason: "price" as const,
         avgSolarProduction: normalizedTime.avgSolarProduction,
         avgPrice: normalizedTime.avgPrice,
       };
+      return result;
     };
 
-    if (solarData && marketData) {
+    if (solarData && marketData && settings) {
       const result = calculateSchedule();
       setSchedulingResult(result);
+    } else {
+      setSchedulingResult(null);
     }
   }, [
     solarData,
@@ -463,7 +476,8 @@ export function useScheduling(
     calculatePowerGeneration,
     calculateMarketPrice,
     normalizeToFullHour,
-    settings.minKwh,
+    settings?.minKwh,
+    settings,
   ]);
 
   // Clear error when promises are created
