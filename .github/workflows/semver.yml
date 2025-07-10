@@ -107,8 +107,12 @@ jobs:
           CURRENT_VERSION="${{ steps.get_version.outputs.current_version }}"
           VERSION_TYPE="${{ steps.determine_bump.outputs.version_type }}"
 
+          # Remove beta/pre-release tags from current version
+          CLEAN_VERSION=$(echo "$CURRENT_VERSION" | sed 's/-.*$//')
+          echo "Cleaned version: $CLEAN_VERSION (from $CURRENT_VERSION)"
+
           # Split version into parts
-          IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
+          IFS='.' read -r major minor patch <<< "$CLEAN_VERSION"
 
           # Bump version based on type
           case $VERSION_TYPE in
