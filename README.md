@@ -8,30 +8,18 @@
 
 # Wattlyzer
 
-Solar energy optimization tool for smart scheduling.
+Wattlyzer is a smart solar energy optimization tool that helps you maximize your solar energy usage and minimize costs. The application provides intelligent scheduling recommendations based on solar production forecasts and dynamic energy market prices.
 
-## Features
+## How it works
 
-- Solar production forecasting
-- Market price optimization
-- Smart scheduling recommendations
-- Responsive design
+- **Intelligent Time Slot Calculation**: Determines the optimal time slots to run energy-intensive appliances like dishwashers, washing machines, and EV charging
+- **Location-Based Solar Forecasting**: Uses your browser location to fetch accurate solar production forecasts from weather APIs
+- **German Energy Market Integration**: Monitors real-time German energy market prices and stock market fluctuations to find the cheapest electricity rates
+- **Personalized Solar Setup**: Integrates your specific solar panel configuration from the settings page to provide tailored recommendations
+- **Cost Optimization**: Combines solar forecasts with dynamic pricing to minimize your energy costs by scheduling usage during peak solar production or low market prices
+- **Germany-Focused**: Currently optimized for the German energy market and pricing structure
 
 ## Development
-
-### Debug Mode
-
-The debug link is only visible in the following scenarios:
-
-1. **Local development**: When running `bun dev` (NODE_ENV=development)
-2. **Development subdomain**: When the hostname contains "dev" or "development" (e.g., `development.wattlyzer.com`)
-3. **Debug parameter**: When URL contains `?debug=true` parameter
-
-Examples:
-
-- `https://development.wattlyzer.com/` - Shows debug link
-- `https://wattlyzer.com/?debug=true` - Shows debug link
-- `https://wattlyzer.com/` - No debug link
 
 ### Running locally
 
@@ -40,12 +28,19 @@ bun install
 bun dev
 ```
 
-## Deployment
+### Debug Mode
 
-The app is deployed on Netlify with separate environments:
+The debug link is only visible in the following scenarios:
 
-- Production: `wattlyzer.com`
-- Development: `development.wattlyzer.com`
+1. **Local development**: When running `bun dev` (NODE_ENV=development)
+2. **Development subdomain**: When the hostname contains "dev" (e.g., `dev.wattlyzer.com`)
+3. **Debug parameter**: When URL contains `?debug=true` parameter
+
+Examples:
+
+- `https://dev.wattlyzer.com/` - Shows debug link
+- `https://wattlyzer.com/?debug=true` - Shows debug link
+- `https://wattlyzer.com/` - No debug link
 
 ## License
 
