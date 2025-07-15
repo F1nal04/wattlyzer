@@ -15,7 +15,7 @@ export function useScheduling(
   position: { latitude: number; longitude: number } | null,
   consumerDuration: number
 ) {
-  const { settings, getApiAzimut } = useSettings();
+  const { settings } = useSettings();
   const [solarData, setSolarData] = useState<SolarData | null>(null);
   const [marketData, setMarketData] = useState<MarketData | null>(null);
   const [schedulingResult, setSchedulingResult] =
@@ -203,7 +203,7 @@ export function useScheduling(
     }
     lastSolarKey.current = key;
 
-    const apiAzimut = getApiAzimut();
+    const apiAzimut = settings.azimut - 180;
 
     const url = `https://api.forecast.solar/estimate/watthours/${latitude}/${longitude}/${angle}/${apiAzimut}/${kwh}`;
 
@@ -221,7 +221,7 @@ export function useScheduling(
       });
 
     return solarDataPromiseRef.current;
-  }, [position, settings, solarData, getApiAzimut]);
+  }, [position, settings, solarData]);
 
   const marketDataPromise = useMemo(() => {
     if (!position) return null;

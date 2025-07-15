@@ -14,7 +14,7 @@ import { SolarData, MarketData } from "@/lib/types";
 import packageJson from "../../../package.json";
 
 export default function Debug() {
-  const { settings, getApiAzimut } = useSettings();
+  const { settings } = useSettings();
 
   // Helper function to format cache age
   const formatCacheAge = (ageMs: number): string => {
@@ -128,7 +128,7 @@ export default function Debug() {
                 <strong>Azimut (Compass):</strong> {settings.azimut}°
               </div>
               <div>
-                <strong>Azimut (API):</strong> {getApiAzimut()}°
+                <strong>Azimut (API):</strong> {settings.azimut - 180}°
               </div>
               <div>
                 <strong>Angle:</strong> {settings.angle}°

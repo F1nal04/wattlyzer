@@ -14,7 +14,6 @@ interface SettingsData {
 interface SettingsContextType {
   settings: SettingsData;
   updateSettings: (newSettings: Partial<SettingsData>) => void;
-  getApiAzimut: () => number; // Convert to API format (-180 to 180)
 }
 
 const defaultSettings: SettingsData = {
@@ -59,27 +58,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("wattlyzer_settings", JSON.stringify(updatedSettings));
   };
 
-  // Convert compass azimut (0-360) to API format (-180 to 180)
-  const getApiAzimut = () => {
-    const compass = settings.azimut;
-    // API expects: -180=North, -90=East, 0=South, 90=West, 180=North
-    // Compass shows: 0=North, 90=East, 180=South, 270=West, 360=North
-
-    // Simple conversion: API_azimuth = compass_azimuth - 180
-    // This works for all compass values:
-    // Compass 0° (North) -> API -180°
-    // Compass 90° (East) -> API -90°
-    // Compass 180° (South) -> API 0°
-    // Compass 270° (West) -> API 90°
-    // Compass 360° (North) -> API -180° (same as 0°)
-
-    return compass - 180;
-  };
-
   return (
-    <SettingsContext.Provider
-      value={{ settings, updateSettings, getApiAzimut }}
-    >
+    <SettingsContext.Provider value={{ settings, updateSettings }}>
       {children}
     </SettingsContext.Provider>
   );
