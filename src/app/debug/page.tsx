@@ -141,8 +141,11 @@ export default function Debug() {
                 {(settings.minKwh / 1000).toFixed(1)} kWh)
               </div>
               <div>
-                <strong>Beta Calculations:</strong>{" "}
-                {settings.betaCalculations ? "Enabled" : "Disabled"}
+                <strong>Morning Shading:</strong>{" "}
+                {settings.morningShading ? "Enabled" : "Disabled"}
+              </div>
+              <div>
+                <strong>Shading End Time:</strong> {settings.shadingEndTime}:00
               </div>
             </div>
           </section>

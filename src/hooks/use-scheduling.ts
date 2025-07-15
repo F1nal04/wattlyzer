@@ -137,8 +137,11 @@ export function useScheduling(
       // Apply general 30% reduction for solar estimation accuracy
       hourlyProduction *= 0.7;
 
-      // Beta calculations: Apply 50% reduction for estimates before 10:00 AM
-      if (settings?.betaCalculations && targetTime.getHours() < 10) {
+      // Morning shading: Apply 50% reduction for estimates before shadingEndTime
+      if (
+        settings?.morningShading &&
+        targetTime.getHours() < settings.shadingEndTime
+      ) {
         hourlyProduction *= 0.5;
       }
 
@@ -402,7 +405,6 @@ export function useScheduling(
           const avgSolarProduction = totalSolarProduction / validHours;
           const avgPrice = totalPrice / validHours;
           const solarQualifies = avgSolarProduction >= settings.minKwh;
-
 
           results.push({
             startTime,

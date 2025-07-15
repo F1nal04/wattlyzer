@@ -7,7 +7,8 @@ interface SettingsData {
   angle: number;
   kwh: number;
   minKwh: number; // Minimum kWh requirement in Wh (500-3000)
-  betaCalculations: boolean; // Enable beta calculations
+  morningShading: boolean; // Enable morning shading compensation
+  shadingEndTime: number; // Hour when shading ends (0-23)
 }
 
 interface SettingsContextType {
@@ -21,7 +22,8 @@ const defaultSettings: SettingsData = {
   angle: 45,
   kwh: 5,
   minKwh: 1200, // 1.2 kWh = 1200 Wh
-  betaCalculations: false, // Beta calculations disabled by default
+  morningShading: false, // Morning shading compensation disabled by default
+  shadingEndTime: 10, // Shading ends at 10:00 AM by default
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(
@@ -37,6 +39,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     if (savedSettings) {
       try {
         const parsed = JSON.parse(savedSettings);
+
+        // Migration: Convert old betaCalculations to morningShading
+        if (parsed.betaCalculations !== undefined) {
+          parsed.morningShading = parsed.betaCalculations;
+          delete parsed.betaCalculations;
+        }
+
         setSettings({ ...defaultSettings, ...parsed });
       } catch (error) {
         console.error("Failed to parse saved settings:", error);

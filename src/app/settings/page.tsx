@@ -187,32 +187,71 @@ export default function Settings() {
             </div>
           </section>
 
-          {/* Beta Calculations Switch */}
+          {/* Morning Shading Switch */}
           <section>
             <div className="flex flex-col md:flex-row md:items-start gap-6">
               <div className="md:flex-1 text-sm text-gray-400">
                 <p>
-                  Enable experimental beta calculations for improved solar
-                  predictions and optimization algorithms.
+                  Enable morning shading compensation to reduce solar production
+                  estimates before the specified time. Useful when trees,
+                  buildings, or other objects block your panels in the morning.
                 </p>
               </div>
               <div className="md:flex-1 flex items-center justify-center gap-4">
                 <label
-                  htmlFor="beta-calculations-switch"
+                  htmlFor="morning-shading-switch"
                   className="text-xl md:text-2xl font-semibold text-white"
                 >
-                  Beta Calculations
+                  Morning Shading
                 </label>
                 <Switch
-                  id="beta-calculations-switch"
-                  checked={settings.betaCalculations}
+                  id="morning-shading-switch"
+                  checked={settings.morningShading}
                   onCheckedChange={(checked) =>
-                    updateSettings({ betaCalculations: checked })
+                    updateSettings({ morningShading: checked })
                   }
                 />
               </div>
             </div>
           </section>
+
+          {/* Shading End Time Slider - only show if morning shading is enabled */}
+          {settings.morningShading && (
+            <section>
+              <div className="flex flex-col md:flex-row md:items-start gap-6">
+                <div className="md:flex-1 text-sm text-gray-400">
+                  <p>
+                    Set the hour when shading clears and full solar production
+                    begins. Before this time, estimates will be reduced by 50%.
+                  </p>
+                </div>
+                <div className="md:flex-1 text-center">
+                  <label
+                    htmlFor="shading-end-time-slider"
+                    className="block text-xl md:text-2xl font-semibold text-white mb-4"
+                  >
+                    Shading Ends: {settings.shadingEndTime}:00
+                  </label>
+                  <Slider
+                    id="shading-end-time-slider"
+                    min={6}
+                    max={12}
+                    value={[settings.shadingEndTime]}
+                    onValueChange={(value) =>
+                      updateSettings({ shadingEndTime: value[0] })
+                    }
+                    className="mb-2"
+                  />
+                  <div className="flex justify-between text-sm text-gray-300 mt-2">
+                    <span>6:00</span>
+                    <span>8:00</span>
+                    <span>10:00</span>
+                    <span>12:00</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
 
           {/* Cache Clear Button */}
           <section>
