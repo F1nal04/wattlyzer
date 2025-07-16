@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { useSettings } from "@/lib/settings-context";
 import { useScheduling } from "@/hooks/use-scheduling";
