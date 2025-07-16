@@ -164,7 +164,7 @@ export default function Debug() {
                 <strong>Azimut (Compass):</strong> {settings.azimut}°
               </div>
               <div>
-                <strong>Azimut (API):</strong> {settings.azimut - 180}°
+                <strong>Azimut (API):</strong> {(settings.azimut % 360) - 180}°
               </div>
               <div>
                 <strong>Angle:</strong> {settings.angle}°
