@@ -319,7 +319,7 @@ export function useScheduling(
 
       // If we only have one option, use it (current hour is reachable)
       if (!currentHourResult && !nextHourResult) {
-        return { time: bestTime, ...bestResult };
+        return { time: currentHour, ...bestResult };
       }
 
       if (!nextHourResult) {
