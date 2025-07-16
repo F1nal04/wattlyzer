@@ -7,7 +7,6 @@ import {
   MarketData,
   SchedulingResult,
   TopSlotsResult,
-  SlotResult,
 } from "@/lib/types";
 import {
   getCachedData,

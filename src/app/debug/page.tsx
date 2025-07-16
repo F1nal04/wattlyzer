@@ -32,6 +32,7 @@ export default function Debug() {
       return "Just now";
     }
   };
+
   const [position, setPosition] = useState<{
     latitude: number;
     longitude: number;
@@ -55,6 +56,16 @@ export default function Debug() {
     solarKey: string;
   } | null>(null);
 
+  // Client-only system information state
+  const [systemInfo, setSystemInfo] = useState({
+    userAgent: "Loading...",
+    screenSize: "Loading...",
+    timezone: "Loading...",
+    language: "Loading...",
+    online: "Loading...",
+    localStorage: "Loading...",
+  });
+
   const { solarData, marketData, schedulingResult, topSlotsResult, apiError } =
     useScheduling(position, 3);
 
@@ -75,6 +86,32 @@ export default function Debug() {
     } else {
       setLocationError("Geolocation is not supported by this browser.");
     }
+  }, []);
+
+  // Set system information after hydration
+  useEffect(() => {
+    setSystemInfo({
+      userAgent:
+        typeof navigator !== "undefined" ? navigator.userAgent : "Unknown",
+      screenSize:
+        typeof window !== "undefined"
+          ? `${window.innerWidth}x${window.innerHeight}`
+          : "Unknown",
+      timezone:
+        typeof Intl !== "undefined"
+          ? Intl.DateTimeFormat().resolvedOptions().timeZone
+          : "Unknown",
+      language:
+        typeof navigator !== "undefined" ? navigator.language : "Unknown",
+      online:
+        typeof navigator !== "undefined" && navigator.onLine !== undefined
+          ? navigator.onLine
+            ? "✅ Online"
+            : "❌ Offline"
+          : "Unknown",
+      localStorage:
+        typeof Storage !== "undefined" ? "✅ Available" : "❌ Not available",
+    });
   }, []);
 
   // Check cache status
@@ -397,43 +434,23 @@ export default function Debug() {
               <div>
                 <strong>User Agent:</strong>
                 <div className="text-xs text-gray-400 mt-1 break-all">
-                  {typeof navigator !== "undefined"
-                    ? navigator.userAgent
-                    : "Unknown"}
+                  {systemInfo.userAgent}
                 </div>
               </div>
               <div>
-                <strong>Screen Size:</strong>{" "}
-                {typeof window !== "undefined"
-                  ? `${window.innerWidth}x${window.innerHeight}`
-                  : "Unknown"}
+                <strong>Screen Size:</strong> {systemInfo.screenSize}
               </div>
               <div>
-                <strong>Timezone:</strong>{" "}
-                {typeof Intl !== "undefined"
-                  ? Intl.DateTimeFormat().resolvedOptions().timeZone
-                  : "Unknown"}
+                <strong>Timezone:</strong> {systemInfo.timezone}
               </div>
               <div>
-                <strong>Language:</strong>{" "}
-                {typeof navigator !== "undefined"
-                  ? navigator.language
-                  : "Unknown"}
+                <strong>Language:</strong> {systemInfo.language}
               </div>
               <div>
-                <strong>Online:</strong>{" "}
-                {typeof navigator !== "undefined" &&
-                navigator.onLine !== undefined
-                  ? navigator.onLine
-                    ? "✅ Online"
-                    : "❌ Offline"
-                  : "Unknown"}
+                <strong>Online:</strong> {systemInfo.online}
               </div>
               <div>
-                <strong>Local Storage:</strong>{" "}
-                {typeof Storage !== "undefined"
-                  ? "✅ Available"
-                  : "❌ Not available"}
+                <strong>Local Storage:</strong> {systemInfo.localStorage}
               </div>
             </div>
           </section>
