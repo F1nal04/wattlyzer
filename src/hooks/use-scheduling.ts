@@ -211,7 +211,7 @@ export function useScheduling(
     }
     lastSolarKey.current = key;
 
-    const apiAzimut = settings.azimut - 180;
+    const apiAzimut = (settings.azimut % 360) - 180;
 
     const url = `https://api.forecast.solar/estimate/watthours/${latitude}/${longitude}/${angle}/${apiAzimut}/${kwh}`;
 
