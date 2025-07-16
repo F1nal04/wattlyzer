@@ -14,6 +14,11 @@ import { useState, useEffect } from "react";
 import { SolarData, MarketData } from "@/lib/types";
 import packageJson from "../../../package.json";
 
+/**
+ * Displays a comprehensive debug dashboard with real-time application state, environment, cache, API, scheduling, and system diagnostics.
+ *
+ * This client-side React component gathers and presents detailed information including user settings, geolocation, cache status, API data load status, scheduling recommendations, and client system details. It is intended for troubleshooting and inspecting the current state of the application.
+ */
 export default function Debug() {
   const { settings } = useSettings();
 

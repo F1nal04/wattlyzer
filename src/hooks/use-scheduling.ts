@@ -16,6 +16,15 @@ import {
   roundCoordinate,
 } from "@/lib/cache";
 
+/**
+ * React hook that computes optimal energy consumption scheduling slots based on solar generation forecasts and market price data for a given location and consumption duration.
+ *
+ * Fetches and caches solar and market data, estimates hourly solar production and market prices, and determines the best scheduling slot for energy usage according to user settings. Returns both the single best slot and the top three slots for solar and price optimization, along with relevant data, error state, and data-fetching promises.
+ *
+ * @param position - Geographic coordinates for which to optimize scheduling, or `null` to disable scheduling.
+ * @param consumerDuration - Desired duration of energy consumption in hours.
+ * @returns An object containing solar and market data, the best scheduling result, top slots for solar and price, error state, data-fetching promises, and data/error handling callbacks.
+ */
 export function useScheduling(
   position: { latitude: number; longitude: number } | null,
   consumerDuration: number

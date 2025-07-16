@@ -29,6 +29,13 @@ const SettingsContext = createContext<SettingsContextType | undefined>(
   undefined
 );
 
+/**
+ * Provides application-wide settings for solar panel configuration to its child components.
+ *
+ * Loads settings from localStorage on mount, applies necessary migrations for legacy fields, and persists updates. Exposes the current settings and an update function via React context.
+ *
+ * @param children - The components that will have access to the settings context
+ */
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<SettingsData>(defaultSettings);
 

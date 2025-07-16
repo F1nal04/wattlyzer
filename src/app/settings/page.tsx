@@ -7,6 +7,13 @@ import { useSettings } from "@/lib/settings-context";
 import { clearCache } from "@/lib/cache";
 import { useState } from "react";
 
+/**
+ * Renders the settings page for configuring solar panel parameters and application preferences.
+ *
+ * Provides interactive controls for adjusting azimut, tilt angle, system capacity, minimum kWh requirement, and morning shading compensation. Includes a button to clear cached data and displays feedback when the cache is cleared. The UI adapts based on selected options, such as showing additional controls when morning shading is enabled.
+ *
+ * @returns The React element representing the settings page UI.
+ */
 export default function Settings() {
   const { settings, updateSettings } = useSettings();
   const [cacheCleared, setCacheCleared] = useState(false);

@@ -12,6 +12,11 @@ import { useSettings } from "@/lib/settings-context";
 import { isDebugMode } from "@/lib/utils";
 import Link from "next/link";
 
+/**
+ * Renders the main interactive page for energy consumption scheduling, integrating geolocation, solar and market data, and user-configurable duration.
+ *
+ * Displays a typewriter-effect title, a slider to select consumer duration, and dynamically fetches and presents the optimal time for energy usage based on solar and market conditions at the user's location. Handles geolocation permissions, API errors, and provides contextual feedback. Includes navigation links and conditionally displays a debug link when debug mode is active.
+ */
 export default function Home() {
   const { settings } = useSettings();
   const [consumerDuration, setConsumerDuration] = useState(3);
