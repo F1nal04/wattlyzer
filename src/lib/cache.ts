@@ -6,8 +6,8 @@ type CachedData<T> = {
 };
 
 const CACHE_DURATION_MS = 1 * 60 * 60 * 1000; // 1 hour
-export const SOLAR_CACHE_KEY = 'wattlyzer_solar_cache';
-export const MARKET_CACHE_KEY = 'wattlyzer_market_cache';
+export const SOLAR_CACHE_KEY = "wattlyzer_solar_cache";
+export const MARKET_CACHE_KEY = "wattlyzer_market_cache";
 
 // Helper function to round coordinates for consistent cache keys
 export const roundCoordinate = (coord: number) => Math.round(coord * 100) / 100; // Round to 2 decimal places (~1km precision)
@@ -16,37 +16,96 @@ export function getCachedData<T>(cacheKey: string, dataKey: string): T | null {
   try {
     const cached = localStorage.getItem(cacheKey);
     if (!cached) return null;
-    
+
     const parsedCache: CachedData<T> = JSON.parse(cached);
     const now = Date.now();
     const age = now - parsedCache.timestamp;
-    
+
     // Check if cache is expired
     if (age > CACHE_DURATION_MS) {
       localStorage.removeItem(cacheKey);
       return null;
     }
-    
+
     // Check if key matches (for solar data with different parameters)
     if (parsedCache.key !== dataKey) {
       return null;
     }
-    
+
     return parsedCache.data;
   } catch {
     return null;
   }
 }
 
-export function setCachedData<T>(cacheKey: string, dataKey: string, data: T): void {
+export function setCachedData<T>(
+  cacheKey: string,
+  dataKey: string,
+  data: T
+): void {
   try {
     const cacheData: CachedData<T> = {
       data,
       timestamp: Date.now(),
-      key: dataKey
+      key: dataKey,
     };
     localStorage.setItem(cacheKey, JSON.stringify(cacheData));
   } catch {
     // Ignore localStorage errors
+  }
+}
+
+export function clearCache(): void {
+  try {
+    localStorage.removeItem(SOLAR_CACHE_KEY);
+    localStorage.removeItem(MARKET_CACHE_KEY);
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
+export function getCacheInfo<T>(
+  cacheKey: string,
+  dataKey: string
+): {
+  data: T | null;
+  timestamp: number | null;
+  age: number | null;
+  isExpired: boolean;
+  exists: boolean;
+} {
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (!cached) {
+      return {
+        data: null,
+        timestamp: null,
+        age: null,
+        isExpired: false,
+        exists: false,
+      };
+    }
+
+    const parsedCache: CachedData<T> = JSON.parse(cached);
+    const now = Date.now();
+    const age = now - parsedCache.timestamp;
+    const isExpired = age > CACHE_DURATION_MS;
+    const keyMatches = parsedCache.key === dataKey;
+
+    return {
+      data: keyMatches && !isExpired ? parsedCache.data : null,
+      timestamp: parsedCache.timestamp,
+      age,
+      isExpired,
+      exists: true,
+    };
+  } catch {
+    return {
+      data: null,
+      timestamp: null,
+      age: null,
+      isExpired: false,
+      exists: false,
+    };
   }
 }

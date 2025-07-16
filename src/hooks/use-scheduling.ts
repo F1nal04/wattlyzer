@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSettings } from "@/lib/settings-context";
-import { SolarData, MarketData, SchedulingResult } from "@/lib/types";
+import {
+  SolarData,
+  MarketData,
+  SchedulingResult,
+  TopSlotsResult,
+} from "@/lib/types";
 import {
   getCachedData,
   setCachedData,
@@ -20,6 +25,9 @@ export function useScheduling(
   const [marketData, setMarketData] = useState<MarketData | null>(null);
   const [schedulingResult, setSchedulingResult] =
     useState<SchedulingResult | null>(null);
+  const [topSlotsResult, setTopSlotsResult] = useState<TopSlotsResult | null>(
+    null
+  );
   const [apiError, setApiError] = useState<string | null>(null);
 
   // Create promises for render-while-fetch with caching
@@ -58,7 +66,9 @@ export function useScheduling(
 
   const calculatePowerGeneration = useCallback(
     (hoursFromNow: number) => {
-      if (!solarData) return 0;
+      if (!solarData || !settings) {
+        return 0;
+      }
 
       const now = new Date();
       const targetTime = new Date(
@@ -135,14 +145,24 @@ export function useScheduling(
       // Apply general 30% reduction for solar estimation accuracy
       hourlyProduction *= 0.7;
 
+      // Morning shading: Apply 50% reduction for estimates before shadingEndTime
+      if (
+        settings?.morningShading &&
+        targetTime.getHours() < settings.shadingEndTime
+      ) {
+        hourlyProduction *= 0.5;
+      }
+
       return hourlyProduction;
     },
-    [solarData]
+    [solarData, settings]
   );
 
   const calculateMarketPrice = useCallback(
     (hoursFromNow: number) => {
-      if (!marketData || !marketData.data) return 0;
+      if (!marketData || !marketData.data) {
+        return 0;
+      }
 
       const now = new Date();
       const targetTime = new Date(
@@ -191,14 +211,7 @@ export function useScheduling(
     }
     lastSolarKey.current = key;
 
-    let apiAzimut;
-    if (azimut === 0 || azimut === 360) {
-      apiAzimut = -180;
-    } else if (azimut <= 180) {
-      apiAzimut = azimut - 180;
-    } else {
-      apiAzimut = azimut - 180;
-    }
+    const apiAzimut = (settings.azimut % 360) - 180;
 
     const url = `https://api.forecast.solar/estimate/watthours/${latitude}/${longitude}/${angle}/${apiAzimut}/${kwh}`;
 
@@ -355,10 +368,12 @@ export function useScheduling(
     []
   );
 
-  // Calculate scheduling result
+  // Calculate scheduling result and top slots
   useEffect(() => {
     const calculateSchedule = () => {
-      if (!solarData || !marketData) return null;
+      if (!solarData || !marketData || !settings) {
+        return { schedulingResult: null, topSlotsResult: null };
+      }
 
       const now = new Date();
       const results: Array<{
@@ -408,10 +423,41 @@ export function useScheduling(
         }
       }
 
-      if (results.length === 0) return null;
+      if (results.length === 0) {
+        return { schedulingResult: null, topSlotsResult: null };
+      }
 
-      // First priority: Find slots with solar production >= 1.2kWh average
+      // Calculate top 3 slots for solar (highest solar production)
+      const topSolarSlots = [...results]
+        .sort((a, b) => b.avgSolarProduction - a.avgSolarProduction)
+        .slice(0, 3)
+        .map((slot) => ({
+          startTime: slot.startTime,
+          avgSolarProduction: slot.avgSolarProduction,
+          avgPrice: slot.avgPrice,
+          solarQualifies: slot.solarQualifies,
+        }));
+
+      // Calculate top 3 slots for price (lowest price)
+      const topPriceSlots = [...results]
+        .sort((a, b) => a.avgPrice - b.avgPrice)
+        .slice(0, 3)
+        .map((slot) => ({
+          startTime: slot.startTime,
+          avgSolarProduction: slot.avgSolarProduction,
+          avgPrice: slot.avgPrice,
+          solarQualifies: slot.solarQualifies,
+        }));
+
+      const topSlotsResult: TopSlotsResult = {
+        topSolarSlots,
+        topPriceSlots,
+      };
+
+      // Calculate the single best scheduling result (existing logic)
       const solarQualifiedSlots = results.filter((r) => r.solarQualifies);
+
+      let schedulingResult: SchedulingResult | null = null;
 
       if (solarQualifiedSlots.length > 0) {
         // Among solar-qualified slots, pick the one with highest solar production
@@ -426,37 +472,43 @@ export function useScheduling(
           results
         );
 
-        return {
+        schedulingResult = {
           bestTime: normalizedTime.time,
           reason: "solar" as const,
           avgSolarProduction: normalizedTime.avgSolarProduction,
           avgPrice: normalizedTime.avgPrice,
         };
+      } else {
+        // If no solar-qualified slots, find the cheapest price slot
+        const cheapest = results.reduce((best, current) =>
+          current.avgPrice < best.avgPrice ? current : best
+        );
+
+        // Normalize to full hour - compare current hour vs next hour
+        const normalizedTime = normalizeToFullHour(
+          cheapest.startTime,
+          cheapest,
+          results
+        );
+
+        schedulingResult = {
+          bestTime: normalizedTime.time,
+          reason: "price" as const,
+          avgSolarProduction: normalizedTime.avgSolarProduction,
+          avgPrice: normalizedTime.avgPrice,
+        };
       }
 
-      // If no solar-qualified slots, find the cheapest price slot
-      const cheapest = results.reduce((best, current) =>
-        current.avgPrice < best.avgPrice ? current : best
-      );
-
-      // Normalize to full hour - compare current hour vs next hour
-      const normalizedTime = normalizeToFullHour(
-        cheapest.startTime,
-        cheapest,
-        results
-      );
-
-      return {
-        bestTime: normalizedTime.time,
-        reason: "price" as const,
-        avgSolarProduction: normalizedTime.avgSolarProduction,
-        avgPrice: normalizedTime.avgPrice,
-      };
+      return { schedulingResult, topSlotsResult };
     };
 
-    if (solarData && marketData) {
-      const result = calculateSchedule();
-      setSchedulingResult(result);
+    if (solarData && marketData && settings) {
+      const { schedulingResult, topSlotsResult } = calculateSchedule();
+      setSchedulingResult(schedulingResult);
+      setTopSlotsResult(topSlotsResult);
+    } else {
+      setSchedulingResult(null);
+      setTopSlotsResult(null);
     }
   }, [
     solarData,
@@ -465,7 +517,8 @@ export function useScheduling(
     calculatePowerGeneration,
     calculateMarketPrice,
     normalizeToFullHour,
-    settings.minKwh,
+    settings?.minKwh,
+    settings,
   ]);
 
   // Clear error when promises are created
@@ -492,6 +545,7 @@ export function useScheduling(
     solarData,
     marketData,
     schedulingResult,
+    topSlotsResult,
     apiError,
     solarDataPromise,
     marketDataPromise,
