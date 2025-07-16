@@ -40,3 +40,15 @@ export type SchedulingResult = {
   avgSolarProduction?: number;
   avgPrice?: number;
 };
+
+export type SlotResult = {
+  startTime: Date;
+  avgSolarProduction: number;
+  avgPrice: number;
+  solarQualifies: boolean;
+};
+
+export type TopSlotsResult = {
+  topSolarSlots: SlotResult[];
+  topPriceSlots: SlotResult[];
+};

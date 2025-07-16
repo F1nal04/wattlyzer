@@ -55,10 +55,8 @@ export default function Debug() {
     solarKey: string;
   } | null>(null);
 
-  const { solarData, marketData, schedulingResult, apiError } = useScheduling(
-    position,
-    3
-  );
+  const { solarData, marketData, schedulingResult, topSlotsResult, apiError } =
+    useScheduling(position, 3);
 
   // Get user location
   useEffect(() => {
@@ -272,36 +270,121 @@ export default function Debug() {
             </div>
           </section>
 
-          {/* Scheduling Result */}
+          {/* Top 3 Best Slots */}
           <section className="bg-gray-800/50 rounded-lg p-4">
             <h2 className="text-2xl font-semibold text-white mb-4">
-              Scheduling Result
+              Top 3 Best Slots
             </h2>
-            {schedulingResult ? (
-              <div className="space-y-2 text-sm">
+            {topSlotsResult ? (
+              <div className="space-y-6">
+                {/* Top Solar Slots */}
                 <div>
-                  <strong>Best Time:</strong>{" "}
-                  {schedulingResult.bestTime.toLocaleString()}
+                  <h3 className="text-lg font-semibold text-yellow-400 mb-3">
+                    ☀️ Best Solar Production Slots
+                  </h3>
+                  <div className="space-y-3">
+                    {topSlotsResult.topSolarSlots.map((slot, index) => (
+                      <div
+                        key={index}
+                        className="bg-gray-700/50 rounded p-3 text-sm"
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="font-medium text-white">
+                            #{index + 1} - {slot.startTime.toLocaleString()}
+                          </div>
+                          {slot.solarQualifies && (
+                            <span className="text-green-400 text-xs">
+                              ✓ Qualifies
+                            </span>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-gray-300">
+                          <div>
+                            <strong>Solar:</strong>{" "}
+                            {slot.avgSolarProduction.toFixed(0)} Wh
+                          </div>
+                          <div>
+                            <strong>Price:</strong>{" "}
+                            {(slot.avgPrice / 1000).toFixed(3)} €/kWh
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+
+                {/* Top Price Slots */}
                 <div>
-                  <strong>Reason:</strong>{" "}
-                  {schedulingResult.reason === "solar"
-                    ? "☀️ Solar Optimized"
-                    : "💰 Price Optimized"}
+                  <h3 className="text-lg font-semibold text-green-400 mb-3">
+                    💰 Best Price Slots
+                  </h3>
+                  <div className="space-y-3">
+                    {topSlotsResult.topPriceSlots.map((slot, index) => (
+                      <div
+                        key={index}
+                        className="bg-gray-700/50 rounded p-3 text-sm"
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="font-medium text-white">
+                            #{index + 1} - {slot.startTime.toLocaleString()}
+                          </div>
+                          {slot.solarQualifies && (
+                            <span className="text-green-400 text-xs">
+                              ✓ Qualifies
+                            </span>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-gray-300">
+                          <div>
+                            <strong>Solar:</strong>{" "}
+                            {slot.avgSolarProduction.toFixed(0)} Wh
+                          </div>
+                          <div>
+                            <strong>Price:</strong>{" "}
+                            {(slot.avgPrice / 1000).toFixed(3)} €/kWh
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <strong>Avg Solar Production:</strong>{" "}
-                  {(schedulingResult.avgSolarProduction || 0).toFixed(0)} Wh
-                </div>
-                <div>
-                  <strong>Avg Price:</strong>{" "}
-                  {((schedulingResult.avgPrice || 0) / 1000).toFixed(3)} €/kWh
-                </div>
+
+                {/* Current Best Recommendation */}
+                {schedulingResult && (
+                  <div className="border-t border-gray-600 pt-4">
+                    <h3 className="text-lg font-semibold text-blue-400 mb-3">
+                      🎯 Current Recommendation
+                    </h3>
+                    <div className="bg-blue-900/30 rounded p-3 text-sm">
+                      <div className="font-medium text-white mb-2">
+                        {schedulingResult.bestTime.toLocaleString()}
+                      </div>
+                      <div className="grid grid-cols-3 gap-4 text-gray-300">
+                        <div>
+                          <strong>Reason:</strong>{" "}
+                          {schedulingResult.reason === "solar"
+                            ? "☀️ Solar"
+                            : "💰 Price"}
+                        </div>
+                        <div>
+                          <strong>Solar:</strong>{" "}
+                          {(schedulingResult.avgSolarProduction || 0).toFixed(
+                            0
+                          )}{" "}
+                          Wh
+                        </div>
+                        <div>
+                          <strong>Price:</strong>{" "}
+                          {((schedulingResult.avgPrice || 0) / 1000).toFixed(3)}{" "}
+                          €/kWh
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="text-gray-400">
-                No scheduling result available
-              </div>
+              <div className="text-gray-400">No scheduling data available</div>
             )}
           </section>
 
