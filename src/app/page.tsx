@@ -31,13 +31,31 @@ export default function Home() {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [showRemainingTime, setShowRemainingTime] = useState<boolean>(false);
   const [showDebugLink, setShowDebugLink] = useState<boolean>(false);
-
-  // Calculate hours till end of day
-  const hoursTillEndOfDay = useMemo(() => {
+  const [hoursTillEndOfDay, setHoursTillEndOfDay] = useState(() => {
     const now = new Date();
     const endOfDay = new Date(now);
     endOfDay.setHours(23, 59, 59, 999);
     return Math.ceil((endOfDay.getTime() - now.getTime()) / (1000 * 60 * 60));
+  });
+
+  // Update hours till end of day every minute
+  useEffect(() => {
+    const updateHoursTillEndOfDay = () => {
+      const now = new Date();
+      const endOfDay = new Date(now);
+      endOfDay.setHours(23, 59, 59, 999);
+      const hours = Math.ceil(
+        (endOfDay.getTime() - now.getTime()) / (1000 * 60 * 60)
+      );
+
+      // Only update if the value actually changed to prevent unnecessary re-renders
+      setHoursTillEndOfDay((prev) => (prev !== hours ? hours : prev));
+    };
+
+    // Update every minute (60000ms)
+    const interval = setInterval(updateHoursTillEndOfDay, 60000);
+
+    return () => clearInterval(interval);
   }, []);
 
   // Convert search timespan to number
