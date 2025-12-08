@@ -18,7 +18,8 @@ import {
 
 export function useScheduling(
   position: { latitude: number; longitude: number } | null,
-  consumerDuration: number
+  consumerDuration: number,
+  searchTimespan: number
 ) {
   const { settings } = useSettings();
   const [solarData, setSolarData] = useState<SolarData | null>(null);
@@ -383,8 +384,11 @@ export function useScheduling(
         solarQualifies: boolean;
       }> = [];
 
-      // Check every hour in the next 24 hours, but ensure we don't go beyond available data
-      const maxStartHour = Math.min(24, 24 - consumerDuration + 1);
+      // Check every hour in the search timespan, but ensure we don't go beyond available data
+      const maxStartHour = Math.min(
+        searchTimespan,
+        searchTimespan - consumerDuration + 1
+      );
 
       for (let h = 0; h < maxStartHour; h++) {
         const startTime = new Date(now.getTime() + h * 60 * 60 * 1000);
@@ -397,8 +401,8 @@ export function useScheduling(
         for (let i = 0; i < consumerDuration; i++) {
           const hoursFromNow = h + i;
 
-          // Only process if within our 24-hour window
-          if (hoursFromNow >= 0 && hoursFromNow < 24) {
+          // Only process if within our search timespan window
+          if (hoursFromNow >= 0 && hoursFromNow < searchTimespan) {
             const solarProduction = calculatePowerGeneration(hoursFromNow);
             const price = calculateMarketPrice(hoursFromNow);
 
@@ -514,6 +518,7 @@ export function useScheduling(
     solarData,
     marketData,
     consumerDuration,
+    searchTimespan,
     calculatePowerGeneration,
     calculateMarketPrice,
     normalizeToFullHour,

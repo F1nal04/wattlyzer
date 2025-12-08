@@ -68,7 +68,7 @@ export default function Debug() {
   });
 
   const { solarData, marketData, schedulingResult, topSlotsResult, apiError } =
-    useScheduling(position, 3);
+    useScheduling(position, 3, 24);
 
   // Get user location
   useEffect(() => {

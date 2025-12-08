@@ -1,7 +1,14 @@
 "use client";
 
 import { Slider } from "@/components/ui/slider";
-import { useState, useEffect, Suspense, useCallback } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useState, useEffect, Suspense, useCallback, useMemo } from "react";
 import {
   SolarDataFetcher,
   MarketDataFetcher,
@@ -15,6 +22,7 @@ import Link from "next/link";
 export default function Home() {
   const { settings } = useSettings();
   const [consumerDuration, setConsumerDuration] = useState(3);
+  const [searchTimespan, setSearchTimespan] = useState<string>("24");
   const [displayText, setDisplayText] = useState("");
   const [position, setPosition] = useState<{
     latitude: number;
@@ -23,6 +31,57 @@ export default function Home() {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [showRemainingTime, setShowRemainingTime] = useState<boolean>(false);
   const [showDebugLink, setShowDebugLink] = useState<boolean>(false);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [hoursTillEndOfDay, setHoursTillEndOfDay] = useState(() => {
+    const now = new Date();
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 59, 999);
+    return Math.ceil((endOfDay.getTime() - now.getTime()) / (1000 * 60 * 60));
+  });
+
+  // Load saved state from localStorage on mount (client-side only)
+  useEffect(() => {
+    const saved = localStorage.getItem("wattlyzer_show_advanced");
+    if (saved !== null) {
+      setShowAdvancedOptions(JSON.parse(saved));
+    }
+  }, []);
+
+  // Save advanced options state to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem(
+      "wattlyzer_show_advanced",
+      JSON.stringify(showAdvancedOptions)
+    );
+  }, [showAdvancedOptions]);
+
+  // Update hours till end of day every minute
+  useEffect(() => {
+    const updateHoursTillEndOfDay = () => {
+      const now = new Date();
+      const endOfDay = new Date(now);
+      endOfDay.setHours(23, 59, 59, 999);
+      const hours = Math.ceil(
+        (endOfDay.getTime() - now.getTime()) / (1000 * 60 * 60)
+      );
+
+      // Only update if the value actually changed to prevent unnecessary re-renders
+      setHoursTillEndOfDay((prev) => (prev !== hours ? hours : prev));
+    };
+
+    // Update every minute (60000ms)
+    const interval = setInterval(updateHoursTillEndOfDay, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Convert search timespan to number
+  const searchTimespanHours = useMemo(() => {
+    if (searchTimespan === "eod") {
+      return hoursTillEndOfDay;
+    }
+    return parseInt(searchTimespan);
+  }, [searchTimespan, hoursTillEndOfDay]);
 
   const {
     schedulingResult,
@@ -32,7 +91,7 @@ export default function Home() {
     handleSolarData,
     handleMarketData,
     handleError,
-  } = useScheduling(position, consumerDuration);
+  } = useScheduling(position, consumerDuration, searchTimespanHours);
 
   const fullText = "wattlyzer";
 
@@ -125,7 +184,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-br from-black via-gray-800 to-yellow-700 flex flex-col items-center justify-center px-4 relative">
+    <div className="min-h-dvh bg-linear-to-br from-black via-gray-800 to-yellow-700 flex flex-col items-center justify-center px-4 relative">
       {/* Title with typewriter effect */}
       <div className="mb-16">
         <h1 className="text-6xl md:text-8xl font-bold text-white text-center font-sans">
@@ -140,7 +199,12 @@ export default function Home() {
       </div>
 
       {/* Energy consumer scheduling section */}
-      <div className="w-full max-w-md space-y-8">
+      <div
+        className={`w-full max-w-md space-y-6 ${
+          showAdvancedOptions ? "pb-32" : ""
+        }`}
+      >
+        {/* Consumer Duration - Always Visible */}
         <div className="text-center">
           <label
             htmlFor="consumer-duration-slider"
@@ -228,7 +292,24 @@ export default function Home() {
             </div>
           )}
 
-          {schedulingResult ? (
+          {position && searchTimespanHours < consumerDuration && (
+            <div className="text-center">
+              <div className="text-8xl md:text-9xl font-bold text-orange-400 font-sans">
+                ⚠️
+              </div>
+              <div className="text-xl text-orange-400 mt-2">
+                Invalid Configuration
+              </div>
+              <div className="text-sm text-gray-400 mt-2 max-w-sm mx-auto">
+                Search window ({searchTimespanHours}h) must be longer than
+                consumer duration ({consumerDuration}h)
+              </div>
+            </div>
+          )}
+
+          {position &&
+          searchTimespanHours >= consumerDuration &&
+          schedulingResult ? (
             <div className="text-center">
               <div
                 className="text-8xl md:text-9xl font-bold text-yellow-400 font-sans cursor-pointer hover:text-yellow-300 transition-colors"
@@ -293,17 +374,79 @@ export default function Home() {
             API Error: {apiError}
           </div>
         )}
+
+        {/* Collapsible Advanced Options */}
+        <div className="bg-white/5 rounded-lg p-4 backdrop-blur-sm">
+          <button
+            onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+            className="w-full flex items-center justify-between text-white hover:text-yellow-300 transition-colors"
+            aria-expanded={showAdvancedOptions}
+            aria-controls="advanced-options"
+          >
+            <span className="text-xl font-semibold">⚙️ Advanced Options</span>
+            <span
+              className={`transform transition-transform duration-200 ${
+                showAdvancedOptions ? "rotate-180" : ""
+              }`}
+            >
+              ▼
+            </span>
+          </button>
+
+          <div
+            id="advanced-options"
+            className={`overflow-hidden transition-all duration-300 ease-in-out ${
+              showAdvancedOptions
+                ? "max-h-[400px] opacity-100 mt-6"
+                : "max-h-0 opacity-0"
+            }`}
+          >
+            <div className="text-center">
+              <label
+                htmlFor="search-timespan-select"
+                className="block text-2xl font-semibold text-white mb-4"
+              >
+                Search Window
+              </label>
+              <div className="flex justify-center">
+                <Select
+                  value={searchTimespan}
+                  onValueChange={setSearchTimespan}
+                >
+                  <SelectTrigger
+                    id="search-timespan-select"
+                    className="w-[200px] bg-white/10 text-white border-white/20 hover:bg-white/20 transition-colors"
+                  >
+                    <SelectValue placeholder="Select timespan" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 text-white border-white/20">
+                    <SelectItem value="3">Next 3 hours</SelectItem>
+                    <SelectItem value="6">Next 6 hours</SelectItem>
+                    <SelectItem value="12">Next 12 hours</SelectItem>
+                    <SelectItem value="24">Next 24 hours</SelectItem>
+                    <SelectItem value="eod">
+                      Till end of day ({hoursTillEndOfDay}h)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="text-sm text-gray-400 mt-2">
+                Find the best time within this window
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Footer links */}
       <div className="fixed bottom-0 left-0 right-0 pb-safe-bottom">
-        <div className="flex justify-center space-x-4 px-2 py-4 bg-gradient-to-t from-black/50 to-transparent">
+        <div className="flex justify-center space-x-4 px-2 py-4 bg-linear-to-t from-black/50 to-transparent">
           <Link
             href="https://github.com/F1nal04/wattlyzer"
             target="_blank"
             rel="noopener noreferrer"
             prefetch={false}
-            className="text-sm text-gray-300 hover:text-white transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
+            className="text-sm text-gray-300 hover:text-white‚ transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
           >
             GitHub
           </Link>
