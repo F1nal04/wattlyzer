@@ -1,7 +1,14 @@
 "use client";
 
 import { Slider } from "@/components/ui/slider";
-import { useState, useEffect, Suspense, useCallback } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useState, useEffect, Suspense, useCallback, useMemo } from "react";
 import {
   SolarDataFetcher,
   MarketDataFetcher,
@@ -15,6 +22,7 @@ import Link from "next/link";
 export default function Home() {
   const { settings } = useSettings();
   const [consumerDuration, setConsumerDuration] = useState(3);
+  const [searchTimespan, setSearchTimespan] = useState<string>("24");
   const [displayText, setDisplayText] = useState("");
   const [position, setPosition] = useState<{
     latitude: number;
@@ -24,6 +32,22 @@ export default function Home() {
   const [showRemainingTime, setShowRemainingTime] = useState<boolean>(false);
   const [showDebugLink, setShowDebugLink] = useState<boolean>(false);
 
+  // Calculate hours till end of day
+  const hoursTillEndOfDay = useMemo(() => {
+    const now = new Date();
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 59, 999);
+    return Math.ceil((endOfDay.getTime() - now.getTime()) / (1000 * 60 * 60));
+  }, []);
+
+  // Convert search timespan to number
+  const searchTimespanHours = useMemo(() => {
+    if (searchTimespan === "eod") {
+      return hoursTillEndOfDay;
+    }
+    return parseInt(searchTimespan);
+  }, [searchTimespan, hoursTillEndOfDay]);
+
   const {
     schedulingResult,
     apiError,
@@ -32,7 +56,7 @@ export default function Home() {
     handleSolarData,
     handleMarketData,
     handleError,
-  } = useScheduling(position, consumerDuration);
+  } = useScheduling(position, consumerDuration, searchTimespanHours);
 
   const fullText = "wattlyzer";
 
@@ -161,6 +185,37 @@ export default function Home() {
             <span>3</span>
             <span>4</span>
             <span>5</span>
+          </div>
+        </div>
+
+        <div className="text-center">
+          <label
+            htmlFor="search-timespan-select"
+            className="block text-2xl font-semibold text-white mb-4"
+          >
+            Search Window
+          </label>
+          <div className="flex justify-center">
+            <Select value={searchTimespan} onValueChange={setSearchTimespan}>
+              <SelectTrigger
+                id="search-timespan-select"
+                className="w-[200px] bg-white/10 text-white border-white/20 hover:bg-white/20 transition-colors"
+              >
+                <SelectValue placeholder="Select timespan" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-900 text-white border-white/20">
+                <SelectItem value="3">Next 3 hours</SelectItem>
+                <SelectItem value="6">Next 6 hours</SelectItem>
+                <SelectItem value="12">Next 12 hours</SelectItem>
+                <SelectItem value="24">Next 24 hours</SelectItem>
+                <SelectItem value="eod">
+                  Till end of day ({hoursTillEndOfDay}h)
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="text-sm text-gray-400 mt-2">
+            Find the best time within this window
           </div>
         </div>
 
