@@ -283,7 +283,24 @@ export default function Home() {
             </div>
           )}
 
-          {schedulingResult ? (
+          {position && searchTimespanHours < consumerDuration && (
+            <div className="text-center">
+              <div className="text-8xl md:text-9xl font-bold text-orange-400 font-sans">
+                ⚠️
+              </div>
+              <div className="text-xl text-orange-400 mt-2">
+                Invalid Configuration
+              </div>
+              <div className="text-sm text-gray-400 mt-2 max-w-sm mx-auto">
+                Search window ({searchTimespanHours}h) must be longer than
+                consumer duration ({consumerDuration}h)
+              </div>
+            </div>
+          )}
+
+          {position &&
+          searchTimespanHours >= consumerDuration &&
+          schedulingResult ? (
             <div className="text-center">
               <div
                 className="text-8xl md:text-9xl font-bold text-yellow-400 font-sans cursor-pointer hover:text-yellow-300 transition-colors"
