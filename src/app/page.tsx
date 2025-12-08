@@ -31,12 +31,29 @@ export default function Home() {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [showRemainingTime, setShowRemainingTime] = useState<boolean>(false);
   const [showDebugLink, setShowDebugLink] = useState<boolean>(false);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [hoursTillEndOfDay, setHoursTillEndOfDay] = useState(() => {
     const now = new Date();
     const endOfDay = new Date(now);
     endOfDay.setHours(23, 59, 59, 999);
     return Math.ceil((endOfDay.getTime() - now.getTime()) / (1000 * 60 * 60));
   });
+
+  // Load saved state from localStorage on mount (client-side only)
+  useEffect(() => {
+    const saved = localStorage.getItem("wattlyzer_show_advanced");
+    if (saved !== null) {
+      setShowAdvancedOptions(JSON.parse(saved));
+    }
+  }, []);
+
+  // Save advanced options state to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem(
+      "wattlyzer_show_advanced",
+      JSON.stringify(showAdvancedOptions)
+    );
+  }, [showAdvancedOptions]);
 
   // Update hours till end of day every minute
   useEffect(() => {
@@ -167,7 +184,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-br from-black via-gray-800 to-yellow-700 flex flex-col items-center justify-center px-4 relative">
+    <div className="min-h-dvh bg-linear-to-br from-black via-gray-800 to-yellow-700 flex flex-col items-center justify-center px-4 relative">
       {/* Title with typewriter effect */}
       <div className="mb-16">
         <h1 className="text-6xl md:text-8xl font-bold text-white text-center font-sans">
@@ -182,7 +199,12 @@ export default function Home() {
       </div>
 
       {/* Energy consumer scheduling section */}
-      <div className="w-full max-w-md space-y-8">
+      <div
+        className={`w-full max-w-md space-y-6 ${
+          showAdvancedOptions ? "pb-32" : ""
+        }`}
+      >
+        {/* Consumer Duration - Always Visible */}
         <div className="text-center">
           <label
             htmlFor="consumer-duration-slider"
@@ -203,37 +225,6 @@ export default function Home() {
             <span>3</span>
             <span>4</span>
             <span>5</span>
-          </div>
-        </div>
-
-        <div className="text-center">
-          <label
-            htmlFor="search-timespan-select"
-            className="block text-2xl font-semibold text-white mb-4"
-          >
-            Search Window
-          </label>
-          <div className="flex justify-center">
-            <Select value={searchTimespan} onValueChange={setSearchTimespan}>
-              <SelectTrigger
-                id="search-timespan-select"
-                className="w-[200px] bg-white/10 text-white border-white/20 hover:bg-white/20 transition-colors"
-              >
-                <SelectValue placeholder="Select timespan" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-900 text-white border-white/20">
-                <SelectItem value="3">Next 3 hours</SelectItem>
-                <SelectItem value="6">Next 6 hours</SelectItem>
-                <SelectItem value="12">Next 12 hours</SelectItem>
-                <SelectItem value="24">Next 24 hours</SelectItem>
-                <SelectItem value="eod">
-                  Till end of day ({hoursTillEndOfDay}h)
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="text-sm text-gray-400 mt-2">
-            Find the best time within this window
           </div>
         </div>
 
@@ -383,6 +374,68 @@ export default function Home() {
             API Error: {apiError}
           </div>
         )}
+
+        {/* Collapsible Advanced Options */}
+        <div className="bg-white/5 rounded-lg p-4 backdrop-blur-sm">
+          <button
+            onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+            className="w-full flex items-center justify-between text-white hover:text-yellow-300 transition-colors"
+            aria-expanded={showAdvancedOptions}
+            aria-controls="advanced-options"
+          >
+            <span className="text-xl font-semibold">⚙️ Advanced Options</span>
+            <span
+              className={`transform transition-transform duration-200 ${
+                showAdvancedOptions ? "rotate-180" : ""
+              }`}
+            >
+              ▼
+            </span>
+          </button>
+
+          <div
+            id="advanced-options"
+            className={`overflow-hidden transition-all duration-300 ease-in-out ${
+              showAdvancedOptions
+                ? "max-h-[400px] opacity-100 mt-6"
+                : "max-h-0 opacity-0"
+            }`}
+          >
+            <div className="text-center">
+              <label
+                htmlFor="search-timespan-select"
+                className="block text-2xl font-semibold text-white mb-4"
+              >
+                Search Window
+              </label>
+              <div className="flex justify-center">
+                <Select
+                  value={searchTimespan}
+                  onValueChange={setSearchTimespan}
+                >
+                  <SelectTrigger
+                    id="search-timespan-select"
+                    className="w-[200px] bg-white/10 text-white border-white/20 hover:bg-white/20 transition-colors"
+                  >
+                    <SelectValue placeholder="Select timespan" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 text-white border-white/20">
+                    <SelectItem value="3">Next 3 hours</SelectItem>
+                    <SelectItem value="6">Next 6 hours</SelectItem>
+                    <SelectItem value="12">Next 12 hours</SelectItem>
+                    <SelectItem value="24">Next 24 hours</SelectItem>
+                    <SelectItem value="eod">
+                      Till end of day ({hoursTillEndOfDay}h)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="text-sm text-gray-400 mt-2">
+                Find the best time within this window
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Footer links */}
