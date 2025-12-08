@@ -440,13 +440,13 @@ export default function Home() {
 
       {/* Footer links */}
       <div className="fixed bottom-0 left-0 right-0 pb-safe-bottom">
-        <div className="flex justify-center space-x-4 px-2 py-4 bg-gradient-to-t from-black/50 to-transparent">
+        <div className="flex justify-center space-x-4 px-2 py-4 bg-linear-to-t from-black/50 to-transparent">
           <Link
             href="https://github.com/F1nal04/wattlyzer"
             target="_blank"
             rel="noopener noreferrer"
             prefetch={false}
-            className="text-sm text-gray-300 hover:text-white transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
+            className="text-sm text-gray-300 hover:text-white‚ transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
           >
             GitHub
           </Link>
