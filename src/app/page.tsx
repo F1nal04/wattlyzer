@@ -191,7 +191,7 @@ export default function Home() {
           <span className="sr-only">wattlyzer - energy optimization tool</span>
           <span aria-hidden="true">
             {displayText}
-            <span aria-hidden="true" className="animate-blink">
+            <span aria-hidden="true" className="motion-safe:animate-blink">
               |
             </span>
           </span>
