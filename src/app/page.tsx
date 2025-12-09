@@ -91,6 +91,7 @@ export default function Home() {
     handleSolarData,
     handleMarketData,
     handleError,
+    marketDataSufficiency,
   } = useScheduling(position, consumerDuration, searchTimespanHours);
 
   const fullText = "wattlyzer";
@@ -306,6 +307,28 @@ export default function Home() {
               </div>
             </div>
           )}
+
+          {position &&
+            searchTimespanHours >= consumerDuration &&
+            marketDataSufficiency &&
+            !marketDataSufficiency.isSufficient && (
+              <div className="text-center mb-6">
+                <div className="bg-orange-500/20 border border-orange-500/50 rounded-lg p-4 max-w-md mx-auto">
+                  <div className="text-orange-400 font-semibold text-lg mb-2">
+                    ⚠️ Limited Market Data
+                  </div>
+                  <div className="text-sm text-gray-300">
+                    Market data is only available for the next{" "}
+                    {marketDataSufficiency.hoursAvailable} hours, but you
+                    requested a {marketDataSufficiency.searchTimespanHours}
+                    -hour search window.
+                  </div>
+                  <div className="text-xs text-gray-400 mt-2">
+                    Results will be based on available data only.
+                  </div>
+                </div>
+              </div>
+            )}
 
           {position &&
           searchTimespanHours >= consumerDuration &&

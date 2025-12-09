@@ -15,6 +15,7 @@ import {
   MARKET_CACHE_KEY,
   roundCoordinate,
 } from "@/lib/cache";
+import { checkMarketDataSufficiency } from "@/lib/utils";
 
 export function useScheduling(
   position: { latitude: number; longitude: number } | null,
@@ -30,6 +31,11 @@ export function useScheduling(
     null
   );
   const [apiError, setApiError] = useState<string | null>(null);
+  const [marketDataSufficiency, setMarketDataSufficiency] = useState<{
+    isSufficient: boolean;
+    hoursAvailable: number;
+    searchTimespanHours: number;
+  } | null>(null);
 
   // Create promises for render-while-fetch with caching
   const solarDataPromiseRef = useRef<Promise<SolarData> | null>(null);
@@ -533,6 +539,12 @@ export function useScheduling(
     }
   }, [solarDataPromise]);
 
+  // Check market data sufficiency whenever market data or search timespan changes
+  useEffect(() => {
+    const sufficiency = checkMarketDataSufficiency(marketData, searchTimespan);
+    setMarketDataSufficiency(sufficiency);
+  }, [marketData, searchTimespan]);
+
   // Callbacks for handling data from Suspense components
   const handleSolarData = useCallback((data: SolarData) => {
     setSolarData(data);
@@ -558,5 +570,6 @@ export function useScheduling(
     handleMarketData,
     handleError,
     setApiError,
+    marketDataSufficiency,
   };
 }
