@@ -94,6 +94,16 @@ export default function Home() {
     marketDataSufficiency,
   } = useScheduling(position, consumerDuration, searchTimespanHours);
 
+  // Calculate if market data warning should be shown
+  const showMarketDataWarning = useMemo(() => {
+    return (
+      position &&
+      searchTimespanHours >= consumerDuration &&
+      marketDataSufficiency &&
+      !marketDataSufficiency.isSufficient
+    );
+  }, [position, searchTimespanHours, consumerDuration, marketDataSufficiency]);
+
   const fullText = "wattlyzer";
 
   // Function to calculate remaining time in hours and minutes
@@ -202,7 +212,7 @@ export default function Home() {
       {/* Energy consumer scheduling section */}
       <div
         className={`w-full max-w-md space-y-6 ${
-          showAdvancedOptions ? "pb-32" : ""
+          showAdvancedOptions ? "pb-32" : showMarketDataWarning ? "pb-16" : ""
         }`}
       >
         {/* Consumer Duration - Always Visible */}
@@ -308,27 +318,24 @@ export default function Home() {
             </div>
           )}
 
-          {position &&
-            searchTimespanHours >= consumerDuration &&
-            marketDataSufficiency &&
-            !marketDataSufficiency.isSufficient && (
-              <div className="text-center mb-6">
-                <div className="bg-orange-500/20 border border-orange-500/50 rounded-lg p-4 max-w-md mx-auto">
-                  <div className="text-orange-400 font-semibold text-lg mb-2">
-                    ⚠️ Limited Market Data
-                  </div>
-                  <div className="text-sm text-gray-300">
-                    Market data is only available for the next{" "}
-                    {marketDataSufficiency.hoursAvailable} hours, but you
-                    requested a {marketDataSufficiency.searchTimespanHours}
-                    -hour search window.
-                  </div>
-                  <div className="text-xs text-gray-400 mt-2">
-                    Results may be incorrect.
-                  </div>
+          {showMarketDataWarning && marketDataSufficiency && (
+            <div className="text-center mb-6">
+              <div className="bg-orange-500/20 border border-orange-500/50 rounded-lg p-4 max-w-md mx-auto">
+                <div className="text-orange-400 font-semibold text-lg mb-2">
+                  ⚠️ Limited Market Data
+                </div>
+                <div className="text-sm text-gray-300">
+                  Market data is only available for the next{" "}
+                  {marketDataSufficiency.hoursAvailable} hours, but you
+                  requested a {marketDataSufficiency.searchTimespanHours}-hour
+                  search window.
+                </div>
+                <div className="text-xs text-gray-400 mt-2">
+                  Results may be incorrect.
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
           {position &&
           searchTimespanHours >= consumerDuration &&
