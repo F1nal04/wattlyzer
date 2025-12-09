@@ -16,12 +16,16 @@
 }
 
 .min-h-screen-safe {
-  min-height: calc(100vh - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0));
+  min-height: calc(
+    100vh - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0)
+  );
 }
 
 @supports (height: 100dvh) {
   .min-h-screen-safe {
-    min-height: calc(100dvh - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0));
+    min-height: calc(
+      100dvh - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0)
+    );
   }
 }
 
@@ -29,10 +33,6 @@
 
 body {
   font-family: var(--font-poppins), sans-serif;
-}
-
-.cursor-blink {
-  animation: blink 1s ease-in-out infinite;
 }
 
 @keyframes blink {
@@ -82,6 +82,7 @@ body {
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --animate-blink: blink 1s ease-in-out infinite;
 }
 
 :root {
