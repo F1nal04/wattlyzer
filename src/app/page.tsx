@@ -324,7 +324,7 @@ export default function Home() {
                     -hour search window.
                   </div>
                   <div className="text-xs text-gray-400 mt-2">
-                    Results will be based on available data only.
+                    Results may be incorrect.
                   </div>
                 </div>
               </div>
