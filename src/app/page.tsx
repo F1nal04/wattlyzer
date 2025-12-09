@@ -8,7 +8,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState, useEffect, Suspense, useCallback, useMemo } from "react";
+import {
+  useState,
+  useEffect,
+  Suspense,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import {
   SolarDataFetcher,
   MarketDataFetcher,
@@ -39,6 +46,10 @@ export default function Home() {
     return Math.ceil((endOfDay.getTime() - now.getTime()) / (1000 * 60 * 60));
   });
 
+  // Refs for advanced options section
+  const advancedOptionsRef = useRef<HTMLDivElement>(null);
+  const advancedOptionsContentRef = useRef<HTMLDivElement>(null);
+
   // Load saved state from localStorage on mount (client-side only)
   useEffect(() => {
     const saved = localStorage.getItem("wattlyzer_show_advanced");
@@ -53,6 +64,32 @@ export default function Home() {
       "wattlyzer_show_advanced",
       JSON.stringify(showAdvancedOptions)
     );
+  }, [showAdvancedOptions]);
+
+  // Scroll to advanced options when opened
+  useEffect(() => {
+    if (showAdvancedOptions && advancedOptionsRef.current) {
+      // Use setTimeout to wait for the collapse animation to complete
+      setTimeout(() => {
+        const element = advancedOptionsRef.current;
+        if (!element) return;
+
+        // Get the element's position and the footer height
+        const elementRect = element.getBoundingClientRect();
+        const footerHeight = 80; // Approximate footer height
+        const viewportHeight = window.innerHeight;
+
+        // Calculate scroll position to show the bottom of the element above the footer
+        const scrollTop = window.scrollY;
+        const elementBottom = elementRect.bottom + scrollTop;
+        const targetScroll = elementBottom - viewportHeight + footerHeight + 20; // 20px padding
+
+        window.scrollTo({
+          top: Math.max(0, targetScroll),
+          behavior: "smooth",
+        });
+      }, 350);
+    }
   }, [showAdvancedOptions]);
 
   // Update hours till end of day every minute
@@ -91,7 +128,18 @@ export default function Home() {
     handleSolarData,
     handleMarketData,
     handleError,
+    marketDataSufficiency,
   } = useScheduling(position, consumerDuration, searchTimespanHours);
+
+  // Calculate if market data warning should be shown
+  const showMarketDataWarning = useMemo(() => {
+    return (
+      position &&
+      searchTimespanHours >= consumerDuration &&
+      marketDataSufficiency &&
+      !marketDataSufficiency.isSufficient
+    );
+  }, [position, searchTimespanHours, consumerDuration, marketDataSufficiency]);
 
   const fullText = "wattlyzer";
 
@@ -191,7 +239,7 @@ export default function Home() {
           <span className="sr-only">wattlyzer - energy optimization tool</span>
           <span aria-hidden="true">
             {displayText}
-            <span aria-hidden="true" className="cursor-blink">
+            <span aria-hidden="true" className="motion-safe:animate-blink">
               |
             </span>
           </span>
@@ -201,7 +249,7 @@ export default function Home() {
       {/* Energy consumer scheduling section */}
       <div
         className={`w-full max-w-md space-y-6 ${
-          showAdvancedOptions ? "pb-32" : ""
+          showAdvancedOptions ? "pb-32" : showMarketDataWarning ? "pb-16" : ""
         }`}
       >
         {/* Consumer Duration - Always Visible */}
@@ -307,6 +355,25 @@ export default function Home() {
             </div>
           )}
 
+          {showMarketDataWarning && marketDataSufficiency && (
+            <div className="text-center mb-6">
+              <div className="bg-orange-500/20 border border-orange-500/50 rounded-lg p-4 max-w-md mx-auto">
+                <div className="text-orange-400 font-semibold text-lg mb-2">
+                  ⚠️ Limited Market Data
+                </div>
+                <div className="text-sm text-gray-300">
+                  Market data is only available for the next{" "}
+                  {marketDataSufficiency.hoursAvailable} hours, but you
+                  requested a {marketDataSufficiency.searchTimespanHours}-hour
+                  search window.
+                </div>
+                <div className="text-xs text-gray-400 mt-2">
+                  Results may be incorrect.
+                </div>
+              </div>
+            </div>
+          )}
+
           {position &&
           searchTimespanHours >= consumerDuration &&
           schedulingResult ? (
@@ -376,7 +443,10 @@ export default function Home() {
         )}
 
         {/* Collapsible Advanced Options */}
-        <div className="bg-white/5 rounded-lg p-4 backdrop-blur-sm">
+        <div
+          ref={advancedOptionsRef}
+          className="bg-white/5 rounded-lg p-4 backdrop-blur-sm"
+        >
           <button
             onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
             className="w-full flex items-center justify-between text-white hover:text-yellow-300 transition-colors"
@@ -401,7 +471,7 @@ export default function Home() {
                 : "max-h-0 opacity-0"
             }`}
           >
-            <div className="text-center">
+            <div ref={advancedOptionsContentRef} className="text-center">
               <label
                 htmlFor="search-timespan-select"
                 className="block text-2xl font-semibold text-white mb-4"
