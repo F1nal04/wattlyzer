@@ -54,25 +54,22 @@ export function checkMarketDataSufficiency(
   }
 
   const now = new Date().getTime();
-  const requiredEndTime = now + searchTimespanHours * 60 * 60 * 1000;
 
-  // Find the latest end timestamp in the market data
-  const latestEndTimestamp = Math.max(
-    ...marketData.data.map((item) => item.end_timestamp)
+  // Count how many hourly data points are available from now onwards
+  // Market data is in hourly slots, so we count complete hour coverage
+  const availableDataPoints = marketData.data.filter(
+    (item) => item.end_timestamp > now
   );
 
-  // Calculate how many hours of data we have available from now
-  const hoursAvailable = Math.max(
-    0,
-    (latestEndTimestamp - now) / (1000 * 60 * 60)
-  );
+  const hoursAvailable = availableDataPoints.length;
 
-  // Check if market data covers the entire search span
-  const isSufficient = latestEndTimestamp >= requiredEndTime;
+  // Check if we have enough hourly data points to cover the search span
+  // We need at least searchTimespanHours complete hours of data
+  const isSufficient = hoursAvailable >= searchTimespanHours;
 
   return {
     isSufficient,
-    hoursAvailable: Math.floor(hoursAvailable),
+    hoursAvailable,
     searchTimespanHours,
   };
 }
