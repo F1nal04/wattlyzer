@@ -72,7 +72,7 @@ export function checkMarketDataSufficiency(
 
   return {
     isSufficient,
-    hoursAvailable: Math.floor(hoursAvailable),
+    hoursAvailable: Math.ceil(hoursAvailable),
     searchTimespanHours,
   };
 }
