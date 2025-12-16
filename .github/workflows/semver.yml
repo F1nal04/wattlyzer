@@ -19,7 +19,7 @@ permissions:
 jobs:
   version-bump:
     runs-on: ubuntu-latest
-    if: ${{ github.actor != 'github-actions[bot]' && github.event.head_commit.author.email != 'action@github.com' && !startsWith(github.event.head_commit.message, 'ci:') }}
+    if: ${{ github.actor != 'github-actions[bot]' && github.event.head_commit.author.email != 'action@github.com' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,12 +27,46 @@ jobs:
           token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
+      - name: Check for CI-only commits
+        id: check_ci_commits
+        run: |
+          # Get all commits in this push
+          if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+            # First push to branch, check last commit only
+            COMMITS=$(git log -1 --format="%s")
+          else
+            # Normal push, check all commits in the push
+            COMMITS=$(git log --format="%s" ${{ github.event.before }}..${{ github.event.after }})
+          fi
+
+          echo "Commits in this push:"
+          echo "$COMMITS"
+
+          # Check if all commits start with "ci:"
+          ALL_CI=true
+          while IFS= read -r commit_msg; do
+            if [[ ! "$commit_msg" =~ ^ci: ]] && [[ ! "$commit_msg" =~ ^Merge ]]; then
+              ALL_CI=false
+              break
+            fi
+          done <<< "$COMMITS"
+
+          if [ "$ALL_CI" = true ]; then
+            echo "all_ci_commits=true" >> $GITHUB_OUTPUT
+            echo "All commits are CI-related, skipping version bump"
+          else
+            echo "all_ci_commits=false" >> $GITHUB_OUTPUT
+            echo "Non-CI commits found, proceeding with version bump"
+          fi
+
       - name: Set up Bun
+        if: steps.check_ci_commits.outputs.all_ci_commits != 'true'
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
       - name: Get current version
+        if: steps.check_ci_commits.outputs.all_ci_commits != 'true'
         id: get_version
         run: |
           # Extract version from package.json
@@ -41,6 +75,7 @@ jobs:
           echo "Current version: $CURRENT_VERSION"
 
       - name: Determine version bump type
+        if: steps.check_ci_commits.outputs.all_ci_commits != 'true'
         id: determine_bump
         run: |
           VERSION_TYPE="${{ github.event.inputs.version_type || 'auto' }}"
@@ -97,6 +132,7 @@ jobs:
           echo "Has features: $HAS_FEAT"
 
       - name: Calculate new version
+        if: steps.check_ci_commits.outputs.all_ci_commits != 'true'
         id: calc_version
         run: |
           CURRENT_VERSION="${{ steps.get_version.outputs.current_version }}"
@@ -130,6 +166,7 @@ jobs:
           echo "New version: $NEW_VERSION (was $CURRENT_VERSION, bump type: $VERSION_TYPE)"
 
       - name: Update version in package.json
+        if: steps.check_ci_commits.outputs.all_ci_commits != 'true'
         run: |
           NEW_VERSION="${{ steps.calc_version.outputs.new_version }}"
           # Use Bun to update package.json version
@@ -142,6 +179,7 @@ jobs:
           echo "Updated package.json with version $NEW_VERSION"
 
       - name: Check for changes
+        if: steps.check_ci_commits.outputs.all_ci_commits != 'true'
         id: check_changes
         run: |
           if git diff --quiet; then
@@ -154,7 +192,7 @@ jobs:
           fi
 
       - name: Commit and push changes
-        if: steps.check_changes.outputs.has_changes == 'true'
+        if: steps.check_ci_commits.outputs.all_ci_commits != 'true' && steps.check_changes.outputs.has_changes == 'true'
         run: |
           NEW_VERSION="${{ steps.calc_version.outputs.new_version }}"
           VERSION_TYPE="${{ steps.determine_bump.outputs.version_type }}"
@@ -165,7 +203,7 @@ jobs:
           git push
 
       - name: Create and push git tag
-        if: steps.check_changes.outputs.has_changes == 'true'
+        if: steps.check_ci_commits.outputs.all_ci_commits != 'true' && steps.check_changes.outputs.has_changes == 'true'
         run: |
           NEW_VERSION="${{ steps.calc_version.outputs.new_version }}"
           VERSION_TYPE="${{ steps.determine_bump.outputs.version_type }}"
