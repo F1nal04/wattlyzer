@@ -405,23 +405,18 @@ export default function Home() {
               </div>
 
               <div className="mt-4 space-y-2">
-                <div className="flex flex-wrap items-center justify-center gap-2">
-                  <div
-                    className={`px-4 py-2 rounded-full inline-block ${
-                      schedulingResult.reason === "solar"
-                        ? "bg-yellow-500/20 text-yellow-300"
-                        : "bg-blue-500/20 text-blue-300"
-                    }`}
-                  >
-                    {schedulingResult.reason === "solar"
-                      ? "☀️ Solar Optimized"
-                      : "💰 Price Optimized"}
-                  </div>
-                  {settings.ignoreSolarForBestSlot && (
-                    <div className="px-3 py-2 rounded-full inline-block bg-blue-500/30 text-blue-200 text-sm border border-blue-400/30">
-                      🚫☀️ Solar Ignored
-                    </div>
-                  )}
+                <div
+                  className={`px-4 py-2 rounded-full inline-block ${
+                    schedulingResult.reason === "solar"
+                      ? "bg-yellow-500/20 text-yellow-300"
+                      : "bg-blue-500/20 text-blue-300"
+                  }`}
+                >
+                  {schedulingResult.reason === "solar"
+                    ? "☀️ Solar Optimized"
+                    : settings.ignoreSolarForBestSlot
+                    ? "💰 Price Only Mode"
+                    : "💰 Price Optimized"}
                 </div>
 
                 <div className="text-sm text-gray-400 space-y-1">
