@@ -464,32 +464,12 @@ export function useScheduling(
         topPriceSlots,
       };
 
-      // Calculate the single best scheduling result (existing logic)
-      const solarQualifiedSlots = results.filter((r) => r.solarQualifies);
-
+      // Calculate the single best scheduling result
       let schedulingResult: SchedulingResult | null = null;
 
-      if (solarQualifiedSlots.length > 0) {
-        // Among solar-qualified slots, pick the one with highest solar production
-        const best = solarQualifiedSlots.reduce((best, current) =>
-          current.avgSolarProduction > best.avgSolarProduction ? current : best
-        );
-
-        // Normalize to full hour - compare current hour vs next hour
-        const normalizedTime = normalizeToFullHour(
-          best.startTime,
-          best,
-          results
-        );
-
-        schedulingResult = {
-          bestTime: normalizedTime.time,
-          reason: "solar" as const,
-          avgSolarProduction: normalizedTime.avgSolarProduction,
-          avgPrice: normalizedTime.avgPrice,
-        };
-      } else {
-        // If no solar-qualified slots, find the cheapest price slot
+      // If ignoreSolarForBestSlot is enabled, always optimize for price only
+      if (settings.ignoreSolarForBestSlot) {
+        // Find the cheapest price slot regardless of solar production
         const cheapest = results.reduce((best, current) =>
           current.avgPrice < best.avgPrice ? current : best
         );
@@ -507,6 +487,51 @@ export function useScheduling(
           avgSolarProduction: normalizedTime.avgSolarProduction,
           avgPrice: normalizedTime.avgPrice,
         };
+      } else {
+        // Original logic: Consider solar optimization
+        const solarQualifiedSlots = results.filter((r) => r.solarQualifies);
+
+        if (solarQualifiedSlots.length > 0) {
+          // Among solar-qualified slots, pick the one with highest solar production
+          const best = solarQualifiedSlots.reduce((best, current) =>
+            current.avgSolarProduction > best.avgSolarProduction
+              ? current
+              : best
+          );
+
+          // Normalize to full hour - compare current hour vs next hour
+          const normalizedTime = normalizeToFullHour(
+            best.startTime,
+            best,
+            results
+          );
+
+          schedulingResult = {
+            bestTime: normalizedTime.time,
+            reason: "solar" as const,
+            avgSolarProduction: normalizedTime.avgSolarProduction,
+            avgPrice: normalizedTime.avgPrice,
+          };
+        } else {
+          // If no solar-qualified slots, find the cheapest price slot
+          const cheapest = results.reduce((best, current) =>
+            current.avgPrice < best.avgPrice ? current : best
+          );
+
+          // Normalize to full hour - compare current hour vs next hour
+          const normalizedTime = normalizeToFullHour(
+            cheapest.startTime,
+            cheapest,
+            results
+          );
+
+          schedulingResult = {
+            bestTime: normalizedTime.time,
+            reason: "price" as const,
+            avgSolarProduction: normalizedTime.avgSolarProduction,
+            avgPrice: normalizedTime.avgPrice,
+          };
+        }
       }
 
       return { schedulingResult, topSlotsResult };
