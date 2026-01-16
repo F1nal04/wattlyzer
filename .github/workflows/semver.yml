@@ -12,14 +12,10 @@ on:
           - patch
           - minor
           - major
-  pull_request:
-    types: [opened, synchronize, reopened]
-    branches: [main]
   push:
     branches: [main]
 permissions:
   contents: write
-  pull-requests: write # For commenting on PRs
 jobs:
   version-bump:
     runs-on: ubuntu-latest
@@ -30,17 +26,12 @@ jobs:
         with:
           token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
           fetch-depth: 0
-          # For PRs, checkout the PR head ref to allow pushing
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || '' }}
 
-      - name: Check for CI-only commits and existing bumps
+      - name: Check for CI-only commits
         id: check_ci_commits
         run: |
-          # Get commits based on event type
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            # For PRs, check all commits in the PR
-            COMMITS=$(git log --format="%s" origin/${{ github.base_ref }}..HEAD)
-          elif [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+          # Get all commits in this push
+          if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
             # First push to branch, check last commit only
             COMMITS=$(git log -1 --format="%s")
           else
@@ -48,13 +39,13 @@ jobs:
             COMMITS=$(git log --format="%s" ${{ github.event.before }}..${{ github.event.after }})
           fi
 
-          echo "Commits in this push/PR:"
+          echo "Commits in this push:"
           echo "$COMMITS"
 
-          # Check if all commits start with "ci:" or "bump:"
+          # Check if all commits start with "ci:"
           ALL_CI=true
           while IFS= read -r commit_msg; do
-            if [[ ! "$commit_msg" =~ ^ci: ]] && [[ ! "$commit_msg" =~ ^bump: ]] && [[ ! "$commit_msg" =~ ^Merge ]]; then
+            if [[ ! "$commit_msg" =~ ^ci: ]] && [[ ! "$commit_msg" =~ ^Merge ]]; then
               ALL_CI=false
               break
             fi
@@ -66,24 +57,6 @@ jobs:
           else
             echo "all_ci_commits=false" >> $GITHUB_OUTPUT
             echo "Non-CI commits found, proceeding with version bump"
-          fi
-
-          # For PRs, check if a bump commit already exists
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            EXISTING_BUMP=$(echo "$COMMITS" | grep "^bump: bump version to" | head -n 1 || echo "")
-            if [ -n "$EXISTING_BUMP" ]; then
-              # Extract bump type from existing commit message
-              # Format: "bump: bump version to X.Y.Z (TYPE)"
-              EXISTING_TYPE=$(echo "$EXISTING_BUMP" | sed -n 's/.*(\(.*\)).*/\1/p')
-              echo "existing_bump_type=$EXISTING_TYPE" >> $GITHUB_OUTPUT
-              echo "Found existing bump commit: $EXISTING_BUMP"
-              echo "Existing bump type: $EXISTING_TYPE"
-            else
-              echo "existing_bump_type=" >> $GITHUB_OUTPUT
-              echo "No existing bump commit found"
-            fi
-          else
-            echo "existing_bump_type=" >> $GITHUB_OUTPUT
           fi
 
       - name: Set up Bun
@@ -113,24 +86,17 @@ jobs:
             exit 0
           fi
 
-          # Get commits to analyze based on event type
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            # For PRs, analyze all commits in the PR (excluding bump commits)
-            COMMITS=$(git log --oneline --format="%s" origin/${{ github.base_ref }}..HEAD | grep -v "^bump: bump version to" || echo "")
-            COMMIT_BODIES=$(git log --format="%B" origin/${{ github.base_ref }}..HEAD)
+          # Get commits since last version bump commit or last 10 commits if no version bump found
+          LAST_VERSION_COMMIT=$(git log --oneline --grep="bump: bump version to" -n 1 --format="%H" || echo "")
+
+          if [ -n "$LAST_VERSION_COMMIT" ]; then
+            # Get commits since last version bump
+            COMMITS=$(git log --oneline --format="%s" ${LAST_VERSION_COMMIT}..HEAD)
+            COMMIT_BODIES=$(git log --format="%B" ${LAST_VERSION_COMMIT}..HEAD)
           else
-            # For push events, use existing logic
-            LAST_VERSION_COMMIT=$(git log --oneline --grep="bump: bump version to" -n 1 --format="%H" || echo "")
-            
-            if [ -n "$LAST_VERSION_COMMIT" ]; then
-              # Get commits since last version bump
-              COMMITS=$(git log --oneline --format="%s" ${LAST_VERSION_COMMIT}..HEAD)
-              COMMIT_BODIES=$(git log --format="%B" ${LAST_VERSION_COMMIT}..HEAD)
-            else
-              # If no previous version bump found, check last 10 commits
-              COMMITS=$(git log --oneline --format="%s" -n 10)
-              COMMIT_BODIES=$(git log --format="%B" -n 10)
-            fi
+            # If no previous version bump found, check last 10 commits
+            COMMITS=$(git log --oneline --format="%s" -n 10)
+            COMMIT_BODIES=$(git log --format="%B" -n 10)
           fi
 
           echo "Analyzing commits:"
@@ -165,46 +131,8 @@ jobs:
           echo "Has breaking changes: $HAS_BREAKING"
           echo "Has features: $HAS_FEAT"
 
-      - name: Compare bump types and decide if update needed
-        if: steps.check_ci_commits.outputs.all_ci_commits != 'true'
-        id: compare_bump
-        run: |
-          NEEDED_BUMP="${{ steps.determine_bump.outputs.version_type }}"
-          EXISTING_BUMP="${{ steps.check_ci_commits.outputs.existing_bump_type }}"
-
-          echo "Needed bump type: $NEEDED_BUMP"
-          echo "Existing bump type: $EXISTING_BUMP"
-
-          # If no existing bump, we need to bump
-          if [ -z "$EXISTING_BUMP" ]; then
-            echo "needs_bump=true" >> $GITHUB_OUTPUT
-            echo "No existing bump found, will create one"
-            exit 0
-          fi
-
-          # Define bump type hierarchy: patch < minor < major
-          declare -A BUMP_PRIORITY
-          BUMP_PRIORITY[patch]=1
-          BUMP_PRIORITY[minor]=2
-          BUMP_PRIORITY[major]=3
-
-          NEEDED_PRIORITY=${BUMP_PRIORITY[$NEEDED_BUMP]}
-          EXISTING_PRIORITY=${BUMP_PRIORITY[$EXISTING_BUMP]}
-
-          echo "Needed priority: $NEEDED_PRIORITY"
-          echo "Existing priority: $EXISTING_PRIORITY"
-
-          # Only bump if needed type is greater than existing type
-          if [ "$NEEDED_PRIORITY" -gt "$EXISTING_PRIORITY" ]; then
-            echo "needs_bump=true" >> $GITHUB_OUTPUT
-            echo "Needed bump ($NEEDED_BUMP) is greater than existing ($EXISTING_BUMP), will update"
-          else
-            echo "needs_bump=false" >> $GITHUB_OUTPUT
-            echo "Existing bump ($EXISTING_BUMP) is sufficient for needed bump ($NEEDED_BUMP), skipping"
-          fi
-
       - name: Calculate new version
-        if: steps.check_ci_commits.outputs.all_ci_commits != 'true' && steps.compare_bump.outputs.needs_bump != 'false'
+        if: steps.check_ci_commits.outputs.all_ci_commits != 'true'
         id: calc_version
         run: |
           CURRENT_VERSION="${{ steps.get_version.outputs.current_version }}"
@@ -238,7 +166,7 @@ jobs:
           echo "New version: $NEW_VERSION (was $CURRENT_VERSION, bump type: $VERSION_TYPE)"
 
       - name: Update version in package.json
-        if: steps.check_ci_commits.outputs.all_ci_commits != 'true' && steps.compare_bump.outputs.needs_bump != 'false'
+        if: steps.check_ci_commits.outputs.all_ci_commits != 'true'
         run: |
           NEW_VERSION="${{ steps.calc_version.outputs.new_version }}"
           # Use Bun to update package.json version
@@ -251,7 +179,7 @@ jobs:
           echo "Updated package.json with version $NEW_VERSION"
 
       - name: Check for changes
-        if: steps.check_ci_commits.outputs.all_ci_commits != 'true' && steps.compare_bump.outputs.needs_bump != 'false'
+        if: steps.check_ci_commits.outputs.all_ci_commits != 'true'
         id: check_changes
         run: |
           if git diff --quiet; then
@@ -264,50 +192,18 @@ jobs:
           fi
 
       - name: Commit and push changes
-        if: steps.check_ci_commits.outputs.all_ci_commits != 'true' && steps.compare_bump.outputs.needs_bump != 'false' && steps.check_changes.outputs.has_changes == 'true'
+        if: steps.check_ci_commits.outputs.all_ci_commits != 'true' && steps.check_changes.outputs.has_changes == 'true'
         run: |
           NEW_VERSION="${{ steps.calc_version.outputs.new_version }}"
           VERSION_TYPE="${{ steps.determine_bump.outputs.version_type }}"
-          EXISTING_BUMP="${{ steps.check_ci_commits.outputs.existing_bump_type }}"
-
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add package.json
-
-          # If there's an existing bump commit and we're updating it, we need to remove it first
-          if [ "${{ github.event_name }}" = "pull_request" ] && [ -n "$EXISTING_BUMP" ]; then
-            echo "Updating existing bump commit from $EXISTING_BUMP to $VERSION_TYPE"
-            # Find and remove the old bump commit using interactive rebase
-            # Get the commit hash of the bump commit
-            BUMP_COMMIT=$(git log --format="%H" --grep="^bump: bump version to" -n 1)
-            if [ -n "$BUMP_COMMIT" ]; then
-              # Get the commit before the bump
-              BEFORE_BUMP=$(git rev-parse ${BUMP_COMMIT}^)
-              # Reset to before the bump commit, keeping changes
-              git reset --soft $BEFORE_BUMP
-              # Re-add package.json with new version
-              git add package.json
-              echo "Removed old bump commit, will create new one"
-            fi
-          fi
-
           git commit -m "bump: bump version to $NEW_VERSION ($VERSION_TYPE)"
-
-          # For PRs, push to the PR branch; for direct pushes, push to main
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            # Force push since we might have rewritten history
-            if [ -n "$EXISTING_BUMP" ]; then
-              git push --force origin HEAD:${{ github.event.pull_request.head.ref }}
-            else
-              git push origin HEAD:${{ github.event.pull_request.head.ref }}
-            fi
-          else
-            git push
-          fi
+          git push
 
       - name: Create and push git tag
-        # Only create tags when pushing to main, not on PRs
-        if: github.event_name == 'push' && steps.check_ci_commits.outputs.all_ci_commits != 'true' && steps.compare_bump.outputs.needs_bump != 'false' && steps.check_changes.outputs.has_changes == 'true'
+        if: steps.check_ci_commits.outputs.all_ci_commits != 'true' && steps.check_changes.outputs.has_changes == 'true'
         run: |
           NEW_VERSION="${{ steps.calc_version.outputs.new_version }}"
           VERSION_TYPE="${{ steps.determine_bump.outputs.version_type }}"
@@ -319,29 +215,3 @@ jobs:
           git push origin "v$NEW_VERSION"
 
           echo "Created and pushed tag: v$NEW_VERSION"
-
-      - name: Comment on PR with version bump
-        if: github.event_name == 'pull_request' && steps.check_ci_commits.outputs.all_ci_commits != 'true' && steps.compare_bump.outputs.needs_bump != 'false' && steps.check_changes.outputs.has_changes == 'true'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const currentVersion = '${{ steps.get_version.outputs.current_version }}';
-            const newVersion = '${{ steps.calc_version.outputs.new_version }}';
-            const versionType = '${{ steps.determine_bump.outputs.version_type }}';
-
-            const body = `## ✅ Version Bumped
-
-            The version has been automatically updated in this PR:
-            - **Previous version:** \`${currentVersion}\`
-            - **New version:** \`${newVersion}\`
-            - **Bump type:** \`${versionType}\`
-
-            The \`package.json\` has been updated. When this PR is merged, a git tag \`v${newVersion}\` will be created automatically.`;
-
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: body
-            });
