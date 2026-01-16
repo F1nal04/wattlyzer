@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   useState,
   useEffect,
@@ -27,7 +28,7 @@ import { isDebugMode } from "@/lib/utils";
 import Link from "next/link";
 
 export default function Home() {
-  const { settings } = useSettings();
+  const { settings, updateSettings } = useSettings();
   const [consumerDuration, setConsumerDuration] = useState(3);
   const [searchTimespan, setSearchTimespan] = useState<string>("24");
   const [displayText, setDisplayText] = useState("");
@@ -413,6 +414,8 @@ export default function Home() {
                 >
                   {schedulingResult.reason === "solar"
                     ? "☀️ Solar Optimized"
+                    : settings.ignoreSolarForBestSlot
+                    ? "💰 Price Only Mode"
                     : "💰 Price Optimized"}
                 </div>
 
@@ -467,41 +470,65 @@ export default function Home() {
             id="advanced-options"
             className={`overflow-hidden transition-all duration-300 ease-in-out ${
               showAdvancedOptions
-                ? "max-h-[400px] opacity-100 mt-6"
+                ? "max-h-[500px] opacity-100 mt-6"
                 : "max-h-0 opacity-0"
             }`}
           >
-            <div ref={advancedOptionsContentRef} className="text-center">
-              <label
-                htmlFor="search-timespan-select"
-                className="block text-2xl font-semibold text-white mb-4"
-              >
-                Search Window
-              </label>
-              <div className="flex justify-center">
-                <Select
-                  value={searchTimespan}
-                  onValueChange={setSearchTimespan}
+            <div ref={advancedOptionsContentRef} className="space-y-6">
+              {/* Search Window */}
+              <div className="text-center">
+                <label
+                  htmlFor="search-timespan-select"
+                  className="block text-2xl font-semibold text-white mb-4"
                 >
-                  <SelectTrigger
-                    id="search-timespan-select"
-                    className="w-[200px] bg-white/10 text-white border-white/20 hover:bg-white/20 transition-colors"
+                  Search Window
+                </label>
+                <div className="flex justify-center">
+                  <Select
+                    value={searchTimespan}
+                    onValueChange={setSearchTimespan}
                   >
-                    <SelectValue placeholder="Select timespan" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-900 text-white border-white/20">
-                    <SelectItem value="3">Next 3 hours</SelectItem>
-                    <SelectItem value="6">Next 6 hours</SelectItem>
-                    <SelectItem value="12">Next 12 hours</SelectItem>
-                    <SelectItem value="24">Next 24 hours</SelectItem>
-                    <SelectItem value="eod">
-                      Till end of day ({hoursTillEndOfDay}h)
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                    <SelectTrigger
+                      id="search-timespan-select"
+                      className="w-[200px] bg-white/10 text-white border-white/20 hover:bg-white/20 transition-colors"
+                    >
+                      <SelectValue placeholder="Select timespan" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-900 text-white border-white/20">
+                      <SelectItem value="3">Next 3 hours</SelectItem>
+                      <SelectItem value="6">Next 6 hours</SelectItem>
+                      <SelectItem value="12">Next 12 hours</SelectItem>
+                      <SelectItem value="24">Next 24 hours</SelectItem>
+                      <SelectItem value="eod">
+                        Till end of day ({hoursTillEndOfDay}h)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="text-sm text-gray-400 mt-2">
+                  Find the best time within this window
+                </div>
               </div>
-              <div className="text-sm text-gray-400 mt-2">
-                Find the best time within this window
+
+              {/* Ignore Solar Option */}
+              <div className="flex items-center justify-center gap-3 px-4">
+                <Switch
+                  id="ignore-solar-switch"
+                  checked={settings.ignoreSolarForBestSlot}
+                  onCheckedChange={(checked) =>
+                    updateSettings({ ignoreSolarForBestSlot: checked })
+                  }
+                  className="data-[state=checked]:bg-blue-500"
+                />
+                <label
+                  htmlFor="ignore-solar-switch"
+                  className="text-lg text-white cursor-pointer select-none"
+                >
+                  Ignore solar for best timeslot
+                </label>
+              </div>
+              <div className="text-sm text-gray-400 text-center -mt-2">
+                Only optimize for lowest price
               </div>
             </div>
           </div>

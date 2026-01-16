@@ -9,6 +9,7 @@ interface SettingsData {
   minKwh: number; // Minimum kWh requirement in Wh (500-3000)
   morningShading: boolean; // Enable morning shading compensation
   shadingEndTime: number; // Hour when shading ends (0-23)
+  ignoreSolarForBestSlot: boolean; // Ignore solar production when calculating best timeslot
 }
 
 interface SettingsContextType {
@@ -23,6 +24,7 @@ const defaultSettings: SettingsData = {
   minKwh: 1200, // 1.2 kWh = 1200 Wh
   morningShading: false, // Morning shading compensation disabled by default
   shadingEndTime: 10, // Shading ends at 10:00 AM by default
+  ignoreSolarForBestSlot: false, // Don't ignore solar by default
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(
