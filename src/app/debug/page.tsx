@@ -13,6 +13,8 @@ import { useState, useEffect } from "react";
 import { SolarData, MarketData } from "@/lib/types";
 import packageJson from "../../../package.json";
 
+const commitSha = process.env.NEXT_PUBLIC_COMMIT_SHA || "unknown";
+
 function formatCacheAge(ageMs: number): string {
   const minutes = Math.floor(ageMs / 1000 / 60);
   const hours = Math.floor(minutes / 60);
@@ -118,6 +120,9 @@ export default function Debug() {
             </h2>
             <div className="text-lg">
               <strong>Version:</strong> {packageJson.version}
+            </div>
+            <div className="text-lg">
+              <strong>Commit:</strong> {commitSha}
             </div>
           </section>
 
