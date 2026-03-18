@@ -9,14 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import {
-  useState,
-  useEffect,
-  Suspense,
-  useCallback,
-  useMemo,
-  useRef,
-} from "react";
+import { useState, useEffect, Suspense, useRef, useSyncExternalStore } from "react";
 import {
   SolarDataFetcher,
   MarketDataFetcher,
@@ -27,18 +20,132 @@ import { useSettings } from "@/lib/settings-context";
 import { isDebugMode } from "@/lib/utils";
 import Link from "next/link";
 
-export default function Home() {
+function formatRemainingTime(targetTime: Date) {
+  const now = new Date();
+  const diffMs = targetTime.getTime() - now.getTime();
+
+  if (diffMs <= 0) {
+    return "now";
+  }
+
+  const totalMinutes = Math.floor(diffMs / (1000 * 60));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours === 0) {
+    return `${minutes}m`;
+  }
+
+  if (minutes === 0) {
+    return `${hours}h`;
+  }
+
+  return `${hours}h ${minutes}m`;
+}
+
+function TypewriterTitle() {
+  const [displayText, setDisplayText] = useState("");
+  const fullText = "wattlyzer";
+
+  useEffect(() => {
+    let currentIndex = 0;
+    const typingInterval = setInterval(() => {
+      if (currentIndex <= fullText.length) {
+        setDisplayText(fullText.slice(0, currentIndex));
+        currentIndex++;
+      } else {
+        clearInterval(typingInterval);
+      }
+    }, 150);
+
+    return () => clearInterval(typingInterval);
+  }, []);
+
+  return (
+    <div className="mb-16">
+      <h1 className="text-6xl md:text-8xl font-bold text-white text-center font-sans">
+        <span className="sr-only">wattlyzer - energy optimization tool</span>
+        <span aria-hidden="true">
+          {displayText}
+          <span aria-hidden="true" className="motion-safe:animate-blink">
+            |
+          </span>
+        </span>
+      </h1>
+    </div>
+  );
+}
+
+function FooterLinks({ showDebugLink }: { showDebugLink: boolean }) {
+  return (
+    <div className="fixed bottom-0 left-0 right-0 pb-safe-bottom">
+      <div className="flex justify-center space-x-4 px-2 py-4 bg-linear-to-t from-black/50 to-transparent">
+        <Link
+          href="https://github.com/F1nal04/wattlyzer"
+          target="_blank"
+          rel="noopener noreferrer"
+          prefetch={false}
+          className="text-sm text-gray-300 hover:text-white‚ transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
+        >
+          GitHub
+        </Link>
+        <Link
+          href="/legal"
+          className="text-sm text-gray-300 hover:text-white transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
+        >
+          Legal
+        </Link>
+        <Link
+          href="/privacy"
+          className="text-sm text-gray-300 hover:text-white transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
+        >
+          Privacy
+        </Link>
+        <Link
+          href="/settings"
+          className="text-sm text-gray-300 hover:text-white transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
+        >
+          Settings
+        </Link>
+        {showDebugLink && (
+          <Link
+            href="/debug"
+            className="text-sm text-gray-300 hover:text-white transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
+          >
+            Debug
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function subscribeToDebugMode(onStoreChange: () => void) {
+  window.addEventListener("popstate", onStoreChange);
+
+  return () => {
+    window.removeEventListener("popstate", onStoreChange);
+  };
+}
+
+function getDebugModeSnapshot() {
+  return isDebugMode();
+}
+
+function getDebugModeServerSnapshot() {
+  return false;
+}
+
+function SchedulingPanel() {
   const { settings, updateSettings } = useSettings();
   const [consumerDuration, setConsumerDuration] = useState(3);
   const [searchTimespan, setSearchTimespan] = useState<string>("24");
-  const [displayText, setDisplayText] = useState("");
   const [position, setPosition] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [showRemainingTime, setShowRemainingTime] = useState<boolean>(false);
-  const [showDebugLink, setShowDebugLink] = useState<boolean>(false);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [hoursTillEndOfDay, setHoursTillEndOfDay] = useState(() => {
     const now = new Date();
@@ -49,7 +156,6 @@ export default function Home() {
 
   // Refs for advanced options section
   const advancedOptionsRef = useRef<HTMLDivElement>(null);
-  const advancedOptionsContentRef = useRef<HTMLDivElement>(null);
 
   // Load saved state from localStorage on mount (client-side only)
   useEffect(() => {
@@ -114,12 +220,8 @@ export default function Home() {
   }, []);
 
   // Convert search timespan to number
-  const searchTimespanHours = useMemo(() => {
-    if (searchTimespan === "eod") {
-      return hoursTillEndOfDay;
-    }
-    return parseInt(searchTimespan);
-  }, [searchTimespan, hoursTillEndOfDay]);
+  const searchTimespanHours =
+    searchTimespan === "eod" ? hoursTillEndOfDay : parseInt(searchTimespan, 10);
 
   const {
     schedulingResult,
@@ -133,52 +235,11 @@ export default function Home() {
   } = useScheduling(position, consumerDuration, searchTimespanHours);
 
   // Calculate if market data warning should be shown
-  const showMarketDataWarning = useMemo(() => {
-    return (
-      position &&
-      searchTimespanHours >= consumerDuration &&
-      marketDataSufficiency &&
-      !marketDataSufficiency.isSufficient
-    );
-  }, [position, searchTimespanHours, consumerDuration, marketDataSufficiency]);
-
-  const fullText = "wattlyzer";
-
-  // Function to calculate remaining time in hours and minutes
-  const formatRemainingTime = useCallback((targetTime: Date) => {
-    const now = new Date();
-    const diffMs = targetTime.getTime() - now.getTime();
-
-    if (diffMs <= 0) {
-      return "now";
-    }
-
-    const totalMinutes = Math.floor(diffMs / (1000 * 60));
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-
-    if (hours === 0) {
-      return `${minutes}m`;
-    } else if (minutes === 0) {
-      return `${hours}h`;
-    } else {
-      return `${hours}h ${minutes}m`;
-    }
-  }, []);
-
-  useEffect(() => {
-    let currentIndex = 0;
-    const typingInterval = setInterval(() => {
-      if (currentIndex <= fullText.length) {
-        setDisplayText(fullText.slice(0, currentIndex));
-        currentIndex++;
-      } else {
-        clearInterval(typingInterval);
-      }
-    }, 150);
-
-    return () => clearInterval(typingInterval);
-  }, []);
+  const showMarketDataWarning =
+    !!position &&
+    searchTimespanHours >= consumerDuration &&
+    !!marketDataSufficiency &&
+    !marketDataSufficiency.isSufficient;
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -216,105 +277,74 @@ export default function Home() {
     }
   }, []);
 
-  // Check if debug mode should be enabled
-  useEffect(() => {
-    setShowDebugLink(isDebugMode());
-
-    // Listen for URL changes to update debug mode
-    const handleUrlChange = () => {
-      setShowDebugLink(isDebugMode());
-    };
-
-    window.addEventListener("popstate", handleUrlChange);
-
-    return () => {
-      window.removeEventListener("popstate", handleUrlChange);
-    };
-  }, []);
-
   return (
-    <div className="min-h-dvh bg-linear-to-br from-black via-gray-800 to-yellow-700 flex flex-col items-center justify-center px-4 relative">
-      {/* Title with typewriter effect */}
-      <div className="mb-16">
-        <h1 className="text-6xl md:text-8xl font-bold text-white text-center font-sans">
-          <span className="sr-only">wattlyzer - energy optimization tool</span>
-          <span aria-hidden="true">
-            {displayText}
-            <span aria-hidden="true" className="motion-safe:animate-blink">
-              |
-            </span>
-          </span>
-        </h1>
+    <div
+      className={`w-full max-w-md space-y-6 ${
+        showAdvancedOptions ? "pb-32" : showMarketDataWarning ? "pb-16" : ""
+      }`}
+    >
+      {/* Consumer Duration - Always Visible */}
+      <div className="text-center">
+        <label
+          htmlFor="consumer-duration-slider"
+          className="block text-2xl font-semibold text-white mb-4"
+        >
+          Consumer Duration: {consumerDuration} hours
+        </label>
+        <Slider
+          id="consumer-duration-slider"
+          min={1}
+          max={5}
+          defaultValue={[3]}
+          onValueChange={(value) => setConsumerDuration(value[0])}
+        />
+        <div className="flex justify-between text-sm text-gray-300 mt-2">
+          <span>1</span>
+          <span>2</span>
+          <span>3</span>
+          <span>4</span>
+          <span>5</span>
+        </div>
       </div>
 
-      {/* Energy consumer scheduling section */}
-      <div
-        className={`w-full max-w-md space-y-6 ${
-          showAdvancedOptions ? "pb-32" : showMarketDataWarning ? "pb-16" : ""
-        }`}
-      >
-        {/* Consumer Duration - Always Visible */}
-        <div className="text-center">
-          <label
-            htmlFor="consumer-duration-slider"
-            className="block text-2xl font-semibold text-white mb-4"
-          >
-            Consumer Duration: {consumerDuration} hours
-          </label>
-          <Slider
-            id="consumer-duration-slider"
-            min={1}
-            max={5}
-            defaultValue={[3]}
-            onValueChange={(value) => setConsumerDuration(value[0])}
-          />
-          <div className="flex justify-between text-sm text-gray-300 mt-2">
-            <span>1</span>
-            <span>2</span>
-            <span>3</span>
-            <span>4</span>
-            <span>5</span>
+      <ErrorBoundary
+        fallback={
+          <div className="text-center">
+            <div className="text-8xl md:text-9xl font-bold text-red-400 font-sans">
+              --:--
+            </div>
+            <div className="text-xl text-red-400 mt-2">
+              Failed to load data
+            </div>
           </div>
-        </div>
-
-        <ErrorBoundary
+        }
+        onError={handleError}
+      >
+        <Suspense
           fallback={
             <div className="text-center">
-              <div className="text-8xl md:text-9xl font-bold text-red-400 font-sans">
+              <div className="text-8xl md:text-9xl font-bold text-gray-500 font-sans">
                 --:--
               </div>
-              <div className="text-xl text-red-400 mt-2">
-                Failed to load data
+              <div className="text-xl text-gray-400 mt-2">
+                {locationError ? "Location required" : "Loading data..."}
               </div>
             </div>
           }
-          onError={handleError}
         >
-          <Suspense
-            fallback={
-              <div className="text-center">
-                <div className="text-8xl md:text-9xl font-bold text-gray-500 font-sans">
-                  --:--
-                </div>
-                <div className="text-xl text-gray-400 mt-2">
-                  {locationError ? "Location required" : "Loading data..."}
-                </div>
-              </div>
-            }
-          >
-            {solarDataPromise ? (
-              <SolarDataFetcher
-                promise={solarDataPromise}
-                onData={handleSolarData}
-              />
-            ) : null}
-            {marketDataPromise ? (
-              <MarketDataFetcher
-                promise={marketDataPromise}
-                onData={handleMarketData}
-              />
-            ) : null}
-          </Suspense>
+          {solarDataPromise ? (
+            <SolarDataFetcher
+              promise={solarDataPromise}
+              onData={handleSolarData}
+            />
+          ) : null}
+          {marketDataPromise ? (
+            <MarketDataFetcher
+              promise={marketDataPromise}
+              onData={handleMarketData}
+            />
+          ) : null}
+        </Suspense>
 
           {!position && !locationError && (
             <div className="text-center">
@@ -474,7 +504,7 @@ export default function Home() {
                 : "max-h-0 opacity-0"
             }`}
           >
-            <div ref={advancedOptionsContentRef} className="space-y-6">
+            <div className="space-y-6">
               {/* Search Window */}
               <div className="text-center">
                 <label
@@ -534,47 +564,21 @@ export default function Home() {
           </div>
         </div>
       </div>
+  );
+}
 
-      {/* Footer links */}
-      <div className="fixed bottom-0 left-0 right-0 pb-safe-bottom">
-        <div className="flex justify-center space-x-4 px-2 py-4 bg-linear-to-t from-black/50 to-transparent">
-          <Link
-            href="https://github.com/F1nal04/wattlyzer"
-            target="_blank"
-            rel="noopener noreferrer"
-            prefetch={false}
-            className="text-sm text-gray-300 hover:text-white‚ transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
-          >
-            GitHub
-          </Link>
-          <Link
-            href="/legal"
-            className="text-sm text-gray-300 hover:text-white transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
-          >
-            Legal
-          </Link>
-          <Link
-            href="/privacy"
-            className="text-sm text-gray-300 hover:text-white transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
-          >
-            Privacy
-          </Link>
-          <Link
-            href="/settings"
-            className="text-sm text-gray-300 hover:text-white transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
-          >
-            Settings
-          </Link>
-          {showDebugLink && (
-            <Link
-              href="/debug"
-              className="text-sm text-gray-300 hover:text-white transition-colors py-3 px-4 rounded-lg hover:bg-gray-800/50 min-w-[64px] text-center touch-manipulation"
-            >
-              Debug
-            </Link>
-          )}
-        </div>
-      </div>
+export default function Home() {
+  const showDebugLink = useSyncExternalStore(
+    subscribeToDebugMode,
+    getDebugModeSnapshot,
+    getDebugModeServerSnapshot
+  );
+
+  return (
+    <div className="min-h-dvh bg-linear-to-br from-black via-gray-800 to-yellow-700 flex flex-col items-center justify-center px-4 relative">
+      <TypewriterTitle />
+      <SchedulingPanel />
+      <FooterLinks showDebugLink={showDebugLink} />
     </div>
   );
 }

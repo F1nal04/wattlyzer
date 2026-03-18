@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect } from "react";
+import { use, useEffect, useEffectEvent } from "react";
 import { SolarData, MarketData } from "@/lib/types";
 
 // Data fetching component that throws promises for Suspense
@@ -12,10 +12,11 @@ export function SolarDataFetcher({
   onData: (data: SolarData) => void;
 }) {
   const data = use(promise);
+  const handleData = useEffectEvent(onData);
   
   useEffect(() => {
-    onData(data);
-  }, [data, onData]);
+    handleData(data);
+  }, [data]);
   
   return null;
 }
@@ -28,10 +29,11 @@ export function MarketDataFetcher({
   onData: (data: MarketData) => void;
 }) {
   const data = use(promise);
+  const handleData = useEffectEvent(onData);
   
   useEffect(() => {
-    onData(data);
-  }, [data, onData]);
+    handleData(data);
+  }, [data]);
   
   return null;
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 
-interface SettingsData {
+export interface SettingsData {
   azimut: number; // Stored in compass format (0-360)
   angle: number;
   kwh: number;
@@ -31,28 +31,37 @@ const SettingsContext = createContext<SettingsContextType | undefined>(
   undefined
 );
 
+function loadInitialSettings() {
+  if (typeof window === "undefined") {
+    return defaultSettings;
+  }
+
+  const savedSettings = localStorage.getItem("wattlyzer_settings");
+  if (!savedSettings) {
+    return defaultSettings;
+  }
+
+  try {
+    const parsed = JSON.parse(savedSettings) as Partial<SettingsData> & {
+      betaCalculations?: boolean;
+    };
+    const { betaCalculations, ...rest } = parsed;
+
+    return {
+      ...defaultSettings,
+      ...rest,
+      ...(betaCalculations !== undefined
+        ? { morningShading: betaCalculations }
+        : {}),
+    };
+  } catch (error) {
+    console.error("Failed to parse saved settings:", error);
+    return defaultSettings;
+  }
+}
+
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<SettingsData>(defaultSettings);
-
-  useEffect(() => {
-    // Load settings from localStorage on mount
-    const savedSettings = localStorage.getItem("wattlyzer_settings");
-    if (savedSettings) {
-      try {
-        const parsed = JSON.parse(savedSettings);
-
-        // Migration: Convert old betaCalculations to morningShading
-        if (parsed.betaCalculations !== undefined) {
-          parsed.morningShading = parsed.betaCalculations;
-          delete parsed.betaCalculations;
-        }
-
-        setSettings({ ...defaultSettings, ...parsed });
-      } catch (error) {
-        console.error("Failed to parse saved settings:", error);
-      }
-    }
-  }, []);
+  const [settings, setSettings] = useState<SettingsData>(loadInitialSettings);
 
   const updateSettings = (newSettings: Partial<SettingsData>) => {
     const updatedSettings = { ...settings, ...newSettings };
