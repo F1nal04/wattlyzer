@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import { useSettings } from "@/lib/settings-context";
 import { useScheduling } from "@/hooks/use-scheduling";
@@ -14,129 +13,95 @@ import { useState, useEffect } from "react";
 import { SolarData, MarketData } from "@/lib/types";
 import packageJson from "../../../package.json";
 
+function formatCacheAge(ageMs: number): string {
+  const minutes = Math.floor(ageMs / 1000 / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) {
+    return `${days}d ${hours % 24}h ago`;
+  }
+
+  if (hours > 0) {
+    return `${hours}h ${minutes % 60}m ago`;
+  }
+
+  if (minutes > 0) {
+    return `${minutes}m ago`;
+  }
+
+  return "Just now";
+}
+
 export default function Debug() {
   const { settings } = useSettings();
-
-  // Helper function to format cache age
-  const formatCacheAge = (ageMs: number): string => {
-    const minutes = Math.floor(ageMs / 1000 / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-
-    if (days > 0) {
-      return `${days}d ${hours % 24}h ago`;
-    } else if (hours > 0) {
-      return `${hours}h ${minutes % 60}m ago`;
-    } else if (minutes > 0) {
-      return `${minutes}m ago`;
-    } else {
-      return "Just now";
-    }
-  };
-
   const [position, setPosition] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
-  const [cacheInfo, setCacheInfo] = useState<{
-    solar: {
-      data: SolarData | null;
-      timestamp: number | null;
-      age: number | null;
-      isExpired: boolean;
-      exists: boolean;
-    };
-    market: {
-      data: MarketData | null;
-      timestamp: number | null;
-      age: number | null;
-      isExpired: boolean;
-      exists: boolean;
-    };
-    solarKey: string;
-  } | null>(null);
-
-  // Client-only system information state
-  const [systemInfo, setSystemInfo] = useState({
-    userAgent: "Loading...",
-    screenSize: "Loading...",
-    timezone: "Loading...",
-    language: "Loading...",
-    online: "Loading...",
-    localStorage: "Loading...",
-  });
+  const hasGeolocationSupport =
+    typeof navigator === "undefined" || !!navigator.geolocation;
 
   const { solarData, marketData, schedulingResult, topSlotsResult, apiError } =
     useScheduling(position, 3, 24);
 
   // Get user location
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setPosition({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
-        },
-        (error) => {
-          setLocationError(error.message);
-        }
-      );
-    } else {
-      setLocationError("Geolocation is not supported by this browser.");
+    if (!hasGeolocationSupport) {
+      return;
     }
-  }, []);
 
-  // Set system information after hydration
-  useEffect(() => {
-    setSystemInfo({
-      userAgent:
-        typeof navigator !== "undefined" ? navigator.userAgent : "Unknown",
-      screenSize:
-        typeof window !== "undefined"
-          ? `${window.innerWidth}x${window.innerHeight}`
-          : "Unknown",
-      timezone:
-        typeof Intl !== "undefined"
-          ? Intl.DateTimeFormat().resolvedOptions().timeZone
-          : "Unknown",
-      language:
-        typeof navigator !== "undefined" ? navigator.language : "Unknown",
-      online:
-        typeof navigator !== "undefined" && navigator.onLine !== undefined
-          ? navigator.onLine
-            ? "✅ Online"
-            : "❌ Offline"
-          : "Unknown",
-      localStorage:
-        typeof Storage !== "undefined" ? "✅ Available" : "❌ Not available",
-    });
-  }, []);
+    navigator.geolocation.getCurrentPosition(
+      (nextPosition) => {
+        setPosition({
+          latitude: nextPosition.coords.latitude,
+          longitude: nextPosition.coords.longitude,
+        });
+      },
+      (error) => {
+        setLocationError(error.message);
+      }
+    );
+  }, [hasGeolocationSupport]);
 
-  // Check cache status
-  useEffect(() => {
-    if (position && settings) {
-      const { latitude, longitude } = position;
-      const { angle, kwh, azimut } = settings;
-      const roundedLat = roundCoordinate(latitude);
-      const roundedLng = roundCoordinate(longitude);
-      const solarKey = `${roundedLat},${roundedLng},${angle},${azimut},${kwh}`;
+  const systemInfo = {
+    userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "Unknown",
+    screenSize:
+      typeof window !== "undefined"
+        ? `${window.innerWidth}x${window.innerHeight}`
+        : "Unknown",
+    timezone:
+      typeof Intl !== "undefined"
+        ? Intl.DateTimeFormat().resolvedOptions().timeZone
+        : "Unknown",
+    language: typeof navigator !== "undefined" ? navigator.language : "Unknown",
+    online:
+      typeof navigator !== "undefined" && navigator.onLine !== undefined
+        ? navigator.onLine
+          ? "✅ Online"
+          : "❌ Offline"
+        : "Unknown",
+    localStorage:
+      typeof Storage !== "undefined" ? "✅ Available" : "❌ Not available",
+  };
 
-      const solarCacheInfo = getCacheInfo<SolarData>(SOLAR_CACHE_KEY, solarKey);
-      const marketCacheInfo = getCacheInfo<MarketData>(
-        MARKET_CACHE_KEY,
-        "market"
-      );
+  const cacheInfo =
+    position && settings
+      ? (() => {
+          const { latitude, longitude } = position;
+          const { angle, kwh, azimut } = settings;
+          const roundedLat = roundCoordinate(latitude);
+          const roundedLng = roundCoordinate(longitude);
+          const solarKey = `${roundedLat},${roundedLng},${angle},${azimut},${kwh}`;
 
-      setCacheInfo({
-        solar: solarCacheInfo,
-        market: marketCacheInfo,
-        solarKey,
-      });
-    }
-  }, [position, settings]);
+          return {
+            solar: getCacheInfo<SolarData>(SOLAR_CACHE_KEY, solarKey),
+            market: getCacheInfo<MarketData>(MARKET_CACHE_KEY, "market"),
+            solarKey,
+          };
+        })()
+      : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-black via-gray-800 to-yellow-800 flex flex-col items-center justify-center px-4 py-8">
@@ -208,7 +173,10 @@ export default function Debug() {
               </div>
             ) : (
               <div className="text-red-400">
-                {locationError || "Getting location..."}
+                {locationError ||
+                  (!hasGeolocationSupport
+                    ? "Geolocation is not supported by this browser."
+                    : "Getting location...")}
               </div>
             )}
           </section>
