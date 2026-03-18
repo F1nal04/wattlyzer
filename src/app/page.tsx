@@ -13,8 +13,6 @@ import {
   useState,
   useEffect,
   Suspense,
-  useCallback,
-  useMemo,
   useRef,
 } from "react";
 import {
@@ -113,13 +111,8 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // Convert search timespan to number
-  const searchTimespanHours = useMemo(() => {
-    if (searchTimespan === "eod") {
-      return hoursTillEndOfDay;
-    }
-    return parseInt(searchTimespan);
-  }, [searchTimespan, hoursTillEndOfDay]);
+  const searchTimespanHours =
+    searchTimespan === "eod" ? hoursTillEndOfDay : parseInt(searchTimespan, 10);
 
   const {
     schedulingResult,
@@ -132,20 +125,15 @@ export default function Home() {
     marketDataSufficiency,
   } = useScheduling(position, consumerDuration, searchTimespanHours);
 
-  // Calculate if market data warning should be shown
-  const showMarketDataWarning = useMemo(() => {
-    return (
-      position &&
-      searchTimespanHours >= consumerDuration &&
-      marketDataSufficiency &&
-      !marketDataSufficiency.isSufficient
-    );
-  }, [position, searchTimespanHours, consumerDuration, marketDataSufficiency]);
+  const showMarketDataWarning =
+    !!position &&
+    searchTimespanHours >= consumerDuration &&
+    !!marketDataSufficiency &&
+    !marketDataSufficiency.isSufficient;
 
   const fullText = "wattlyzer";
 
-  // Function to calculate remaining time in hours and minutes
-  const formatRemainingTime = useCallback((targetTime: Date) => {
+  function formatRemainingTime(targetTime: Date) {
     const now = new Date();
     const diffMs = targetTime.getTime() - now.getTime();
 
@@ -164,7 +152,7 @@ export default function Home() {
     } else {
       return `${hours}h ${minutes}m`;
     }
-  }, []);
+  }
 
   useEffect(() => {
     let currentIndex = 0;
