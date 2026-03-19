@@ -485,7 +485,9 @@ export default function Debug() {
               </div>
             ) : (
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-gray-300">
-                No scheduling data available.
+                {settings.bestSlotMode === "solar-only"
+                  ? `No slot reaches the ${(settings.minKwh / 1000).toFixed(1)} kWh solar minimum in the current search window.`
+                  : "No scheduling data available."}
               </div>
             )}
 

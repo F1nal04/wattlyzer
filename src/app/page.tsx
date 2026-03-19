@@ -136,12 +136,14 @@ function StatusPanel({
 }: {
   title: string;
   body: string;
-  accent: "red" | "orange" | "gray";
+  accent: "red" | "orange" | "gray" | "yellow";
 }) {
   const tones = {
     red: "border-red-400/20 bg-red-500/10 text-red-200",
     orange: "border-orange-400/20 bg-orange-500/10 text-orange-200",
     gray: "border-white/10 bg-white/[0.04] text-gray-200",
+    yellow:
+      "border-yellow-300/35 bg-yellow-400/15 text-yellow-50 shadow-[0_0_0_1px_rgba(253,224,71,0.12)]",
   };
 
   return (
@@ -216,6 +218,7 @@ function SchedulingPanel() {
     searchTimespan === "eod" ? hoursTillEndOfDay : parseInt(searchTimespan, 10);
 
   const {
+    solarData,
     schedulingResult,
     apiError,
     solarDataPromise,
@@ -232,6 +235,13 @@ function SchedulingPanel() {
     searchTimespanHours >= consumerDuration &&
     !!marketDataSufficiency &&
     !marketDataSufficiency.isSufficient;
+  const showNoSuitableSolarSlotMessage =
+    settings.bestSlotMode === "solar-only" &&
+    !!position &&
+    searchTimespanHours >= consumerDuration &&
+    !!solarData &&
+    !schedulingResult &&
+    !apiError;
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -370,6 +380,14 @@ function SchedulingPanel() {
                   title="Limited market data"
                   body={`Only ${marketDataSufficiency.hoursAvailable} hours of market data are available, but the selected search window is ${marketDataSufficiency.searchTimespanHours} hours.`}
                   accent="orange"
+                />
+              )}
+
+              {showNoSuitableSolarSlotMessage && (
+                <StatusPanel
+                  title="No suitable solar window"
+                  body={`No slot in the selected search window reaches the ${(settings.minKwh / 1000).toFixed(1)} kWh solar minimum. Try lowering the threshold or expanding the search window.`}
+                  accent="yellow"
                 />
               )}
 

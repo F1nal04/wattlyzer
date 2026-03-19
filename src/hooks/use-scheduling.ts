@@ -363,7 +363,16 @@ function calculateSchedule(
   }
 
   if (settings.bestSlotMode === "solar-only") {
-    const sunniest = results.reduce((best, current) =>
+    const solarQualifiedSlots = results.filter((result) => result.solarQualifies);
+
+    if (solarQualifiedSlots.length === 0) {
+      return {
+        schedulingResult: null,
+        topSlotsResult,
+      };
+    }
+
+    const sunniest = solarQualifiedSlots.reduce((best, current) =>
       current.avgSolarProduction > best.avgSolarProduction ? current : best
     );
     const normalizedTime = normalizeToFullHour(
