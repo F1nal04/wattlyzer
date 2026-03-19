@@ -1,12 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import {
   useEffect,
   useRef,
   useState,
   Suspense,
-  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import { Slider } from "@/components/ui/slider";
@@ -23,9 +21,9 @@ import {
   MarketDataFetcher,
 } from "@/components/data-fetchers";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { FooterLinks } from "@/components/footer-links";
 import { useScheduling } from "@/hooks/use-scheduling";
 import { useSettings } from "@/lib/settings-context";
-import { isDebugMode } from "@/lib/utils";
 
 function formatRemainingTime(targetTime: Date) {
   const now = new Date();
@@ -111,50 +109,6 @@ function SectionCard({
   );
 }
 
-function FooterLinks({ showDebugLink }: { showDebugLink: boolean }) {
-  return (
-    <div className="mt-10 pb-safe-bottom">
-      <div className="flex flex-nowrap items-center justify-center gap-1 overflow-x-auto rounded-full border border-white/10 bg-black/25 px-2 py-1.5 backdrop-blur-sm">
-        <Link
-          href="https://github.com/F1nal04/wattlyzer"
-          target="_blank"
-          rel="noopener noreferrer"
-          prefetch={false}
-          className="shrink-0 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
-        >
-          GitHub
-        </Link>
-        <Link
-          href="/legal"
-          className="shrink-0 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
-        >
-          Legal
-        </Link>
-        <Link
-          href="/privacy"
-          className="shrink-0 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
-        >
-          Privacy
-        </Link>
-        <Link
-          href="/settings"
-          className="shrink-0 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
-        >
-          Settings
-        </Link>
-        {showDebugLink && (
-          <Link
-            href="/debug"
-            className="shrink-0 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
-          >
-            Debug
-          </Link>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function ControlBlock({
   title,
   description,
@@ -198,23 +152,7 @@ function StatusPanel({
   );
 }
 
-function subscribeToDebugMode(onStoreChange: () => void) {
-  window.addEventListener("popstate", onStoreChange);
-
-  return () => {
-    window.removeEventListener("popstate", onStoreChange);
-  };
-}
-
-function getDebugModeSnapshot() {
-  return isDebugMode();
-}
-
-function getDebugModeServerSnapshot() {
-  return false;
-}
-
-function SchedulingPanel({ showDebugLink }: { showDebugLink: boolean }) {
+function SchedulingPanel() {
   const { settings, updateSettings } = useSettings();
   const [consumerDuration, setConsumerDuration] = useState(3);
   const [searchTimespan, setSearchTimespan] = useState<string>("24");
@@ -621,18 +559,12 @@ function SchedulingPanel({ showDebugLink }: { showDebugLink: boolean }) {
         </div>
       </SectionCard>
 
-      <FooterLinks showDebugLink={showDebugLink} />
+      <FooterLinks />
     </div>
   );
 }
 
 export default function Home() {
-  const showDebugLink = useSyncExternalStore(
-    subscribeToDebugMode,
-    getDebugModeSnapshot,
-    getDebugModeServerSnapshot
-  );
-
   return (
     <div className="relative min-h-dvh overflow-hidden bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.18),transparent_28%),linear-gradient(135deg,#050505_0%,#151515_42%,#3b2b0f_100%)] px-4 py-8 md:px-6 md:py-10">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -659,7 +591,7 @@ export default function Home() {
           </div>
         </header>
 
-        <SchedulingPanel showDebugLink={showDebugLink} />
+        <SchedulingPanel />
       </div>
     </div>
   );

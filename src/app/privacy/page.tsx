@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { FooterLinks } from "@/components/footer-links";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -94,6 +95,8 @@ export default function Privacy() {
             </PrivacyCard>
           </div>
         </section>
+
+        <FooterLinks />
       </div>
     </div>
   );

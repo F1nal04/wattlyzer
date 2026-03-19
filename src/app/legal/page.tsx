@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { FooterLinks } from "@/components/footer-links";
 
 export const metadata: Metadata = {
   title: "Legal Notice",
@@ -107,6 +108,8 @@ export default function Legal() {
             </div>
           </section>
         </div>
+
+        <FooterLinks />
       </div>
     </div>
   );

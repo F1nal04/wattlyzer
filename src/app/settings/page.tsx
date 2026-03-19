@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
+import { FooterLinks } from "@/components/footer-links";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { clearCache } from "@/lib/cache";
@@ -175,48 +176,6 @@ function ToggleSetting({
           </span>
           <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} />
         </div>
-      </div>
-    </div>
-  );
-}
-
-function FooterLinks() {
-  return (
-    <div className="mt-8 pb-safe-bottom">
-      <div className="flex flex-nowrap items-center justify-center gap-1 overflow-x-auto rounded-full border border-white/10 bg-black/25 px-2 py-1.5 backdrop-blur-sm">
-        <Link
-          href="/"
-          className="shrink-0 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
-        >
-          Scheduler
-        </Link>
-        <Link
-          href="/legal"
-          className="shrink-0 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
-        >
-          Legal
-        </Link>
-        <Link
-          href="/privacy"
-          className="shrink-0 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
-        >
-          Privacy
-        </Link>
-        <Link
-          href="/debug"
-          className="shrink-0 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
-        >
-          Debug
-        </Link>
-        <Link
-          href="https://github.com/F1nal04/wattlyzer"
-          target="_blank"
-          rel="noopener noreferrer"
-          prefetch={false}
-          className="shrink-0 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
-        >
-          GitHub
-        </Link>
       </div>
     </div>
   );
