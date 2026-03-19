@@ -407,7 +407,9 @@ export default function Debug() {
                 <InfoTile
                   label="Market Data"
                   value={
-                    marketData
+                    settings.bestSlotMode === "solar-only"
+                      ? "Ignored in solar-only mode"
+                      : marketData
                       ? `${marketData.data?.length || 0} price points`
                       : "Not loaded"
                   }
@@ -456,23 +458,29 @@ export default function Debug() {
                   <h3 className="text-lg font-semibold text-green-300">
                     Best price slots
                   </h3>
-                  {topSlotsResult.topPriceSlots.map((slot, index) => (
-                    <div
-                      key={`price-${index}`}
-                      className="rounded-2xl border border-white/10 bg-white/[0.04] p-4"
-                    >
-                      <div className="text-sm font-semibold text-white">
-                        #{index + 1} {slot.startTime.toLocaleString()}
+                  {topSlotsResult.topPriceSlots.length > 0 ? (
+                    topSlotsResult.topPriceSlots.map((slot, index) => (
+                      <div
+                        key={`price-${index}`}
+                        className="rounded-2xl border border-white/10 bg-white/[0.04] p-4"
+                      >
+                        <div className="text-sm font-semibold text-white">
+                          #{index + 1} {slot.startTime.toLocaleString()}
+                        </div>
+                        <div className="mt-2 text-sm leading-6 text-gray-300">
+                          Solar: {slot.avgSolarProduction.toFixed(0)} Wh
+                          <br />
+                          Price: {(slot.avgPrice / 1000).toFixed(3)} €/kWh
+                          <br />
+                          Qualifies: {slot.solarQualifies ? "Yes" : "No"}
+                        </div>
                       </div>
-                      <div className="mt-2 text-sm leading-6 text-gray-300">
-                        Solar: {slot.avgSolarProduction.toFixed(0)} Wh
-                        <br />
-                        Price: {(slot.avgPrice / 1000).toFixed(3)} €/kWh
-                        <br />
-                        Qualifies: {slot.solarQualifies ? "Yes" : "No"}
-                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-gray-300">
+                      Price ranking is skipped in solar-only mode.
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             ) : (
@@ -490,11 +498,21 @@ export default function Debug() {
                   {schedulingResult.bestTime.toLocaleString()}
                 </div>
                 <div className="mt-2 text-sm leading-6 text-gray-300">
-                  Reason: {schedulingResult.reason === "solar" ? "Solar" : "Price"}
+                  Reason:{" "}
+                  {settings.bestSlotMode === "solar-only"
+                    ? "Solar only"
+                    : settings.bestSlotMode === "price-only"
+                    ? "Price only"
+                    : schedulingResult.reason === "solar"
+                    ? "Solar"
+                    : "Price"}
                   <br />
                   Solar: {(schedulingResult.avgSolarProduction || 0).toFixed(0)} Wh
                   <br />
-                  Price: {((schedulingResult.avgPrice || 0) / 1000).toFixed(3)} €/kWh
+                  Price:{" "}
+                  {settings.bestSlotMode === "solar-only"
+                    ? "Ignored"
+                    : `${((schedulingResult.avgPrice || 0) / 1000).toFixed(3)} €/kWh`}
                 </div>
               </div>
             ) : null}

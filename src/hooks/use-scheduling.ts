@@ -117,7 +117,8 @@ function calculateMarketPrice(marketData: MarketData | null, hoursFromNow: numbe
 function normalizeToFullHour(
   bestTime: Date,
   bestResult: SlotResult,
-  allResults: SlotResult[]
+  allResults: SlotResult[],
+  rankingMetric: "solar" | "price"
 ) {
   const now = new Date();
   const currentHour = new Date(bestTime);
@@ -160,7 +161,7 @@ function normalizeToFullHour(
     return { time: nextHour, ...nextHourResult };
   }
 
-  if (bestResult.solarQualifies) {
+  if (rankingMetric === "solar") {
     if (currentHourResult.avgSolarProduction >= nextHourResult.avgSolarProduction) {
       return { time: currentHour, ...currentHourResult };
     }
@@ -255,7 +256,13 @@ function calculateSchedule(
   consumerDuration: number,
   searchTimespan: number
 ) {
-  if (!solarData || !marketData || !settings) {
+  if (!solarData || !settings) {
+    return { schedulingResult: null, topSlotsResult: null };
+  }
+
+  const needsMarketData = settings.bestSlotMode !== "solar-only";
+
+  if (needsMarketData && !marketData) {
     return { schedulingResult: null, topSlotsResult: null };
   }
 
@@ -330,17 +337,18 @@ function calculateSchedule(
 
   const topSlotsResult: TopSlotsResult = {
     topSolarSlots,
-    topPriceSlots,
+    topPriceSlots: needsMarketData ? topPriceSlots : [],
   };
 
-  if (settings.ignoreSolarForBestSlot) {
+  if (settings.bestSlotMode === "price-only") {
     const cheapest = results.reduce((best, current) =>
       current.avgPrice < best.avgPrice ? current : best
     );
     const normalizedTime = normalizeToFullHour(
       cheapest.startTime,
       cheapest,
-      results
+      results,
+      "price"
     );
 
     return {
@@ -354,20 +362,46 @@ function calculateSchedule(
     };
   }
 
-  const solarQualifiedSlots = results.filter((result) => result.solarQualifies);
-
-  if (solarQualifiedSlots.length > 0) {
-    const best = solarQualifiedSlots.reduce((best, current) =>
+  if (settings.bestSlotMode === "solar-only") {
+    const sunniest = results.reduce((best, current) =>
       current.avgSolarProduction > best.avgSolarProduction ? current : best
     );
-    const normalizedTime = normalizeToFullHour(best.startTime, best, results);
+    const normalizedTime = normalizeToFullHour(
+      sunniest.startTime,
+      sunniest,
+      results,
+      "solar"
+    );
 
     return {
       schedulingResult: {
         bestTime: normalizedTime.time,
         reason: "solar" as const,
         avgSolarProduction: normalizedTime.avgSolarProduction,
-        avgPrice: normalizedTime.avgPrice,
+      },
+      topSlotsResult,
+    };
+  }
+
+  const solarQualifiedSlots = results.filter((result) => result.solarQualifies);
+
+  if (solarQualifiedSlots.length > 0) {
+    const best = solarQualifiedSlots.reduce((best, current) =>
+      current.avgSolarProduction > best.avgSolarProduction ? current : best
+    );
+    const normalizedSolarTime = normalizeToFullHour(
+      best.startTime,
+      best,
+      results,
+      "solar"
+    );
+
+    return {
+      schedulingResult: {
+        bestTime: normalizedSolarTime.time,
+        reason: "solar" as const,
+        avgSolarProduction: normalizedSolarTime.avgSolarProduction,
+        avgPrice: normalizedSolarTime.avgPrice,
       },
       topSlotsResult,
     };
@@ -379,7 +413,8 @@ function calculateSchedule(
   const normalizedTime = normalizeToFullHour(
     cheapest.startTime,
     cheapest,
-    results
+    results,
+    "price"
   );
 
   return {
@@ -437,13 +472,14 @@ export function useScheduling(
     ? getCachedData<MarketData>(MARKET_CACHE_KEY, "market")
     : null;
   const marketData = position ? marketDataState ?? cachedMarketData : null;
+  const shouldFetchMarketData = settings.bestSlotMode !== "solar-only";
 
   const solarDataPromise =
     position && settings && !solarData
       ? getSolarDataPromise(position, settings)
       : null;
   const marketDataPromise =
-    position && !marketData ? getMarketDataPromise() : null;
+    position && shouldFetchMarketData && !marketData ? getMarketDataPromise() : null;
   const { schedulingResult, topSlotsResult } = calculateSchedule(
     solarData,
     marketData,

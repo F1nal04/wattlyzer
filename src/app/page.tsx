@@ -227,6 +227,7 @@ function SchedulingPanel() {
   } = useScheduling(position, consumerDuration, searchTimespanHours);
 
   const showMarketDataWarning =
+    settings.bestSlotMode !== "solar-only" &&
     !!position &&
     searchTimespanHours >= consumerDuration &&
     !!marketDataSufficiency &&
@@ -302,12 +303,12 @@ function SchedulingPanel() {
 
           <ErrorBoundary
             fallback={
-              <StatusPanel
-                title="Failed to load data"
-                body="The solar or market request failed. Try again in a moment or clear the cache in settings."
-                accent="red"
-              />
-            }
+                <StatusPanel
+                  title="Failed to load data"
+                  body="A required data request failed. Try again in a moment or clear the cache in settings."
+                  accent="red"
+                />
+              }
             onError={handleError}
           >
             <Suspense
@@ -317,6 +318,8 @@ function SchedulingPanel() {
                   body={
                     locationError
                       ? "Location permission is required to calculate solar production for your roof."
+                      : settings.bestSlotMode === "solar-only"
+                      ? "Fetching solar forecast."
                       : "Fetching solar forecast and market prices."
                   }
                   accent="gray"
@@ -400,10 +403,12 @@ function SchedulingPanel() {
                   </div>
 
                   <div className="mt-5 inline-flex rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-white">
-                    {schedulingResult.reason === "solar"
-                      ? "Solar optimized"
-                      : settings.ignoreSolarForBestSlot
+                    {settings.bestSlotMode === "solar-only"
+                      ? "Solar only mode"
+                      : settings.bestSlotMode === "price-only"
                       ? "Price only mode"
+                      : schedulingResult.reason === "solar"
+                      ? "Solar optimized"
                       : "Price optimized"}
                   </div>
 
@@ -421,7 +426,9 @@ function SchedulingPanel() {
                         Average Price
                       </div>
                       <div className="mt-2 text-2xl font-semibold text-white">
-                        {((schedulingResult.avgPrice || 0) / 1000).toFixed(3)} €/kWh
+                        {settings.bestSlotMode === "solar-only"
+                          ? "Ignored"
+                          : `${((schedulingResult.avgPrice || 0) / 1000).toFixed(3)} €/kWh`}
                       </div>
                     </div>
                   </div>
@@ -559,12 +566,6 @@ function SchedulingPanel() {
                         <TabsTrigger value="price-only">Price only</TabsTrigger>
                       </TabsList>
                     </Tabs>
-                    {settings.bestSlotMode === "solar-only" && (
-                      <div className="mt-3 rounded-xl border border-yellow-300/20 bg-yellow-400/10 px-3 py-2 text-sm text-yellow-100">
-                        Solar-only selection is available in the UI now.
-                        Recommendation logic will be wired in next.
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
