@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
+import { FooterLinks } from "@/components/footer-links";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { clearCache } from "@/lib/cache";
@@ -218,14 +219,17 @@ export default function Settings() {
 
             <Link
               href="/"
-              className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/6 px-5 py-3 text-sm font-medium text-white transition-colors hover:border-yellow-300/35 hover:bg-yellow-300/10 hover:text-yellow-100"
+              className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/6 px-5 py-3 text-center text-sm font-medium text-white whitespace-nowrap transition-colors hover:border-yellow-300/35 hover:bg-yellow-300/10 hover:text-yellow-100"
             >
               Back to Wattlyzer
             </Link>
           </div>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <SummaryItem label="Direction" value={`${directionLabel} (${settings.azimut}°)`} />
+            <SummaryItem
+              label="Direction"
+              value={`${directionLabel} (${settings.azimut}°)`}
+            />
             <SummaryItem label="Tilt" value={`${settings.angle}°`} />
             <SummaryItem label="System Size" value={`${settings.kwh} kW`} />
             <SummaryItem
@@ -423,7 +427,10 @@ export default function Settings() {
               </button>
             </div>
           </SectionCard>
+
         </div>
+
+        <FooterLinks />
       </div>
     </div>
   );

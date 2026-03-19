@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useSyncExternalStore } from "react";
 
 export interface SettingsData {
   azimut: number; // Stored in compass format (0-360)
@@ -35,12 +35,18 @@ const SettingsContext = createContext<SettingsContextType | undefined>(
   undefined
 );
 
-function loadInitialSettings() {
+const SETTINGS_STORAGE_KEY = "wattlyzer_settings";
+const settingsServerSnapshot = defaultSettings;
+let cachedSettings = defaultSettings;
+let hasLoadedSettings = false;
+const listeners = new Set<() => void>();
+
+function loadSavedSettings() {
   if (typeof window === "undefined") {
     return defaultSettings;
   }
 
-  const savedSettings = localStorage.getItem("wattlyzer_settings");
+  const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
   if (!savedSettings) {
     return defaultSettings;
   }
@@ -64,13 +70,68 @@ function loadInitialSettings() {
   }
 }
 
+function getSettingsSnapshot() {
+  if (typeof window === "undefined") {
+    return settingsServerSnapshot;
+  }
+
+  if (!hasLoadedSettings) {
+    cachedSettings = loadSavedSettings();
+    hasLoadedSettings = true;
+  }
+
+  return cachedSettings;
+}
+
+function getSettingsServerSnapshot() {
+  return settingsServerSnapshot;
+}
+
+function emitSettingsChange() {
+  listeners.forEach((listener) => listener());
+}
+
+function subscribeToSettings(listener: () => void) {
+  listeners.add(listener);
+
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key !== SETTINGS_STORAGE_KEY) {
+      return;
+    }
+
+    const nextSettings = loadSavedSettings();
+    if (nextSettings !== cachedSettings) {
+      cachedSettings = nextSettings;
+      emitSettingsChange();
+    }
+  };
+
+  window.addEventListener("storage", handleStorage);
+
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener("storage", handleStorage);
+  };
+}
+
+function updateSettingsStore(newSettings: Partial<SettingsData>) {
+  const currentSettings = getSettingsSnapshot();
+  const updatedSettings = { ...currentSettings, ...newSettings };
+  cachedSettings = updatedSettings;
+  hasLoadedSettings = true;
+  localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(updatedSettings));
+  emitSettingsChange();
+}
+
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<SettingsData>(loadInitialSettings);
+  const settings = useSyncExternalStore(
+    subscribeToSettings,
+    getSettingsSnapshot,
+    getSettingsServerSnapshot
+  );
 
   const updateSettings = (newSettings: Partial<SettingsData>) => {
-    const updatedSettings = { ...settings, ...newSettings };
-    setSettings(updatedSettings);
-    localStorage.setItem("wattlyzer_settings", JSON.stringify(updatedSettings));
+    updateSettingsStore(newSettings);
   };
 
   return (

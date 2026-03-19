@@ -1,21 +1,42 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useSettings } from "@/lib/settings-context";
 import { useScheduling } from "@/hooks/use-scheduling";
 import {
   getCacheInfo,
-  SOLAR_CACHE_KEY,
   MARKET_CACHE_KEY,
+  SOLAR_CACHE_KEY,
   roundCoordinate,
 } from "@/lib/cache";
-import { useState, useEffect } from "react";
-import { SolarData, MarketData } from "@/lib/types";
+import { MarketData, SolarData } from "@/lib/types";
 import packageJson from "../../../package.json";
 
 const commitSha = process.env.NEXT_PUBLIC_COMMIT_SHA || "unknown";
+const serverSystemInfoSnapshot = {
+  userAgent: "Unknown",
+  screenSize: "Unknown",
+  timezone: "Unknown",
+  language: "Unknown",
+  online: "Unknown",
+  localStorage: "Unknown",
+};
+let cachedSystemInfoSnapshot = serverSystemInfoSnapshot;
 
-function formatCacheAge(ageMs: number): string {
+function subscribeToGeolocationSupport() {
+  return () => {};
+}
+
+function getGeolocationSupportSnapshot() {
+  return !!navigator.geolocation;
+}
+
+function getGeolocationSupportServerSnapshot() {
+  return null;
+}
+
+function formatCacheAge(ageMs: number) {
   const minutes = Math.floor(ageMs / 1000 / 60);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
@@ -35,6 +56,96 @@ function formatCacheAge(ageMs: number): string {
   return "Just now";
 }
 
+function SectionCard({
+  eyebrow,
+  title,
+  description,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-[28px] border border-white/10 bg-gray-950/55 p-5 shadow-[0_24px_80px_-48px_rgba(251,191,36,0.45)] backdrop-blur-md md:p-7">
+      <div className="mb-6">
+        <div className="text-[11px] uppercase tracking-[0.28em] text-yellow-300/70">
+          {eyebrow}
+        </div>
+        <h2 className="mt-2 text-2xl font-semibold text-white md:text-3xl">
+          {title}
+        </h2>
+        {description ? (
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
+            {description}
+          </p>
+        ) : null}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function InfoTile({
+  label,
+  value,
+}: {
+  label: string;
+  value: ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+      <div className="text-[11px] uppercase tracking-[0.22em] text-yellow-200/70">
+        {label}
+      </div>
+      <div className="mt-2 break-words text-sm leading-6 text-white">{value}</div>
+    </div>
+  );
+}
+
+function subscribeToSystemInfo(onStoreChange: () => void) {
+  window.addEventListener("resize", onStoreChange);
+  window.addEventListener("online", onStoreChange);
+  window.addEventListener("offline", onStoreChange);
+
+  return () => {
+    window.removeEventListener("resize", onStoreChange);
+    window.removeEventListener("online", onStoreChange);
+    window.removeEventListener("offline", onStoreChange);
+  };
+}
+
+function getSystemInfoSnapshot() {
+  const nextSnapshot = {
+    userAgent: navigator.userAgent,
+    screenSize: `${window.innerWidth}x${window.innerHeight}`,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    language: navigator.language,
+    online: navigator.onLine ? "Online" : "Offline",
+    localStorage: typeof Storage !== "undefined" ? "Available" : "Not available",
+  };
+
+  const isUnchanged =
+    cachedSystemInfoSnapshot.userAgent === nextSnapshot.userAgent &&
+    cachedSystemInfoSnapshot.screenSize === nextSnapshot.screenSize &&
+    cachedSystemInfoSnapshot.timezone === nextSnapshot.timezone &&
+    cachedSystemInfoSnapshot.language === nextSnapshot.language &&
+    cachedSystemInfoSnapshot.online === nextSnapshot.online &&
+    cachedSystemInfoSnapshot.localStorage === nextSnapshot.localStorage;
+
+  if (isUnchanged) {
+    return cachedSystemInfoSnapshot;
+  }
+
+  cachedSystemInfoSnapshot = nextSnapshot;
+  return cachedSystemInfoSnapshot;
+}
+
+function getSystemInfoServerSnapshot() {
+  return serverSystemInfoSnapshot;
+}
+
 export default function Debug() {
   const { settings } = useSettings();
   const [position, setPosition] = useState<{
@@ -42,13 +153,20 @@ export default function Debug() {
     longitude: number;
   } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
-  const hasGeolocationSupport =
-    typeof navigator === "undefined" || !!navigator.geolocation;
+  const hasGeolocationSupport = useSyncExternalStore(
+    subscribeToGeolocationSupport,
+    getGeolocationSupportSnapshot,
+    getGeolocationSupportServerSnapshot
+  );
+  const systemInfo = useSyncExternalStore(
+    subscribeToSystemInfo,
+    getSystemInfoSnapshot,
+    getSystemInfoServerSnapshot
+  );
 
   const { solarData, marketData, schedulingResult, topSlotsResult, apiError } =
     useScheduling(position, 3, 24);
 
-  // Get user location
   useEffect(() => {
     if (!hasGeolocationSupport) {
       return;
@@ -67,32 +185,11 @@ export default function Debug() {
     );
   }, [hasGeolocationSupport]);
 
-  const systemInfo = {
-    userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "Unknown",
-    screenSize:
-      typeof window !== "undefined"
-        ? `${window.innerWidth}x${window.innerHeight}`
-        : "Unknown",
-    timezone:
-      typeof Intl !== "undefined"
-        ? Intl.DateTimeFormat().resolvedOptions().timeZone
-        : "Unknown",
-    language: typeof navigator !== "undefined" ? navigator.language : "Unknown",
-    online:
-      typeof navigator !== "undefined" && navigator.onLine !== undefined
-        ? navigator.onLine
-          ? "✅ Online"
-          : "❌ Offline"
-        : "Unknown",
-    localStorage:
-      typeof Storage !== "undefined" ? "✅ Available" : "❌ Not available",
-  };
-
   const cacheInfo =
     position && settings
       ? (() => {
           const { latitude, longitude } = position;
-          const { angle, kwh, azimut } = settings;
+          const { angle, azimut, kwh } = settings;
           const roundedLat = roundCoordinate(latitude);
           const roundedLng = roundCoordinate(longitude);
           const solarKey = `${roundedLat},${roundedLng},${angle},${azimut},${kwh}`;
@@ -106,344 +203,316 @@ export default function Debug() {
       : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-black via-gray-800 to-yellow-800 flex flex-col items-center justify-center px-4 py-8">
-      <div className="max-w-4xl mx-auto bg-gray-900/50 rounded-lg p-6 md:p-8 backdrop-blur-sm">
-        <h1 className="text-4xl font-bold text-white text-center mb-8 font-sans">
-          Debug Information
-        </h1>
+    <div className="relative min-h-dvh overflow-hidden bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.18),transparent_28%),linear-gradient(135deg,#050505_0%,#151515_42%,#3b2b0f_100%)] px-4 py-8 md:px-6 md:py-10">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -left-16 top-24 h-48 w-48 rounded-full bg-yellow-500/10 blur-3xl" />
+        <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-orange-500/10 blur-3xl" />
+        <div className="absolute bottom-12 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-amber-300/10 blur-3xl" />
+      </div>
 
-        <div className="space-y-6 text-gray-300">
-          {/* App Version */}
-          <section className="bg-gray-800/50 rounded-lg p-4">
-            <h2 className="text-2xl font-semibold text-white mb-4">
-              App Version
-            </h2>
-            <div className="text-lg">
-              <strong>Version:</strong> {packageJson.version}
+      <div className="relative mx-auto max-w-6xl">
+        <header className="rounded-[32px] border border-white/12 bg-black/30 p-6 shadow-[0_28px_100px_-56px_rgba(251,191,36,0.6)] backdrop-blur-md md:p-8">
+          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+            <div>
+              <div className="inline-flex rounded-full border border-yellow-300/20 bg-yellow-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-yellow-200">
+                Diagnostics
+              </div>
+              <h1 className="mt-4 text-4xl font-bold text-white md:text-5xl">
+                Inspect the scheduler state.
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-300 md:text-base">
+                Cached data, current settings, API status, and calculated top
+                slots are all visible here in a more structured layout.
+              </p>
             </div>
-            <div className="text-lg">
-              <strong>Commit:</strong> {commitSha}
-            </div>
-          </section>
 
-          {/* Settings Information */}
-          <section className="bg-gray-800/50 rounded-lg p-4">
-            <h2 className="text-2xl font-semibold text-white mb-4">Settings</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <strong>Azimut (Compass):</strong> {settings.azimut}°
-              </div>
-              <div>
-                <strong>Azimut (API):</strong> {(settings.azimut % 360) - 180}°
-              </div>
-              <div>
-                <strong>Angle:</strong> {settings.angle}°
-              </div>
-              <div>
-                <strong>kWh:</strong> {settings.kwh}
-              </div>
-              <div>
-                <strong>Min kWh:</strong> {settings.minKwh} Wh (
-                {(settings.minKwh / 1000).toFixed(1)} kWh)
-              </div>
-              <div>
-                <strong>Morning Shading:</strong>{" "}
-                {settings.morningShading ? "Enabled" : "Disabled"}
-              </div>
-              <div>
-                <strong>Morning Shading Ends:</strong> {settings.shadingEndTime}:00
-              </div>
-              <div>
-                <strong>Evening Shading:</strong>{" "}
-                {settings.eveningShading ? "Enabled" : "Disabled"}
-              </div>
-              <div>
-                <strong>Evening Shading Starts:</strong> {settings.shadingStartTime}:00
-              </div>
-            </div>
-          </section>
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/6 px-5 py-3 text-center text-sm font-medium text-white whitespace-nowrap transition-colors hover:border-yellow-300/35 hover:bg-yellow-300/10 hover:text-yellow-100"
+            >
+              Back to Wattlyzer
+            </Link>
+          </div>
+        </header>
 
-          {/* Location Information */}
-          <section className="bg-gray-800/50 rounded-lg p-4">
-            <h2 className="text-2xl font-semibold text-white mb-4">Location</h2>
+        <div className="mt-8 grid gap-6">
+          <SectionCard
+            eyebrow="Runtime"
+            title="Build and environment"
+            description="Basic versioning and runtime context for the current browser session."
+          >
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <InfoTile label="Version" value={packageJson.version} />
+              <InfoTile label="Commit" value={commitSha} />
+              <InfoTile label="Timezone" value={systemInfo.timezone} />
+              <InfoTile label="Status" value={systemInfo.online} />
+            </div>
+          </SectionCard>
+
+          <SectionCard
+            eyebrow="Configuration"
+            title="Current settings"
+            description="The exact values used by the solar and scheduling logic."
+          >
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <InfoTile label="Azimut (Compass)" value={`${settings.azimut}°`} />
+              <InfoTile label="Azimut (API)" value={`${(settings.azimut % 360) - 180}°`} />
+              <InfoTile label="Tilt Angle" value={`${settings.angle}°`} />
+              <InfoTile label="System Size" value={`${settings.kwh} kW`} />
+              <InfoTile
+                label="Solar Minimum"
+                value={`${settings.minKwh} Wh (${(settings.minKwh / 1000).toFixed(1)} kWh)`}
+              />
+              <InfoTile
+                label="Morning Shading"
+                value={settings.morningShading ? "Enabled" : "Disabled"}
+              />
+              <InfoTile
+                label="Morning Clears"
+                value={`${settings.shadingEndTime}:00`}
+              />
+              <InfoTile
+                label="Evening Shading"
+                value={settings.eveningShading ? "Enabled" : "Disabled"}
+              />
+              <InfoTile
+                label="Evening Starts"
+                value={`${settings.shadingStartTime}:00`}
+              />
+              <InfoTile
+                label="Best Slot Mode"
+                value={settings.ignoreSolarForBestSlot ? "Price only" : "Solar first"}
+              />
+            </div>
+          </SectionCard>
+
+          <SectionCard
+            eyebrow="Location"
+            title="Geolocation and cache keys"
+            description="Coordinates used for the solar estimate and the derived cache key."
+          >
             {position ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <strong>Latitude:</strong> {position.latitude.toFixed(6)}
+              <div className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <InfoTile
+                    label="Latitude"
+                    value={position.latitude.toFixed(6)}
+                  />
+                  <InfoTile
+                    label="Longitude"
+                    value={position.longitude.toFixed(6)}
+                  />
+                  <InfoTile
+                    label="Rounded Latitude"
+                    value={roundCoordinate(position.latitude)}
+                  />
+                  <InfoTile
+                    label="Rounded Longitude"
+                    value={roundCoordinate(position.longitude)}
+                  />
                 </div>
-                <div>
-                  <strong>Longitude:</strong> {position.longitude.toFixed(6)}
-                </div>
-                <div>
-                  <strong>Rounded Lat:</strong>{" "}
-                  {roundCoordinate(position.latitude)}
-                </div>
-                <div>
-                  <strong>Rounded Lng:</strong>{" "}
-                  {roundCoordinate(position.longitude)}
-                </div>
+                {cacheInfo ? (
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-yellow-200/70">
+                      Solar Cache Key
+                    </div>
+                    <code className="mt-2 block break-all text-xs leading-6 text-gray-300">
+                      {cacheInfo.solarKey}
+                    </code>
+                  </div>
+                ) : null}
               </div>
             ) : (
-              <div className="text-red-400">
+              <div className="rounded-2xl border border-red-400/20 bg-red-500/10 p-4 text-sm text-red-200">
                 {locationError ||
-                  (!hasGeolocationSupport
+                  (hasGeolocationSupport === false
                     ? "Geolocation is not supported by this browser."
                     : "Getting location...")}
               </div>
             )}
-          </section>
+          </SectionCard>
 
-          {/* Cache Information */}
-          <section className="bg-gray-800/50 rounded-lg p-4">
-            <h2 className="text-2xl font-semibold text-white mb-4">
-              Cache Status
-            </h2>
-            {cacheInfo ? (
-              <div className="space-y-4">
-                <div>
-                  <strong>Solar Cache Key:</strong>
-                  <code className="block bg-gray-700 p-2 rounded mt-1 text-xs">
-                    {cacheInfo.solarKey}
-                  </code>
+          <div className="grid gap-6 xl:grid-cols-2">
+            <SectionCard
+              eyebrow="Cache"
+              title="Cache status"
+              description="Whether solar and market API responses are currently available in local storage."
+            >
+              {cacheInfo ? (
+                <div className="space-y-4">
+                  <InfoTile
+                    label="Solar Cache"
+                    value={
+                      cacheInfo.solar.exists
+                        ? cacheInfo.solar.data
+                          ? "Cached"
+                          : "Expired or invalid"
+                        : "Not cached"
+                    }
+                  />
+                  {cacheInfo.solar.timestamp ? (
+                    <InfoTile
+                      label="Solar Cache Age"
+                      value={`${formatCacheAge(cacheInfo.solar.age || 0)}${
+                        cacheInfo.solar.isExpired ? " (expired)" : ""
+                      }`}
+                    />
+                  ) : null}
+                  <InfoTile
+                    label="Market Cache"
+                    value={
+                      cacheInfo.market.exists
+                        ? cacheInfo.market.data
+                          ? "Cached"
+                          : "Expired or invalid"
+                        : "Not cached"
+                    }
+                  />
+                  {cacheInfo.market.timestamp ? (
+                    <InfoTile
+                      label="Market Cache Age"
+                      value={`${formatCacheAge(cacheInfo.market.age || 0)}${
+                        cacheInfo.market.isExpired ? " (expired)" : ""
+                      }`}
+                    />
+                  ) : null}
                 </div>
-                <div>
-                  <strong>Solar Cache:</strong>{" "}
-                  {cacheInfo.solar.exists ? (
-                    <span>
-                      {cacheInfo.solar.data
-                        ? "✅ Cached"
-                        : "❌ Expired/Invalid"}
-                      {cacheInfo.solar.timestamp && (
-                        <div className="text-xs text-gray-400 mt-1">
-                          Cached:{" "}
-                          {new Date(cacheInfo.solar.timestamp).toLocaleString()}
-                          <br />
-                          Age: {formatCacheAge(cacheInfo.solar.age || 0)}
-                          {cacheInfo.solar.isExpired && " (expired)"}
-                        </div>
-                      )}
-                    </span>
-                  ) : (
-                    "❌ Not cached"
-                  )}
-                </div>
-                <div>
-                  <strong>Market Cache:</strong>{" "}
-                  {cacheInfo.market.exists ? (
-                    <span>
-                      {cacheInfo.market.data
-                        ? "✅ Cached"
-                        : "❌ Expired/Invalid"}
-                      {cacheInfo.market.timestamp && (
-                        <div className="text-xs text-gray-400 mt-1">
-                          Cached:{" "}
-                          {new Date(
-                            cacheInfo.market.timestamp
-                          ).toLocaleString()}
-                          <br />
-                          Age: {formatCacheAge(cacheInfo.market.age || 0)}
-                          {cacheInfo.market.isExpired && " (expired)"}
-                        </div>
-                      )}
-                    </span>
-                  ) : (
-                    "❌ Not cached"
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="text-gray-400">
-                No cache information available
-              </div>
-            )}
-          </section>
-
-          {/* API Data */}
-          <section className="bg-gray-800/50 rounded-lg p-4">
-            <h2 className="text-2xl font-semibold text-white mb-4">API Data</h2>
-            <div className="space-y-4">
-              <div>
-                <strong>Solar Data:</strong>{" "}
-                {solarData ? "✅ Loaded" : "❌ Not loaded"}
-                {solarData && (
-                  <div className="text-xs text-gray-400 mt-1">
-                    {Object.keys(solarData.result).length} data points
-                  </div>
-                )}
-              </div>
-              <div>
-                <strong>Market Data:</strong>{" "}
-                {marketData ? "✅ Loaded" : "❌ Not loaded"}
-                {marketData && (
-                  <div className="text-xs text-gray-400 mt-1">
-                    {marketData.data?.length || 0} price points
-                  </div>
-                )}
-              </div>
-              {apiError && (
-                <div className="text-red-400">
-                  <strong>API Error:</strong> {apiError}
+              ) : (
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-gray-300">
+                  No cache information available.
                 </div>
               )}
-            </div>
-          </section>
+            </SectionCard>
 
-          {/* Top 3 Best Slots */}
-          <section className="bg-gray-800/50 rounded-lg p-4">
-            <h2 className="text-2xl font-semibold text-white mb-4">
-              Top 3 Best Slots
-            </h2>
+            <SectionCard
+              eyebrow="API"
+              title="Loaded data"
+              description="Whether the current solar and market requests have resolved and if any API error was captured."
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                <InfoTile
+                  label="Solar Data"
+                  value={
+                    solarData
+                      ? `${Object.keys(solarData.result).length} data points`
+                      : "Not loaded"
+                  }
+                />
+                <InfoTile
+                  label="Market Data"
+                  value={
+                    marketData
+                      ? `${marketData.data?.length || 0} price points`
+                      : "Not loaded"
+                  }
+                />
+              </div>
+
+              {apiError ? (
+                <div className="mt-4 rounded-2xl border border-red-400/20 bg-red-500/10 p-4 text-sm text-red-200">
+                  API Error: {apiError}
+                </div>
+              ) : null}
+            </SectionCard>
+          </div>
+
+          <SectionCard
+            eyebrow="Ranking"
+            title="Top scheduling slots"
+            description="The best solar-heavy windows, the cheapest windows, and the final recommendation for the current debug run."
+          >
             {topSlotsResult ? (
-              <div className="space-y-6">
-                {/* Top Solar Slots */}
-                <div>
-                  <h3 className="text-lg font-semibold text-yellow-400 mb-3">
-                    ☀️ Best Solar Production Slots
+              <div className="grid gap-6 xl:grid-cols-2">
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-yellow-300">
+                    Best solar production slots
                   </h3>
-                  <div className="space-y-3">
-                    {topSlotsResult.topSolarSlots.map((slot, index) => (
-                      <div
-                        key={index}
-                        className="bg-gray-700/50 rounded p-3 text-sm"
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="font-medium text-white">
-                            #{index + 1} - {slot.startTime.toLocaleString()}
-                          </div>
-                          {slot.solarQualifies && (
-                            <span className="text-green-400 text-xs">
-                              ✓ Qualifies
-                            </span>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 text-gray-300">
-                          <div>
-                            <strong>Solar:</strong>{" "}
-                            {slot.avgSolarProduction.toFixed(0)} Wh
-                          </div>
-                          <div>
-                            <strong>Price:</strong>{" "}
-                            {(slot.avgPrice / 1000).toFixed(3)} €/kWh
-                          </div>
-                        </div>
+                  {topSlotsResult.topSolarSlots.map((slot, index) => (
+                    <div
+                      key={`solar-${index}`}
+                      className="rounded-2xl border border-white/10 bg-white/[0.04] p-4"
+                    >
+                      <div className="text-sm font-semibold text-white">
+                        #{index + 1} {slot.startTime.toLocaleString()}
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Top Price Slots */}
-                <div>
-                  <h3 className="text-lg font-semibold text-green-400 mb-3">
-                    💰 Best Price Slots
-                  </h3>
-                  <div className="space-y-3">
-                    {topSlotsResult.topPriceSlots.map((slot, index) => (
-                      <div
-                        key={index}
-                        className="bg-gray-700/50 rounded p-3 text-sm"
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="font-medium text-white">
-                            #{index + 1} - {slot.startTime.toLocaleString()}
-                          </div>
-                          {slot.solarQualifies && (
-                            <span className="text-green-400 text-xs">
-                              ✓ Qualifies
-                            </span>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 text-gray-300">
-                          <div>
-                            <strong>Solar:</strong>{" "}
-                            {slot.avgSolarProduction.toFixed(0)} Wh
-                          </div>
-                          <div>
-                            <strong>Price:</strong>{" "}
-                            {(slot.avgPrice / 1000).toFixed(3)} €/kWh
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Current Best Recommendation */}
-                {schedulingResult && (
-                  <div className="border-t border-gray-600 pt-4">
-                    <h3 className="text-lg font-semibold text-blue-400 mb-3">
-                      🎯 Current Recommendation
-                    </h3>
-                    <div className="bg-blue-900/30 rounded p-3 text-sm">
-                      <div className="font-medium text-white mb-2">
-                        {schedulingResult.bestTime.toLocaleString()}
-                      </div>
-                      <div className="grid grid-cols-3 gap-4 text-gray-300">
-                        <div>
-                          <strong>Reason:</strong>{" "}
-                          {schedulingResult.reason === "solar"
-                            ? "☀️ Solar"
-                            : "💰 Price"}
-                        </div>
-                        <div>
-                          <strong>Solar:</strong>{" "}
-                          {(schedulingResult.avgSolarProduction || 0).toFixed(
-                            0
-                          )}{" "}
-                          Wh
-                        </div>
-                        <div>
-                          <strong>Price:</strong>{" "}
-                          {((schedulingResult.avgPrice || 0) / 1000).toFixed(3)}{" "}
-                          €/kWh
-                        </div>
+                      <div className="mt-2 text-sm leading-6 text-gray-300">
+                        Solar: {slot.avgSolarProduction.toFixed(0)} Wh
+                        <br />
+                        Price: {(slot.avgPrice / 1000).toFixed(3)} €/kWh
+                        <br />
+                        Qualifies: {slot.solarQualifies ? "Yes" : "No"}
                       </div>
                     </div>
-                  </div>
-                )}
+                  ))}
+                </div>
+
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-green-300">
+                    Best price slots
+                  </h3>
+                  {topSlotsResult.topPriceSlots.map((slot, index) => (
+                    <div
+                      key={`price-${index}`}
+                      className="rounded-2xl border border-white/10 bg-white/[0.04] p-4"
+                    >
+                      <div className="text-sm font-semibold text-white">
+                        #{index + 1} {slot.startTime.toLocaleString()}
+                      </div>
+                      <div className="mt-2 text-sm leading-6 text-gray-300">
+                        Solar: {slot.avgSolarProduction.toFixed(0)} Wh
+                        <br />
+                        Price: {(slot.avgPrice / 1000).toFixed(3)} €/kWh
+                        <br />
+                        Qualifies: {slot.solarQualifies ? "Yes" : "No"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : (
-              <div className="text-gray-400">No scheduling data available</div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-gray-300">
+                No scheduling data available.
+              </div>
             )}
-          </section>
 
-          {/* System Information */}
-          <section className="bg-gray-800/50 rounded-lg p-4">
-            <h2 className="text-2xl font-semibold text-white mb-4">
-              System Information
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <strong>User Agent:</strong>
-                <div className="text-xs text-gray-400 mt-1 break-all">
+            {schedulingResult ? (
+              <div className="mt-6 rounded-2xl border border-blue-400/20 bg-blue-500/10 p-5">
+                <div className="text-[11px] uppercase tracking-[0.22em] text-blue-200/70">
+                  Current Recommendation
+                </div>
+                <div className="mt-2 text-lg font-semibold text-white">
+                  {schedulingResult.bestTime.toLocaleString()}
+                </div>
+                <div className="mt-2 text-sm leading-6 text-gray-300">
+                  Reason: {schedulingResult.reason === "solar" ? "Solar" : "Price"}
+                  <br />
+                  Solar: {(schedulingResult.avgSolarProduction || 0).toFixed(0)} Wh
+                  <br />
+                  Price: {((schedulingResult.avgPrice || 0) / 1000).toFixed(3)} €/kWh
+                </div>
+              </div>
+            ) : null}
+          </SectionCard>
+
+          <SectionCard
+            eyebrow="Client"
+            title="Browser information"
+            description="Useful runtime details when debugging layout, storage, or browser-specific behavior."
+          >
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <InfoTile label="Screen Size" value={systemInfo.screenSize} />
+              <InfoTile label="Language" value={systemInfo.language} />
+              <InfoTile label="Local Storage" value={systemInfo.localStorage} />
+              <div className="sm:col-span-2 xl:col-span-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                <div className="text-[11px] uppercase tracking-[0.22em] text-yellow-200/70">
+                  User Agent
+                </div>
+                <div className="mt-2 break-all text-sm leading-6 text-gray-300">
                   {systemInfo.userAgent}
                 </div>
               </div>
-              <div>
-                <strong>Screen Size:</strong> {systemInfo.screenSize}
-              </div>
-              <div>
-                <strong>Timezone:</strong> {systemInfo.timezone}
-              </div>
-              <div>
-                <strong>Language:</strong> {systemInfo.language}
-              </div>
-              <div>
-                <strong>Online:</strong> {systemInfo.online}
-              </div>
-              <div>
-                <strong>Local Storage:</strong> {systemInfo.localStorage}
-              </div>
             </div>
-          </section>
-        </div>
-
-        <div className="mt-8 text-center">
-          <Link
-            href="/"
-            className="text-yellow-400 hover:text-yellow-300 transition-colors font-medium"
-          >
-            ← Back to Wattlyzer
-          </Link>
+          </SectionCard>
         </div>
       </div>
     </div>
