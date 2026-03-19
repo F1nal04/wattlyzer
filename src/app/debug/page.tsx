@@ -281,7 +281,13 @@ export default function Debug() {
               />
               <InfoTile
                 label="Best Slot Mode"
-                value={settings.ignoreSolarForBestSlot ? "Price only" : "Solar first"}
+                value={
+                  settings.bestSlotMode === "price-only"
+                    ? "Price only"
+                    : settings.bestSlotMode === "solar-only"
+                    ? "Solar only"
+                    : "Combined"
+                }
               />
             </div>
           </SectionCard>

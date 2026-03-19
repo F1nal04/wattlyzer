@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   SolarDataFetcher,
   MarketDataFetcher,
@@ -23,7 +23,7 @@ import {
 import { ErrorBoundary } from "@/components/error-boundary";
 import { FooterLinks } from "@/components/footer-links";
 import { useScheduling } from "@/hooks/use-scheduling";
-import { useSettings } from "@/lib/settings-context";
+import { useSettings, type BestSlotMode } from "@/lib/settings-context";
 
 function formatRemainingTime(targetTime: Date) {
   const now = new Date();
@@ -454,7 +454,7 @@ function SchedulingPanel() {
               <div>
                 <div className="text-lg font-semibold">Advanced options</div>
                 <div className="mt-2 text-sm leading-6 text-gray-400">
-                  Search horizon, solar threshold, and price-only mode.
+                  Search horizon, solar threshold, and scheduling mode.
                 </div>
               </div>
               <span
@@ -533,24 +533,38 @@ function SchedulingPanel() {
                 </ControlBlock>
 
                 <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
-                  <div className="flex items-start justify-between gap-4">
+                  <div>
                     <div>
                       <div className="text-lg font-semibold text-white">
-                        Price only mode
+                        Scheduling mode
                       </div>
                       <div className="mt-2 text-sm leading-6 text-gray-400">
-                        Ignore solar production and optimize only for the
-                        lowest electricity price.
+                        Choose whether Wattlyzer should balance both signals,
+                        prefer solar only, or optimize only for the lowest
+                        electricity price.
                       </div>
                     </div>
-                    <Switch
-                      id="ignore-solar-switch"
-                      checked={settings.ignoreSolarForBestSlot}
-                      onCheckedChange={(checked) =>
-                        updateSettings({ ignoreSolarForBestSlot: checked })
+                    <Tabs
+                      value={settings.bestSlotMode}
+                      onValueChange={(value) =>
+                        updateSettings({
+                          bestSlotMode: value as BestSlotMode,
+                        })
                       }
-                      className="data-[state=checked]:bg-blue-500"
-                    />
+                      className="mt-4"
+                    >
+                      <TabsList className="grid h-auto w-full grid-cols-3 gap-1 bg-white/10 p-1">
+                        <TabsTrigger value="combined">Combined</TabsTrigger>
+                        <TabsTrigger value="solar-only">Solar only</TabsTrigger>
+                        <TabsTrigger value="price-only">Price only</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                    {settings.bestSlotMode === "solar-only" && (
+                      <div className="mt-3 rounded-xl border border-yellow-300/20 bg-yellow-400/10 px-3 py-2 text-sm text-yellow-100">
+                        Solar-only selection is available in the UI now.
+                        Recommendation logic will be wired in next.
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
