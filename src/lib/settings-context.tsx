@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useSyncExternalStore } from "react";
 
+export type BestSlotMode = "combined" | "solar-only" | "price-only";
+
 export interface SettingsData {
   azimut: number; // Stored in compass format (0-360)
   angle: number;
@@ -11,6 +13,7 @@ export interface SettingsData {
   shadingEndTime: number; // Hour when shading ends (0-23)
   eveningShading: boolean; // Enable evening shading compensation
   shadingStartTime: number; // Hour when evening shading starts (0-23)
+  bestSlotMode: BestSlotMode; // UI mode for choosing how the best timeslot should be ranked
   ignoreSolarForBestSlot: boolean; // Ignore solar production when calculating best timeslot
 }
 
@@ -28,6 +31,7 @@ const defaultSettings: SettingsData = {
   shadingEndTime: 10, // Shading ends at 10:00 AM by default
   eveningShading: false, // Evening shading compensation disabled by default
   shadingStartTime: 17, // Shading starts at 17:00 by default
+  bestSlotMode: "combined",
   ignoreSolarForBestSlot: false, // Don't ignore solar by default
 };
 
@@ -56,10 +60,15 @@ function loadSavedSettings() {
       betaCalculations?: boolean;
     };
     const { betaCalculations, ...rest } = parsed;
+    const bestSlotMode =
+      parsed.bestSlotMode ??
+      (parsed.ignoreSolarForBestSlot ? "price-only" : "combined");
 
     return {
       ...defaultSettings,
       ...rest,
+      bestSlotMode,
+      ignoreSolarForBestSlot: bestSlotMode === "price-only",
       ...(betaCalculations !== undefined
         ? { morningShading: betaCalculations }
         : {}),
@@ -117,6 +126,16 @@ function subscribeToSettings(listener: () => void) {
 function updateSettingsStore(newSettings: Partial<SettingsData>) {
   const currentSettings = getSettingsSnapshot();
   const updatedSettings = { ...currentSettings, ...newSettings };
+
+  if (newSettings.bestSlotMode !== undefined) {
+    updatedSettings.ignoreSolarForBestSlot =
+      newSettings.bestSlotMode === "price-only";
+  } else if (newSettings.ignoreSolarForBestSlot !== undefined) {
+    updatedSettings.bestSlotMode = newSettings.ignoreSolarForBestSlot
+      ? "price-only"
+      : "combined";
+  }
+
   cachedSettings = updatedSettings;
   hasLoadedSettings = true;
   localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(updatedSettings));
