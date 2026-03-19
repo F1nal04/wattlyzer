@@ -180,6 +180,48 @@ function ToggleSetting({
   );
 }
 
+function FooterLinks() {
+  return (
+    <div className="mt-8 pb-safe-bottom">
+      <div className="flex flex-nowrap items-center justify-center gap-1 overflow-x-auto rounded-full border border-white/10 bg-black/25 px-2 py-1.5 backdrop-blur-sm">
+        <Link
+          href="/"
+          className="shrink-0 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
+        >
+          Scheduler
+        </Link>
+        <Link
+          href="/legal"
+          className="shrink-0 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
+        >
+          Legal
+        </Link>
+        <Link
+          href="/privacy"
+          className="shrink-0 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
+        >
+          Privacy
+        </Link>
+        <Link
+          href="/debug"
+          className="shrink-0 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
+        >
+          Debug
+        </Link>
+        <Link
+          href="https://github.com/F1nal04/wattlyzer"
+          target="_blank"
+          rel="noopener noreferrer"
+          prefetch={false}
+          className="shrink-0 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
+        >
+          GitHub
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function Settings() {
   const { settings, updateSettings } = useSettings();
   const [cacheCleared, setCacheCleared] = useState(false);
@@ -225,7 +267,10 @@ export default function Settings() {
           </div>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <SummaryItem label="Direction" value={`${directionLabel} (${settings.azimut}°)`} />
+            <SummaryItem
+              label="Direction"
+              value={`${directionLabel} (${settings.azimut}°)`}
+            />
             <SummaryItem label="Tilt" value={`${settings.angle}°`} />
             <SummaryItem label="System Size" value={`${settings.kwh} kW`} />
             <SummaryItem
@@ -423,7 +468,10 @@ export default function Settings() {
               </button>
             </div>
           </SectionCard>
+
         </div>
+
+        <FooterLinks />
       </div>
     </div>
   );
