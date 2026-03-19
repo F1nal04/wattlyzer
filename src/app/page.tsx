@@ -500,7 +500,7 @@ function SchedulingPanel() {
             id="advanced-options"
             className={`overflow-hidden transition-all duration-300 ease-in-out ${
               showAdvancedOptions
-                ? "max-h-[500px] opacity-100 mt-6"
+                ? "max-h-[720px] opacity-100 mt-6"
                 : "max-h-0 opacity-0"
             }`}
           >
@@ -537,6 +537,37 @@ function SchedulingPanel() {
                 </div>
                 <div className="text-sm text-gray-400 mt-2">
                   Find the best time within this window
+                </div>
+              </div>
+
+              {/* Minimum Solar Requirement */}
+              <div className="text-center">
+                <label
+                  htmlFor="min-kwh-slider"
+                  className="block text-2xl font-semibold text-white mb-4"
+                >
+                  Min Solar Requirement: {(settings.minKwh / 1000).toFixed(1)} kWh
+                </label>
+                <Slider
+                  id="min-kwh-slider"
+                  min={500}
+                  max={3000}
+                  step={100}
+                  value={[settings.minKwh]}
+                  onValueChange={(value) =>
+                    updateSettings({ minKwh: value[0] })
+                  }
+                />
+                <div className="flex justify-between text-sm text-gray-300 mt-2">
+                  <span>0.5</span>
+                  <span>1.0</span>
+                  <span>1.5</span>
+                  <span>2.0</span>
+                  <span>2.5</span>
+                  <span>3.0</span>
+                </div>
+                <div className="text-sm text-gray-400 mt-2">
+                  Minimum average solar output needed before solar beats price
                 </div>
               </div>
 

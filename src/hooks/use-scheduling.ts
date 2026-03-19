@@ -89,6 +89,10 @@ function calculatePowerGeneration(
     hourlyProduction *= 0.5;
   }
 
+  if (settings.eveningShading && targetTime.getHours() >= settings.shadingStartTime) {
+    hourlyProduction *= 0.5;
+  }
+
   return hourlyProduction;
 }
 

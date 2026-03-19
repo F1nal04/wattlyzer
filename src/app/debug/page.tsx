@@ -151,7 +151,14 @@ export default function Debug() {
                 {settings.morningShading ? "Enabled" : "Disabled"}
               </div>
               <div>
-                <strong>Shading End Time:</strong> {settings.shadingEndTime}:00
+                <strong>Morning Shading Ends:</strong> {settings.shadingEndTime}:00
+              </div>
+              <div>
+                <strong>Evening Shading:</strong>{" "}
+                {settings.eveningShading ? "Enabled" : "Disabled"}
+              </div>
+              <div>
+                <strong>Evening Shading Starts:</strong> {settings.shadingStartTime}:00
               </div>
             </div>
           </section>

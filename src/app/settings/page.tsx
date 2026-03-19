@@ -148,45 +148,6 @@ export default function Settings() {
             </div>
           </section>
 
-          {/* Minimum kWh Requirement Slider */}
-          <section>
-            <div className="flex flex-col md:flex-row md:items-start gap-6">
-              <div className="md:flex-1 text-sm text-gray-400">
-                <p>
-                  Set the minimum energy threshold for choosing solar over price
-                  optimization.
-                </p>
-              </div>
-              <div className="md:flex-1 text-center">
-                <label
-                  htmlFor="min-kwh-slider"
-                  className="block text-xl md:text-2xl font-semibold text-white mb-4 md:whitespace-nowrap"
-                >
-                  Min Requirement: {(settings.minKwh / 1000).toFixed(1)} kWh
-                </label>
-                <Slider
-                  id="min-kwh-slider"
-                  min={500}
-                  max={3000}
-                  step={100}
-                  value={[settings.minKwh]}
-                  onValueChange={(value) =>
-                    updateSettings({ minKwh: value[0] })
-                  }
-                  className="mb-2"
-                />
-                <div className="flex justify-between text-sm text-gray-300 mt-2">
-                  <span>0.5</span>
-                  <span>1.0</span>
-                  <span>1.5</span>
-                  <span>2.0</span>
-                  <span>2.5</span>
-                  <span>3.0</span>
-                </div>
-              </div>
-            </div>
-          </section>
-
           {/* Morning Shading Switch */}
           <section>
             <div className="flex flex-col md:flex-row md:items-start gap-6">
@@ -215,7 +176,7 @@ export default function Settings() {
             </div>
           </section>
 
-          {/* Shading End Time Slider - only show if morning shading is enabled */}
+          {/* Morning Shading End Time Slider */}
           {settings.morningShading && (
             <section>
               <div className="flex flex-col md:flex-row md:items-start gap-6">
@@ -230,7 +191,7 @@ export default function Settings() {
                     htmlFor="shading-end-time-slider"
                     className="block text-xl md:text-2xl font-semibold text-white mb-4"
                   >
-                    Shading Ends: {settings.shadingEndTime}:00
+                    Morning Shading Ends: {settings.shadingEndTime}:00
                   </label>
                   <Slider
                     id="shading-end-time-slider"
@@ -247,6 +208,72 @@ export default function Settings() {
                     <span>8:00</span>
                     <span>10:00</span>
                     <span>12:00</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Evening Shading Switch */}
+          <section>
+            <div className="flex flex-col md:flex-row md:items-start gap-6">
+              <div className="md:flex-1 text-sm text-gray-400">
+                <p>
+                  Enable evening shading compensation to reduce solar production
+                  estimates after the specified time. Useful when nearby
+                  buildings, trees, or roof geometry block late-day sunlight.
+                </p>
+              </div>
+              <div className="md:flex-1 flex items-center justify-center gap-4">
+                <label
+                  htmlFor="evening-shading-switch"
+                  className="text-xl md:text-2xl font-semibold text-white"
+                >
+                  Evening Shading
+                </label>
+                <Switch
+                  id="evening-shading-switch"
+                  checked={settings.eveningShading}
+                  onCheckedChange={(checked) =>
+                    updateSettings({ eveningShading: checked })
+                  }
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* Evening Shading Start Time Slider */}
+          {settings.eveningShading && (
+            <section>
+              <div className="flex flex-col md:flex-row md:items-start gap-6">
+                <div className="md:flex-1 text-sm text-gray-400">
+                  <p>
+                    Set the hour when evening shading begins. From this time
+                    onward, estimates will be reduced by 50%.
+                  </p>
+                </div>
+                <div className="md:flex-1 text-center">
+                  <label
+                    htmlFor="shading-start-time-slider"
+                    className="block text-xl md:text-2xl font-semibold text-white mb-4"
+                  >
+                    Evening Shading Starts: {settings.shadingStartTime}:00
+                  </label>
+                  <Slider
+                    id="shading-start-time-slider"
+                    min={12}
+                    max={21}
+                    value={[settings.shadingStartTime]}
+                    onValueChange={(value) =>
+                      updateSettings({ shadingStartTime: value[0] })
+                    }
+                    className="mb-2"
+                  />
+                  <div className="flex justify-between text-sm text-gray-300 mt-2">
+                    <span>12:00</span>
+                    <span>15:00</span>
+                    <span>18:00</span>
+                    <span>21:00</span>
                   </div>
                 </div>
               </div>
