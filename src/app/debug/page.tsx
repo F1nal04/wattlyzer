@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useSettings } from "@/lib/settings-context";
 import { useScheduling } from "@/hooks/use-scheduling";
 import {
@@ -14,6 +14,27 @@ import { MarketData, SolarData } from "@/lib/types";
 import packageJson from "../../../package.json";
 
 const commitSha = process.env.NEXT_PUBLIC_COMMIT_SHA || "unknown";
+const serverSystemInfoSnapshot = {
+  userAgent: "Unknown",
+  screenSize: "Unknown",
+  timezone: "Unknown",
+  language: "Unknown",
+  online: "Unknown",
+  localStorage: "Unknown",
+};
+let cachedSystemInfoSnapshot = serverSystemInfoSnapshot;
+
+function subscribeToGeolocationSupport() {
+  return () => {};
+}
+
+function getGeolocationSupportSnapshot() {
+  return !!navigator.geolocation;
+}
+
+function getGeolocationSupportServerSnapshot() {
+  return null;
+}
 
 function formatCacheAge(ageMs: number) {
   const minutes = Math.floor(ageMs / 1000 / 60);
@@ -83,6 +104,48 @@ function InfoTile({
   );
 }
 
+function subscribeToSystemInfo(onStoreChange: () => void) {
+  window.addEventListener("resize", onStoreChange);
+  window.addEventListener("online", onStoreChange);
+  window.addEventListener("offline", onStoreChange);
+
+  return () => {
+    window.removeEventListener("resize", onStoreChange);
+    window.removeEventListener("online", onStoreChange);
+    window.removeEventListener("offline", onStoreChange);
+  };
+}
+
+function getSystemInfoSnapshot() {
+  const nextSnapshot = {
+    userAgent: navigator.userAgent,
+    screenSize: `${window.innerWidth}x${window.innerHeight}`,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    language: navigator.language,
+    online: navigator.onLine ? "Online" : "Offline",
+    localStorage: typeof Storage !== "undefined" ? "Available" : "Not available",
+  };
+
+  const isUnchanged =
+    cachedSystemInfoSnapshot.userAgent === nextSnapshot.userAgent &&
+    cachedSystemInfoSnapshot.screenSize === nextSnapshot.screenSize &&
+    cachedSystemInfoSnapshot.timezone === nextSnapshot.timezone &&
+    cachedSystemInfoSnapshot.language === nextSnapshot.language &&
+    cachedSystemInfoSnapshot.online === nextSnapshot.online &&
+    cachedSystemInfoSnapshot.localStorage === nextSnapshot.localStorage;
+
+  if (isUnchanged) {
+    return cachedSystemInfoSnapshot;
+  }
+
+  cachedSystemInfoSnapshot = nextSnapshot;
+  return cachedSystemInfoSnapshot;
+}
+
+function getSystemInfoServerSnapshot() {
+  return serverSystemInfoSnapshot;
+}
+
 export default function Debug() {
   const { settings } = useSettings();
   const [position, setPosition] = useState<{
@@ -90,8 +153,16 @@ export default function Debug() {
     longitude: number;
   } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
-  const hasGeolocationSupport =
-    typeof navigator === "undefined" || !!navigator.geolocation;
+  const hasGeolocationSupport = useSyncExternalStore(
+    subscribeToGeolocationSupport,
+    getGeolocationSupportSnapshot,
+    getGeolocationSupportServerSnapshot
+  );
+  const systemInfo = useSyncExternalStore(
+    subscribeToSystemInfo,
+    getSystemInfoSnapshot,
+    getSystemInfoServerSnapshot
+  );
 
   const { solarData, marketData, schedulingResult, topSlotsResult, apiError } =
     useScheduling(position, 3, 24);
@@ -113,27 +184,6 @@ export default function Debug() {
       }
     );
   }, [hasGeolocationSupport]);
-
-  const systemInfo = {
-    userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "Unknown",
-    screenSize:
-      typeof window !== "undefined"
-        ? `${window.innerWidth}x${window.innerHeight}`
-        : "Unknown",
-    timezone:
-      typeof Intl !== "undefined"
-        ? Intl.DateTimeFormat().resolvedOptions().timeZone
-        : "Unknown",
-    language: typeof navigator !== "undefined" ? navigator.language : "Unknown",
-    online:
-      typeof navigator !== "undefined" && navigator.onLine !== undefined
-        ? navigator.onLine
-          ? "Online"
-          : "Offline"
-        : "Unknown",
-    localStorage:
-      typeof Storage !== "undefined" ? "Available" : "Not available",
-  };
 
   const cacheInfo =
     position && settings
@@ -178,9 +228,9 @@ export default function Debug() {
 
             <Link
               href="/"
-              className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/6 px-5 py-3 text-sm font-medium text-white transition-colors hover:border-yellow-300/35 hover:bg-yellow-300/10 hover:text-yellow-100"
+              className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/6 px-5 py-3 text-center text-sm font-medium text-white whitespace-nowrap transition-colors hover:border-yellow-300/35 hover:bg-yellow-300/10 hover:text-yellow-100"
             >
-              Back to Scheduler
+              Back to Wattlyzer
             </Link>
           </div>
         </header>
@@ -275,7 +325,7 @@ export default function Debug() {
             ) : (
               <div className="rounded-2xl border border-red-400/20 bg-red-500/10 p-4 text-sm text-red-200">
                 {locationError ||
-                  (!hasGeolocationSupport
+                  (hasGeolocationSupport === false
                     ? "Geolocation is not supported by this browser."
                     : "Getting location...")}
               </div>

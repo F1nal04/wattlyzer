@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
 import { SettingsProvider } from "@/lib/settings-context";
 
 const poppins = Poppins({
@@ -37,7 +36,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <meta
           name="apple-mobile-web-app-status-bar-style"
@@ -46,13 +45,9 @@ export default function RootLayout({
         <meta name="theme-color" content="#000000" />
       </head>
       <body className={`${poppins.variable} antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <SettingsProvider>
-            <div className="min-h-[100dvh] w-full overflow-hidden">
-              {children}
-            </div>
-          </SettingsProvider>
-        </ThemeProvider>
+        <SettingsProvider>
+          <div className="min-h-[100dvh] w-full overflow-hidden">{children}</div>
+        </SettingsProvider>
       </body>
     </html>
   );
