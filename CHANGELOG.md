@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.7.0](https://github.com/F1nal04/wattlyzer/compare/v1.6.0...v1.7.0) (2026-03-20)
+
+
+### Features
+
+* add UTC timezone support and enhance scheduling tests ([cce3aa8](https://github.com/F1nal04/wattlyzer/commit/cce3aa89145adb004bac9d371f6be22e654b2935))
+* integrate Radix UI components and enhance debug page ([705d285](https://github.com/F1nal04/wattlyzer/commit/705d285343b3075904ac1bf66f051bd0261a0ac0))
+* integrate Vitest for testing and enhance scheduling logic ([b71f253](https://github.com/F1nal04/wattlyzer/commit/b71f2539a1548e3c271c14acb4f2574fbf762b54))
+
 ## [1.6.0](https://github.com/F1nal04/wattlyzer/compare/v1.5.4...v1.6.0) (2026-03-19)
 
 
