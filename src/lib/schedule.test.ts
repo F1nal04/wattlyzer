@@ -55,6 +55,90 @@ function flatSolarCurve(day: string, whPerHour: number): Record<string, number> 
   return out;
 }
 
+/** Cumulative Wh at each UTC hour; segment (h→h+1) yields ~rates[h] Wh/h after 0.7 yield. */
+function solarFromHourlyRates(day: string, rates: number[]): SolarData {
+  const out: Record<string, number> = {};
+  let cumulative = 0;
+  for (let h = 0; h < 24; h++) {
+    const hh = String(h).padStart(2, "0");
+    out[`${day}T${hh}:00:00.000Z`] = cumulative;
+    cumulative += (rates[h] ?? 0) / 0.7;
+  }
+  return solarWithResult(out);
+}
+
+/** Lowest average price over any valid start offset (same rules as calculateSchedule windows). */
+function oracleCheapestAvgPrice(
+  prices: number[],
+  consumerDuration: number,
+  searchTimespan: number
+) {
+  const maxStartHour = Math.min(
+    searchTimespan,
+    searchTimespan - consumerDuration + 1
+  );
+  let bestAvg = Infinity;
+  let bestH = -1;
+  for (let h = 0; h < maxStartHour; h++) {
+    let sum = 0;
+    let valid = 0;
+    for (let i = 0; i < consumerDuration; i++) {
+      const idx = h + i;
+      if (idx >= 0 && idx < searchTimespan) {
+        sum += prices[idx] ?? 0;
+        valid++;
+      }
+    }
+    if (valid !== consumerDuration) continue;
+    const avg = sum / valid;
+    if (avg < bestAvg) {
+      bestAvg = avg;
+      bestH = h;
+    }
+  }
+  return { bestAvg, bestH };
+}
+
+/** Sunniest qualifying slot (combined / solar-only solar branch), before full-hour normalization. */
+function oracleBestQualifyingSolar(
+  solar: SolarData,
+  settings: SettingsData,
+  market: MarketData | null,
+  now: Date,
+  consumerDuration: number,
+  searchTimespan: number
+) {
+  const maxStartHour = Math.min(
+    searchTimespan,
+    searchTimespan - consumerDuration + 1
+  );
+  let bestAvg = -Infinity;
+  let bestH = -1;
+  for (let h = 0; h < maxStartHour; h++) {
+    let totalSolar = 0;
+    let valid = 0;
+    for (let i = 0; i < consumerDuration; i++) {
+      const hoursFromNow = h + i;
+      if (hoursFromNow >= 0 && hoursFromNow < searchTimespan) {
+        totalSolar += calculatePowerGeneration(
+          solar,
+          settings,
+          hoursFromNow,
+          now
+        );
+        valid++;
+      }
+    }
+    if (valid !== consumerDuration) continue;
+    const avgSolar = totalSolar / valid;
+    if (avgSolar >= settings.minKwh && avgSolar > bestAvg) {
+      bestAvg = avgSolar;
+      bestH = h;
+    }
+  }
+  return { bestAvg, bestH };
+}
+
 /** One market interval per hour from `now`, in order of hoursFromNow 0..n-1 */
 function marketHourlyFromNow(
   now: Date,
@@ -324,5 +408,150 @@ describe("calculateSchedule", () => {
     expect(schedulingResult).toBeNull();
     expect(topSlotsResult?.topSolarSlots.length).toBeGreaterThan(0);
     expect(topSlotsResult?.topPriceSlots).toEqual([]);
+  });
+
+  it("price-only: picks lowest average over the full run, not the window that merely starts at the cheapest hour", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    // Hour 0 is 1 EUR/MWh but the 3h average is ruined by the next two hours.
+    // A later window has a lower triple average (cheap tail).
+    const prices = [1, 200, 200, 200, 1, 1, 50, 50];
+    const market = marketHourlyFromNow(now, prices);
+    const settings: SettingsData = {
+      ...baseSettings,
+      bestSlotMode: "price-only",
+      minKwh: 99999,
+    };
+    const duration = 3;
+    const searchTimespan = prices.length;
+    const oracle = oracleCheapestAvgPrice(prices, duration, searchTimespan);
+    expect(oracle.bestH).toBe(4);
+    expect(oracle.bestAvg).toBeCloseTo((1 + 1 + 50) / 3, 5);
+
+    const solar = solarWithResult(flatSolarCurve("2025-01-15", 500));
+    const { schedulingResult, topSlotsResult } = calculateSchedule(
+      solar,
+      market,
+      settings,
+      duration,
+      searchTimespan,
+      now
+    );
+    expect(schedulingResult?.reason).toBe("price");
+    expect(schedulingResult?.avgPrice).toBeCloseTo(oracle.bestAvg, 5);
+    expect(schedulingResult?.bestTime.getTime()).toBe(
+      now.getTime() + oracle.bestH * 3600_000
+    );
+    expect(topSlotsResult?.topPriceSlots[0]?.avgPrice).toBeCloseTo(
+      oracle.bestAvg,
+      5
+    );
+  });
+
+  it("combined: among qualifying slots, chooses the sunniest window, not an earlier weaker one", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const day = "2025-01-15";
+    const rates = Array.from({ length: 24 }, (_, h) =>
+      h >= 12 && h <= 15 ? 1600 : h >= 16 && h <= 18 ? 4800 : 1400
+    );
+    const solar = solarFromHourlyRates(day, rates);
+    const market = marketHourlyFromNow(
+      now,
+      Array.from({ length: 12 }, () => 80)
+    );
+    const settings: SettingsData = {
+      ...baseSettings,
+      bestSlotMode: "combined",
+      minKwh: 1200,
+    };
+    const duration = 2;
+    const searchTimespan = 10;
+    const oracle = oracleBestQualifyingSolar(
+      solar,
+      settings,
+      market,
+      now,
+      duration,
+      searchTimespan
+    );
+    expect(oracle.bestH).toBe(4);
+    expect(oracle.bestAvg).toBeCloseTo(4800, 0);
+
+    const { schedulingResult, topSlotsResult } = calculateSchedule(
+      solar,
+      market,
+      settings,
+      duration,
+      searchTimespan,
+      now
+    );
+    expect(schedulingResult?.reason).toBe("solar");
+    expect(schedulingResult?.avgSolarProduction).toBeCloseTo(oracle.bestAvg, 0);
+    const globalMaxSolar = topSlotsResult!.topSolarSlots[0]!.avgSolarProduction;
+    expect(globalMaxSolar).toBeCloseTo(oracle.bestAvg, 0);
+    expect(schedulingResult?.avgSolarProduction).toBeCloseTo(globalMaxSolar, 0);
+  });
+
+  it("solar-only: same — peak production window wins over an earlier qualifying plateau", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const day = "2025-01-15";
+    const rates = Array.from({ length: 24 }, (_, h) =>
+      h >= 12 && h <= 14 ? 1300 : h >= 15 && h <= 17 ? 5200 : 1200
+    );
+    const solar = solarFromHourlyRates(day, rates);
+    const settings: SettingsData = {
+      ...baseSettings,
+      bestSlotMode: "solar-only",
+      minKwh: 1200,
+    };
+    const duration = 2;
+    const searchTimespan = 10;
+    const oracle = oracleBestQualifyingSolar(
+      solar,
+      settings,
+      null,
+      now,
+      duration,
+      searchTimespan
+    );
+    expect(oracle.bestH).toBe(3);
+
+    const { schedulingResult } = calculateSchedule(
+      solar,
+      null,
+      settings,
+      duration,
+      searchTimespan,
+      now
+    );
+    expect(schedulingResult?.reason).toBe("solar");
+    expect(schedulingResult?.avgSolarProduction).toBeCloseTo(oracle.bestAvg, 0);
+  });
+
+  it("topSolarSlots is ordered by avg solar descending across all candidate windows", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const solar = solarFromHourlyRates(
+      "2025-01-15",
+      Array.from({ length: 24 }, (_, h) => (h === 14 || h === 15 ? 6000 : 1000))
+    );
+    const market = marketHourlyFromNow(now, [1, 2, 3, 4, 5, 6, 7, 8]);
+    const { topSlotsResult } = calculateSchedule(
+      solar,
+      market,
+      { ...baseSettings, bestSlotMode: "combined", minKwh: 500 },
+      2,
+      8,
+      now
+    );
+    const tops = topSlotsResult!.topSolarSlots;
+    expect(tops.length).toBe(3);
+    expect(tops[0]!.avgSolarProduction).toBeGreaterThanOrEqual(
+      tops[1]!.avgSolarProduction
+    );
+    expect(tops[1]!.avgSolarProduction).toBeGreaterThanOrEqual(
+      tops[2]!.avgSolarProduction
+    );
+    // Only one window averages the two spike hours (14–15 from midnight index — need mapping)
+    // From now=12UTC, hoursFromNow 2 and 3 hit UTC 14 and 15 → start offset h=2.
+    expect(tops[0]!.startTime.getUTCHours()).toBe(14);
   });
 });
