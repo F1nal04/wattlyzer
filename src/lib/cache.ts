@@ -64,6 +64,14 @@ export function clearCache(): void {
   }
 }
 
+export function clearCacheEntry(cacheKey: string): void {
+  try {
+    localStorage.removeItem(cacheKey);
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
 export function getCacheInfo<T>(
   cacheKey: string,
   dataKey: string
