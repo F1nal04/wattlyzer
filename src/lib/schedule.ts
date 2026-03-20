@@ -7,14 +7,34 @@ import type {
   TopSlotsResult,
 } from "@/lib/types";
 
+const HOUR_MS = 60 * 60 * 1000;
+
+function startOfUtcHour(d: Date): Date {
+  return new Date(
+    Date.UTC(
+      d.getUTCFullYear(),
+      d.getUTCMonth(),
+      d.getUTCDate(),
+      d.getUTCHours(),
+      0,
+      0,
+      0,
+    ),
+  );
+}
+
+export function ceilToUtcHour(d: Date): Date {
+  const floor = startOfUtcHour(d);
+  return d.getTime() > floor.getTime()
+    ? new Date(floor.getTime() + HOUR_MS)
+    : floor;
+}
+
 export function calculatePowerGeneration(
   solarData: SolarData,
   settings: SettingsData,
-  hoursFromNow: number,
-  now: Date
+  targetTime: Date,
 ) {
-  const targetTime = new Date(now.getTime() + hoursFromNow * 60 * 60 * 1000);
-
   const timestamps = Object.keys(solarData.result)
     .map((ts) => ({
       timestamp: new Date(ts).getTime(),
@@ -69,7 +89,8 @@ export function calculatePowerGeneration(
   const startValue = timestamps[closestBeforeIndex].value;
   const endValue = timestamps[nextIndex].value;
   const timeDiffHours =
-    (timestamps[nextIndex].timestamp - timestamps[closestBeforeIndex].timestamp) /
+    (timestamps[nextIndex].timestamp -
+      timestamps[closestBeforeIndex].timestamp) /
     (1000 * 60 * 60);
 
   let hourlyProduction = Math.max(0, (endValue - startValue) / timeDiffHours);
@@ -94,87 +115,21 @@ export function calculatePowerGeneration(
 
 export function calculateMarketPrice(
   marketData: MarketData | null,
-  hoursFromNow: number,
-  now: Date
+  targetTime: Date,
 ) {
   if (!marketData?.data) {
     return 0;
   }
 
-  const targetTime = new Date(now.getTime() + hoursFromNow * 60 * 60 * 1000);
   const targetTimestamp = targetTime.getTime();
 
   const priceData = marketData.data.find(
     (item) =>
       targetTimestamp >= item.start_timestamp &&
-      targetTimestamp < item.end_timestamp
+      targetTimestamp < item.end_timestamp,
   );
 
   return priceData ? priceData.marketprice : 0;
-}
-
-export function normalizeToFullHour(
-  bestTime: Date,
-  bestResult: SlotResult,
-  allResults: SlotResult[],
-  rankingMetric: "solar" | "price",
-  now: Date
-) {
-  const currentHour = new Date(bestTime);
-  currentHour.setMinutes(0, 0, 0);
-
-  const nextHour = new Date(currentHour);
-  nextHour.setHours(nextHour.getHours() + 1);
-
-  const isCurrentHourReachable = currentHour.getTime() >= now.getTime();
-
-  const currentHourResult = allResults.find(
-    (result) =>
-      result.startTime.getHours() === currentHour.getHours() &&
-      result.startTime.getDate() === currentHour.getDate()
-  );
-
-  const nextHourResult = allResults.find(
-    (result) =>
-      result.startTime.getHours() === nextHour.getHours() &&
-      result.startTime.getDate() === nextHour.getDate()
-  );
-
-  if (!isCurrentHourReachable) {
-    if (nextHourResult) {
-      return { time: nextHour, ...nextHourResult };
-    }
-
-    return { time: bestTime, ...bestResult };
-  }
-
-  if (!currentHourResult && !nextHourResult) {
-    return { time: currentHour, ...bestResult };
-  }
-
-  if (!nextHourResult) {
-    return { time: currentHour, ...bestResult };
-  }
-
-  if (!currentHourResult) {
-    return { time: nextHour, ...nextHourResult };
-  }
-
-  if (rankingMetric === "solar") {
-    if (
-      currentHourResult.avgSolarProduction >= nextHourResult.avgSolarProduction
-    ) {
-      return { time: currentHour, ...currentHourResult };
-    }
-
-    return { time: nextHour, ...nextHourResult };
-  }
-
-  if (currentHourResult.avgPrice <= nextHourResult.avgPrice) {
-    return { time: currentHour, ...currentHourResult };
-  }
-
-  return { time: nextHour, ...nextHourResult };
 }
 
 export function calculateSchedule(
@@ -183,7 +138,7 @@ export function calculateSchedule(
   settings: SettingsData | undefined,
   consumerDuration: number,
   searchTimespan: number,
-  now: Date
+  now: Date,
 ): {
   schedulingResult: SchedulingResult | null;
   topSlotsResult: TopSlotsResult | null;
@@ -200,47 +155,39 @@ export function calculateSchedule(
 
   const results: SlotResult[] = [];
 
-  const maxStartHour = Math.min(
-    searchTimespan,
-    searchTimespan - consumerDuration + 1
-  );
+  // Align with hourly solar keys (…Z) and [start,end) market rows on the UTC grid.
+  const firstStartMs = ceilToUtcHour(now).getTime();
+  const lastSampleMaxMs = now.getTime() + (searchTimespan - 1) * HOUR_MS;
 
-  for (let h = 0; h < maxStartHour; h++) {
-    const startTime = new Date(now.getTime() + h * 60 * 60 * 1000);
+  for (let startMs = firstStartMs; ; startMs += HOUR_MS) {
+    const lastSampleMs = startMs + (consumerDuration - 1) * HOUR_MS;
+    if (lastSampleMs > lastSampleMaxMs) {
+      break;
+    }
+
     let totalSolarProduction = 0;
     let totalPrice = 0;
-    let validHours = 0;
 
     for (let i = 0; i < consumerDuration; i++) {
-      const hoursFromNow = h + i;
-
-      if (hoursFromNow >= 0 && hoursFromNow < searchTimespan) {
-        const solarProduction = calculatePowerGeneration(
-          solarData,
-          settings,
-          hoursFromNow,
-          now
-        );
-        const price = calculateMarketPrice(marketData, hoursFromNow, now);
-
-        totalSolarProduction += solarProduction;
-        totalPrice += price;
-        validHours++;
-      }
+      const targetTime = new Date(startMs + i * HOUR_MS);
+      totalSolarProduction += calculatePowerGeneration(
+        solarData,
+        settings,
+        targetTime,
+      );
+      totalPrice += calculateMarketPrice(marketData, targetTime);
     }
 
-    if (validHours === consumerDuration) {
-      const avgSolarProduction = totalSolarProduction / validHours;
-      const avgPrice = totalPrice / validHours;
-      const solarQualifies = avgSolarProduction >= settings.minKwh;
+    const avgSolarProduction = totalSolarProduction / consumerDuration;
+    const avgPrice = totalPrice / consumerDuration;
+    const solarQualifies = avgSolarProduction >= settings.minKwh;
 
-      results.push({
-        startTime,
-        avgSolarProduction,
-        avgPrice,
-        solarQualifies,
-      });
-    }
+    results.push({
+      startTime: new Date(startMs),
+      avgSolarProduction,
+      avgPrice,
+      solarQualifies,
+    });
   }
 
   if (results.length === 0) {
@@ -274,29 +221,24 @@ export function calculateSchedule(
 
   if (settings.bestSlotMode === "price-only") {
     const cheapest = results.reduce((best, current) =>
-      current.avgPrice < best.avgPrice ? current : best
-    );
-    const normalizedTime = normalizeToFullHour(
-      cheapest.startTime,
-      cheapest,
-      results,
-      "price",
-      now
+      current.avgPrice < best.avgPrice ? current : best,
     );
 
     return {
       schedulingResult: {
-        bestTime: normalizedTime.time,
+        bestTime: cheapest.startTime,
         reason: "price" as const,
-        avgSolarProduction: normalizedTime.avgSolarProduction,
-        avgPrice: normalizedTime.avgPrice,
+        avgSolarProduction: cheapest.avgSolarProduction,
+        avgPrice: cheapest.avgPrice,
       },
       topSlotsResult,
     };
   }
 
   if (settings.bestSlotMode === "solar-only") {
-    const solarQualifiedSlots = results.filter((result) => result.solarQualifies);
+    const solarQualifiedSlots = results.filter(
+      (result) => result.solarQualifies,
+    );
 
     if (solarQualifiedSlots.length === 0) {
       return {
@@ -306,21 +248,14 @@ export function calculateSchedule(
     }
 
     const sunniest = solarQualifiedSlots.reduce((best, current) =>
-      current.avgSolarProduction > best.avgSolarProduction ? current : best
-    );
-    const normalizedTime = normalizeToFullHour(
-      sunniest.startTime,
-      sunniest,
-      results,
-      "solar",
-      now
+      current.avgSolarProduction > best.avgSolarProduction ? current : best,
     );
 
     return {
       schedulingResult: {
-        bestTime: normalizedTime.time,
+        bestTime: sunniest.startTime,
         reason: "solar" as const,
-        avgSolarProduction: normalizedTime.avgSolarProduction,
+        avgSolarProduction: sunniest.avgSolarProduction,
       },
       topSlotsResult,
     };
@@ -330,44 +265,30 @@ export function calculateSchedule(
 
   if (solarQualifiedSlots.length > 0) {
     const best = solarQualifiedSlots.reduce((best, current) =>
-      current.avgSolarProduction > best.avgSolarProduction ? current : best
-    );
-    const normalizedSolarTime = normalizeToFullHour(
-      best.startTime,
-      best,
-      results,
-      "solar",
-      now
+      current.avgSolarProduction > best.avgSolarProduction ? current : best,
     );
 
     return {
       schedulingResult: {
-        bestTime: normalizedSolarTime.time,
+        bestTime: best.startTime,
         reason: "solar" as const,
-        avgSolarProduction: normalizedSolarTime.avgSolarProduction,
-        avgPrice: normalizedSolarTime.avgPrice,
+        avgSolarProduction: best.avgSolarProduction,
+        avgPrice: best.avgPrice,
       },
       topSlotsResult,
     };
   }
 
   const cheapest = results.reduce((best, current) =>
-    current.avgPrice < best.avgPrice ? current : best
-  );
-  const normalizedTime = normalizeToFullHour(
-    cheapest.startTime,
-    cheapest,
-    results,
-    "price",
-    now
+    current.avgPrice < best.avgPrice ? current : best,
   );
 
   return {
     schedulingResult: {
-      bestTime: normalizedTime.time,
+      bestTime: cheapest.startTime,
       reason: "price" as const,
-      avgSolarProduction: normalizedTime.avgSolarProduction,
-      avgPrice: normalizedTime.avgPrice,
+      avgSolarProduction: cheapest.avgSolarProduction,
+      avgPrice: cheapest.avgPrice,
     },
     topSlotsResult,
   };
