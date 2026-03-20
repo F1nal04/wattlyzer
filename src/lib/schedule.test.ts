@@ -119,7 +119,6 @@ function oracleCheapestUtcWindows(
 function oracleBestQualifyingSolarUtc(
   solar: SolarData,
   settings: SettingsData,
-  market: MarketData | null,
   now: Date,
   consumerDuration: number,
   searchTimespan: number,
@@ -320,7 +319,86 @@ describe("calculateSchedule", () => {
     ).toBeNull();
   });
 
-  it("price-only mode picks the UTC hour window with lowest average price", () => {
+  it("solar-only: returns null scheduling when no slot meets minKwh but still returns top slots", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const solar = solarWithResult(flatSolarCurve("2025-01-15", 100));
+    const settings: SettingsData = {
+      ...baseSettings,
+      bestSlotMode: "solar-only",
+      minKwh: 99999,
+    };
+    const { schedulingResult, topSlotsResult } = calculateSchedule(
+      solar,
+      null,
+      settings,
+      2,
+      4,
+      now,
+    );
+    expect(schedulingResult).toBeNull();
+    expect(topSlotsResult?.topSolarSlots.length).toBeGreaterThan(0);
+    expect(topSlotsResult?.topPriceSlots).toEqual([]);
+  });
+
+  it("solar-only: with duration 3, prefers a sustained plateau over a single strong hour", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const solar = solarFromHourlyRates("2025-01-15", [
+      200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 4500, 0,
+      2800, 2800, 2800, 200, 200, 200, 200, 200, 200, 200,
+    ]);
+    const { schedulingResult } = calculateSchedule(
+      solar,
+      null,
+      { ...baseSettings, bestSlotMode: "solar-only", minKwh: 1000 },
+      3,
+      6,
+      now,
+    );
+    expect(schedulingResult?.reason).toBe("solar");
+    expect(schedulingResult?.bestTime.toISOString()).toBe(
+      "2025-01-15T14:00:00.000Z",
+    );
+    expect(schedulingResult?.avgSolarProduction).toBeCloseTo(2800, 5);
+  });
+
+  it("solar-only: chooses the peak production window over an earlier qualifying plateau", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const day = "2025-01-15";
+    const rates = Array.from({ length: 24 }, (_, h) =>
+      h >= 12 && h <= 14 ? 1300 : h >= 15 && h <= 17 ? 5200 : 1200,
+    );
+    const solar = solarFromHourlyRates(day, rates);
+    const settings: SettingsData = {
+      ...baseSettings,
+      bestSlotMode: "solar-only",
+      minKwh: 1200,
+    };
+    const duration = 2;
+    const searchTimespan = 10;
+    const oracle = oracleBestQualifyingSolarUtc(
+      solar,
+      settings,
+      now,
+      duration,
+      searchTimespan,
+    );
+    expect(oracle.bestStartMs).toBe(
+      new Date("2025-01-15T15:00:00.000Z").getTime(),
+    );
+
+    const { schedulingResult } = calculateSchedule(
+      solar,
+      null,
+      settings,
+      duration,
+      searchTimespan,
+      now,
+    );
+    expect(schedulingResult?.reason).toBe("solar");
+    expect(schedulingResult?.avgSolarProduction).toBeCloseTo(oracle.bestAvg, 0);
+  });
+
+  it("price-only: picks the UTC hour window with the lowest average price", () => {
     const now = new Date("2025-01-15T12:00:00.000Z");
     const solar = solarWithResult(flatSolarCurve("2025-01-15", 500));
     const prices = [200, 100, 300, 50];
@@ -343,7 +421,7 @@ describe("calculateSchedule", () => {
     expect(schedulingResult?.avgPrice).toBeCloseTo(150, 5);
   });
 
-  it("price-only with duration 2 prefers two moderately cheap hours over a window containing one extreme cheap hour", () => {
+  it("price-only: with duration 2, prefers two moderately cheap hours over a window containing one extreme cheap hour", () => {
     const now = new Date("2025-01-15T12:00:00.000Z");
     const solar = solarWithResult(flatSolarCurve("2025-01-15", 500));
     const market = marketUtcHourlyFrom(now, [5, 200, 60, 60, 200]);
@@ -362,7 +440,7 @@ describe("calculateSchedule", () => {
     expect(schedulingResult?.avgPrice).toBeCloseTo(60, 5);
   });
 
-  it("price-only with duration 2 prefers a window anchored by one extreme cheap hour when its average is still best", () => {
+  it("price-only: with duration 2, prefers a window anchored by one extreme cheap hour when its average is still best", () => {
     const now = new Date("2025-01-15T12:00:00.000Z");
     const solar = solarWithResult(flatSolarCurve("2025-01-15", 500));
     const market = marketUtcHourlyFrom(now, [1, 21, 15, 15, 50]);
@@ -381,157 +459,7 @@ describe("calculateSchedule", () => {
     expect(schedulingResult?.avgPrice).toBeCloseTo(11, 5);
   });
 
-  it("combined mode uses solar when threshold is met", () => {
-    const now = new Date("2025-01-15T12:00:00.000Z");
-    const solar = solarWithResult(flatSolarCurve("2025-01-15", 2000));
-    const market = marketUtcHourlyFrom(now, [500, 500, 500, 500, 500, 500]);
-    const settings: SettingsData = {
-      ...baseSettings,
-      bestSlotMode: "combined",
-      minKwh: 1000,
-    };
-    const { schedulingResult } = calculateSchedule(
-      solar,
-      market,
-      settings,
-      2,
-      6,
-      now,
-    );
-    expect(schedulingResult?.reason).toBe("solar");
-    expect(schedulingResult?.avgSolarProduction).toBeGreaterThanOrEqual(1000);
-  });
-
-  it("combined mode prefers the best qualifying average, not the window containing a single large solar spike", () => {
-    const now = new Date("2025-01-15T12:00:00.000Z");
-    const solar = solarFromHourlyRates("2025-01-15", [
-      200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 6000, 0,
-      3200, 3200, 200, 200, 200, 200, 200, 200, 200, 200,
-    ]);
-    const market = marketUtcHourlyFrom(now, [100, 100, 100, 100, 100]);
-    const { schedulingResult } = calculateSchedule(
-      solar,
-      market,
-      { ...baseSettings, bestSlotMode: "combined", minKwh: 1000 },
-      2,
-      5,
-      now,
-    );
-    expect(schedulingResult?.reason).toBe("solar");
-    expect(schedulingResult?.bestTime.toISOString()).toBe(
-      "2025-01-15T14:00:00.000Z",
-    );
-    expect(schedulingResult?.avgSolarProduction).toBeCloseTo(3200, 5);
-  });
-
-  it("combined mode prefers a spike window when it still has the highest qualifying average", () => {
-    const now = new Date("2025-01-15T12:00:00.000Z");
-    const solar = solarFromHourlyRates("2025-01-15", [
-      200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 6000, 2000,
-      3200, 3200, 200, 200, 200, 200, 200, 200, 200, 200,
-    ]);
-    const market = marketUtcHourlyFrom(now, [100, 100, 100, 100, 100]);
-    const { schedulingResult } = calculateSchedule(
-      solar,
-      market,
-      { ...baseSettings, bestSlotMode: "combined", minKwh: 1000 },
-      2,
-      5,
-      now,
-    );
-    expect(schedulingResult?.reason).toBe("solar");
-    expect(schedulingResult?.bestTime.toISOString()).toBe(
-      "2025-01-15T12:00:00.000Z",
-    );
-    expect(schedulingResult?.avgSolarProduction).toBeCloseTo(4000, 5);
-  });
-
-  it("combined mode falls back to price when solar never qualifies", () => {
-    const now = new Date("2025-01-15T12:00:00.000Z");
-    const solar = solarWithResult(flatSolarCurve("2025-01-15", 100));
-    const market = marketUtcHourlyFrom(now, [80, 200, 200, 200]);
-    const settings: SettingsData = {
-      ...baseSettings,
-      bestSlotMode: "combined",
-      minKwh: 5000,
-    };
-    const { schedulingResult } = calculateSchedule(
-      solar,
-      market,
-      settings,
-      2,
-      4,
-      now,
-    );
-    expect(schedulingResult?.reason).toBe("price");
-    expect(schedulingResult?.avgPrice).toBeCloseTo(140, 5);
-  });
-
-  it("combined mode ignores cheaper non-qualifying windows when a qualifying solar window exists", () => {
-    const now = new Date("2025-01-15T12:00:00.000Z");
-    const solar = solarFromHourlyRates("2025-01-15", [
-      200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 500, 500,
-      1600, 1600, 200, 200, 200, 200, 200, 200, 200, 200,
-    ]);
-    const market = marketUtcHourlyFrom(now, [1, 1, 500, 500, 500]);
-    const { schedulingResult } = calculateSchedule(
-      solar,
-      market,
-      { ...baseSettings, bestSlotMode: "combined", minKwh: 1500 },
-      2,
-      5,
-      now,
-    );
-    expect(schedulingResult?.reason).toBe("solar");
-    expect(schedulingResult?.bestTime.toISOString()).toBe(
-      "2025-01-15T14:00:00.000Z",
-    );
-    expect(schedulingResult?.avgPrice).toBeCloseTo(500, 5);
-  });
-
-  it("solar-only returns null scheduling when no slot meets minKwh but still returns top slots", () => {
-    const now = new Date("2025-01-15T12:00:00.000Z");
-    const solar = solarWithResult(flatSolarCurve("2025-01-15", 100));
-    const settings: SettingsData = {
-      ...baseSettings,
-      bestSlotMode: "solar-only",
-      minKwh: 99999,
-    };
-    const { schedulingResult, topSlotsResult } = calculateSchedule(
-      solar,
-      null,
-      settings,
-      2,
-      4,
-      now,
-    );
-    expect(schedulingResult).toBeNull();
-    expect(topSlotsResult?.topSolarSlots.length).toBeGreaterThan(0);
-    expect(topSlotsResult?.topPriceSlots).toEqual([]);
-  });
-
-  it("solar-only with duration 3 prefers a sustained plateau over a single strong hour", () => {
-    const now = new Date("2025-01-15T12:00:00.000Z");
-    const solar = solarFromHourlyRates("2025-01-15", [
-      200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 4500, 0,
-      2800, 2800, 2800, 200, 200, 200, 200, 200, 200, 200,
-    ]);
-    const { schedulingResult } = calculateSchedule(
-      solar,
-      null,
-      { ...baseSettings, bestSlotMode: "solar-only", minKwh: 1000 },
-      3,
-      6,
-      now,
-    );
-    expect(schedulingResult?.reason).toBe("solar");
-    expect(schedulingResult?.bestTime.toISOString()).toBe(
-      "2025-01-15T14:00:00.000Z",
-    );
-    expect(schedulingResult?.avgSolarProduction).toBeCloseTo(2800, 5);
-  });
-
-  it("price-only breaks ties by keeping the earliest slot", () => {
+  it("price-only: breaks ties by keeping the earliest slot", () => {
     const now = new Date("2025-01-15T12:00:00.000Z");
     const solar = solarWithResult(flatSolarCurve("2025-01-15", 500));
     const market = marketUtcHourlyFrom(now, [20, 20, 20, 20]);
@@ -549,29 +477,7 @@ describe("calculateSchedule", () => {
     expect(schedulingResult?.avgPrice).toBeCloseTo(20, 5);
   });
 
-  it("combined mode breaks equal qualifying solar ties by keeping the earliest slot", () => {
-    const now = new Date("2025-01-15T12:00:00.000Z");
-    const solar = solarFromHourlyRates("2025-01-15", [
-      200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 2000, 2000,
-      2000, 2000, 200, 200, 200, 200, 200, 200, 200, 200,
-    ]);
-    const market = marketUtcHourlyFrom(now, [50, 50, 50, 50, 50]);
-    const { schedulingResult } = calculateSchedule(
-      solar,
-      market,
-      { ...baseSettings, bestSlotMode: "combined", minKwh: 1500 },
-      2,
-      5,
-      now,
-    );
-    expect(schedulingResult?.reason).toBe("solar");
-    expect(schedulingResult?.bestTime.toISOString()).toBe(
-      "2025-01-15T12:00:00.000Z",
-    );
-    expect(schedulingResult?.avgSolarProduction).toBeCloseTo(2000, 5);
-  });
-
-  it("price-only: picks lowest average over the full run, not the window that merely starts at the cheapest hour", () => {
+  it("price-only: picks the lowest average over the full run, not the window that starts at the cheapest hour", () => {
     const now = new Date("2025-01-15T12:00:00.000Z");
     const prices = [1, 200, 200, 200, 1, 1, 50, 50];
     const market = marketUtcHourlyFrom(now, prices);
@@ -609,6 +515,114 @@ describe("calculateSchedule", () => {
     );
   });
 
+  it("combined: uses solar when the threshold is met", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const solar = solarWithResult(flatSolarCurve("2025-01-15", 2000));
+    const market = marketUtcHourlyFrom(now, [500, 500, 500, 500, 500, 500]);
+    const settings: SettingsData = {
+      ...baseSettings,
+      bestSlotMode: "combined",
+      minKwh: 1000,
+    };
+    const { schedulingResult } = calculateSchedule(
+      solar,
+      market,
+      settings,
+      2,
+      6,
+      now,
+    );
+    expect(schedulingResult?.reason).toBe("solar");
+    expect(schedulingResult?.avgSolarProduction).toBeGreaterThanOrEqual(1000);
+  });
+
+  it("combined: prefers the best qualifying average, not the window containing a single large solar spike", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const solar = solarFromHourlyRates("2025-01-15", [
+      200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 6000, 0,
+      3200, 3200, 200, 200, 200, 200, 200, 200, 200, 200,
+    ]);
+    const market = marketUtcHourlyFrom(now, [100, 100, 100, 100, 100]);
+    const { schedulingResult } = calculateSchedule(
+      solar,
+      market,
+      { ...baseSettings, bestSlotMode: "combined", minKwh: 1000 },
+      2,
+      5,
+      now,
+    );
+    expect(schedulingResult?.reason).toBe("solar");
+    expect(schedulingResult?.bestTime.toISOString()).toBe(
+      "2025-01-15T14:00:00.000Z",
+    );
+    expect(schedulingResult?.avgSolarProduction).toBeCloseTo(3200, 5);
+  });
+
+  it("combined: prefers a spike window when it still has the highest qualifying average", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const solar = solarFromHourlyRates("2025-01-15", [
+      200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 6000, 2000,
+      3200, 3200, 200, 200, 200, 200, 200, 200, 200, 200,
+    ]);
+    const market = marketUtcHourlyFrom(now, [100, 100, 100, 100, 100]);
+    const { schedulingResult } = calculateSchedule(
+      solar,
+      market,
+      { ...baseSettings, bestSlotMode: "combined", minKwh: 1000 },
+      2,
+      5,
+      now,
+    );
+    expect(schedulingResult?.reason).toBe("solar");
+    expect(schedulingResult?.bestTime.toISOString()).toBe(
+      "2025-01-15T12:00:00.000Z",
+    );
+    expect(schedulingResult?.avgSolarProduction).toBeCloseTo(4000, 5);
+  });
+
+  it("combined: falls back to price when solar never qualifies", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const solar = solarWithResult(flatSolarCurve("2025-01-15", 100));
+    const market = marketUtcHourlyFrom(now, [80, 200, 200, 200]);
+    const settings: SettingsData = {
+      ...baseSettings,
+      bestSlotMode: "combined",
+      minKwh: 5000,
+    };
+    const { schedulingResult } = calculateSchedule(
+      solar,
+      market,
+      settings,
+      2,
+      4,
+      now,
+    );
+    expect(schedulingResult?.reason).toBe("price");
+    expect(schedulingResult?.avgPrice).toBeCloseTo(140, 5);
+  });
+
+  it("combined: ignores cheaper non-qualifying windows when a qualifying solar window exists", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const solar = solarFromHourlyRates("2025-01-15", [
+      200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 500, 500,
+      1600, 1600, 200, 200, 200, 200, 200, 200, 200, 200,
+    ]);
+    const market = marketUtcHourlyFrom(now, [1, 1, 500, 500, 500]);
+    const { schedulingResult } = calculateSchedule(
+      solar,
+      market,
+      { ...baseSettings, bestSlotMode: "combined", minKwh: 1500 },
+      2,
+      5,
+      now,
+    );
+    expect(schedulingResult?.reason).toBe("solar");
+    expect(schedulingResult?.bestTime.toISOString()).toBe(
+      "2025-01-15T14:00:00.000Z",
+    );
+    expect(schedulingResult?.avgPrice).toBeCloseTo(500, 5);
+  });
+
   it("combined: among qualifying slots, chooses the sunniest window, not an earlier weaker one", () => {
     const now = new Date("2025-01-15T12:00:00.000Z");
     const day = "2025-01-15";
@@ -630,7 +644,6 @@ describe("calculateSchedule", () => {
     const oracle = oracleBestQualifyingSolarUtc(
       solar,
       settings,
-      market,
       now,
       duration,
       searchTimespan,
@@ -655,42 +668,26 @@ describe("calculateSchedule", () => {
     expect(schedulingResult?.avgSolarProduction).toBeCloseTo(globalMaxSolar, 0);
   });
 
-  it("solar-only: same — peak production window wins over an earlier qualifying plateau", () => {
+  it("combined: breaks equal qualifying solar ties by keeping the earliest slot", () => {
     const now = new Date("2025-01-15T12:00:00.000Z");
-    const day = "2025-01-15";
-    const rates = Array.from({ length: 24 }, (_, h) =>
-      h >= 12 && h <= 14 ? 1300 : h >= 15 && h <= 17 ? 5200 : 1200,
-    );
-    const solar = solarFromHourlyRates(day, rates);
-    const settings: SettingsData = {
-      ...baseSettings,
-      bestSlotMode: "solar-only",
-      minKwh: 1200,
-    };
-    const duration = 2;
-    const searchTimespan = 10;
-    const oracle = oracleBestQualifyingSolarUtc(
-      solar,
-      settings,
-      null,
-      now,
-      duration,
-      searchTimespan,
-    );
-    expect(oracle.bestStartMs).toBe(
-      new Date("2025-01-15T15:00:00.000Z").getTime(),
-    );
-
+    const solar = solarFromHourlyRates("2025-01-15", [
+      200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 2000, 2000,
+      2000, 2000, 200, 200, 200, 200, 200, 200, 200, 200,
+    ]);
+    const market = marketUtcHourlyFrom(now, [50, 50, 50, 50, 50]);
     const { schedulingResult } = calculateSchedule(
       solar,
-      null,
-      settings,
-      duration,
-      searchTimespan,
+      market,
+      { ...baseSettings, bestSlotMode: "combined", minKwh: 1500 },
+      2,
+      5,
       now,
     );
     expect(schedulingResult?.reason).toBe("solar");
-    expect(schedulingResult?.avgSolarProduction).toBeCloseTo(oracle.bestAvg, 0);
+    expect(schedulingResult?.bestTime.toISOString()).toBe(
+      "2025-01-15T12:00:00.000Z",
+    );
+    expect(schedulingResult?.avgSolarProduction).toBeCloseTo(2000, 5);
   });
 
   it("topSolarSlots is ordered by avg solar descending across all candidate windows", () => {
