@@ -1,7 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import {
+  useEffect,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import {
   Accordion,
   AccordionContent,
@@ -172,7 +177,6 @@ export default function Debug() {
     longitude: number;
   } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
-  const [cacheRefreshToken, setCacheRefreshToken] = useState(0);
   const hasGeolocationSupport = useSyncExternalStore(
     subscribeToGeolocationSupport,
     getGeolocationSupportSnapshot,
@@ -208,7 +212,6 @@ export default function Debug() {
   const cacheInfo =
     position && settings
       ? (() => {
-          void cacheRefreshToken;
           const { latitude, longitude } = position;
           const { angle, azimut, kwh } = settings;
           const roundedLat = roundCoordinate(latitude);
@@ -222,12 +225,13 @@ export default function Debug() {
           };
         })()
       : null;
+
   const solarRows = solarData ? Object.entries(solarData.result) : [];
   const marketRows = marketData?.data ?? [];
 
   const handleClearCache = (cacheKey: string) => {
     clearCacheEntry(cacheKey);
-    setCacheRefreshToken((currentValue) => currentValue + 1);
+    window.location.reload();
   };
 
   return (
@@ -487,7 +491,9 @@ export default function Debug() {
                       <div className="text-sm font-semibold">Solar data table</div>
                       <div className="mt-1 text-xs text-gray-400">
                         {solarData
-                          ? `${solarRows.length} loaded rows`
+                          ? cacheInfo?.solar.exists
+                            ? `${solarRows.length} loaded rows`
+                            : `${solarRows.length} rows loaded in memory only`
                           : "No solar data loaded"}
                       </div>
                     </div>
@@ -533,7 +539,9 @@ export default function Debug() {
                         {settings.bestSlotMode === "solar-only"
                           ? "Ignored in solar-only mode"
                           : marketData
-                          ? `${marketRows.length} loaded rows`
+                          ? cacheInfo?.market.exists
+                            ? `${marketRows.length} loaded rows`
+                            : `${marketRows.length} rows loaded in memory only`
                           : "No market data loaded"}
                       </div>
                     </div>
