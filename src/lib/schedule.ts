@@ -39,7 +39,7 @@ export function calculatePowerGeneration(
     .map((ts) => ({
       timestamp: new Date(ts).getTime(),
       value: solarData.result[ts],
-      date: new Date(ts).toDateString(),
+      utcDateKey: new Date(ts).toISOString().slice(0, 10),
     }))
     .sort((a, b) => a.timestamp - b.timestamp);
 
@@ -71,7 +71,9 @@ export function calculatePowerGeneration(
   let nextIndex = closestAfterIndex;
   if (nextIndex === -1) {
     for (let i = closestBeforeIndex + 1; i < timestamps.length; i++) {
-      if (timestamps[i].date === timestamps[closestBeforeIndex].date) {
+      if (
+        timestamps[i].utcDateKey === timestamps[closestBeforeIndex].utcDateKey
+      ) {
         nextIndex = i;
         break;
       }
@@ -82,7 +84,10 @@ export function calculatePowerGeneration(
     return 0;
   }
 
-  if (timestamps[closestBeforeIndex].date !== timestamps[nextIndex].date) {
+  if (
+    timestamps[closestBeforeIndex].utcDateKey !==
+    timestamps[nextIndex].utcDateKey
+  ) {
     return 0;
   }
 
@@ -98,14 +103,14 @@ export function calculatePowerGeneration(
 
   if (
     settings.morningShading &&
-    targetTime.getHours() < settings.shadingEndTime
+    targetTime.getUTCHours() < settings.shadingEndTime
   ) {
     hourlyProduction *= 0.5;
   }
 
   if (
     settings.eveningShading &&
-    targetTime.getHours() >= settings.shadingStartTime
+    targetTime.getUTCHours() >= settings.shadingStartTime
   ) {
     hourlyProduction *= 0.5;
   }

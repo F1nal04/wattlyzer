@@ -242,6 +242,58 @@ describe("calculatePowerGeneration", () => {
     const shadedVal = calculatePowerGeneration(solar, shaded, t);
     expect(shadedVal).toBeCloseTo(unshaded * 0.5, 5);
   });
+
+  it("does not interpolate across a UTC day boundary", () => {
+    const solar = solarWithResult({
+      "2025-01-15T23:00:00.000Z": 0,
+      "2025-01-16T00:00:00.000Z": 1000,
+    });
+    const t = new Date("2025-01-15T23:30:00.000Z");
+    expect(calculatePowerGeneration(solar, baseSettings, t)).toBe(0);
+  });
+
+  it("uses UTC hours for shading boundaries", () => {
+    const solar = solarWithResult({
+      "2025-01-15T07:00:00.000Z": 0,
+      "2025-01-15T09:00:00.000Z": 2000,
+      "2025-01-15T16:00:00.000Z": 2000,
+      "2025-01-15T18:00:00.000Z": 4000,
+    });
+    const morningSettings: SettingsData = {
+      ...baseSettings,
+      morningShading: true,
+      shadingEndTime: 9,
+    };
+    const eveningSettings: SettingsData = {
+      ...baseSettings,
+      eveningShading: true,
+      shadingStartTime: 17,
+    };
+
+    const morningBase = calculatePowerGeneration(
+      solar,
+      baseSettings,
+      new Date("2025-01-15T08:00:00.000Z"),
+    );
+    const morningShaded = calculatePowerGeneration(
+      solar,
+      morningSettings,
+      new Date("2025-01-15T08:00:00.000Z"),
+    );
+    const eveningBase = calculatePowerGeneration(
+      solar,
+      baseSettings,
+      new Date("2025-01-15T17:00:00.000Z"),
+    );
+    const eveningShaded = calculatePowerGeneration(
+      solar,
+      eveningSettings,
+      new Date("2025-01-15T17:00:00.000Z"),
+    );
+
+    expect(morningShaded).toBeCloseTo(morningBase * 0.5, 5);
+    expect(eveningShaded).toBeCloseTo(eveningBase * 0.5, 5);
+  });
 });
 
 describe("calculateSchedule", () => {
@@ -291,6 +343,44 @@ describe("calculateSchedule", () => {
     expect(schedulingResult?.avgPrice).toBeCloseTo(150, 5);
   });
 
+  it("price-only with duration 2 prefers two moderately cheap hours over a window containing one extreme cheap hour", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const solar = solarWithResult(flatSolarCurve("2025-01-15", 500));
+    const market = marketUtcHourlyFrom(now, [5, 200, 60, 60, 200]);
+    const { schedulingResult } = calculateSchedule(
+      solar,
+      market,
+      { ...baseSettings, bestSlotMode: "price-only", minKwh: 99999 },
+      2,
+      5,
+      now,
+    );
+    expect(schedulingResult?.reason).toBe("price");
+    expect(schedulingResult?.bestTime.toISOString()).toBe(
+      "2025-01-15T14:00:00.000Z",
+    );
+    expect(schedulingResult?.avgPrice).toBeCloseTo(60, 5);
+  });
+
+  it("price-only with duration 2 prefers a window anchored by one extreme cheap hour when its average is still best", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const solar = solarWithResult(flatSolarCurve("2025-01-15", 500));
+    const market = marketUtcHourlyFrom(now, [1, 21, 15, 15, 50]);
+    const { schedulingResult } = calculateSchedule(
+      solar,
+      market,
+      { ...baseSettings, bestSlotMode: "price-only", minKwh: 99999 },
+      2,
+      5,
+      now,
+    );
+    expect(schedulingResult?.reason).toBe("price");
+    expect(schedulingResult?.bestTime.toISOString()).toBe(
+      "2025-01-15T12:00:00.000Z",
+    );
+    expect(schedulingResult?.avgPrice).toBeCloseTo(11, 5);
+  });
+
   it("combined mode uses solar when threshold is met", () => {
     const now = new Date("2025-01-15T12:00:00.000Z");
     const solar = solarWithResult(flatSolarCurve("2025-01-15", 2000));
@@ -310,6 +400,50 @@ describe("calculateSchedule", () => {
     );
     expect(schedulingResult?.reason).toBe("solar");
     expect(schedulingResult?.avgSolarProduction).toBeGreaterThanOrEqual(1000);
+  });
+
+  it("combined mode prefers the best qualifying average, not the window containing a single large solar spike", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const solar = solarFromHourlyRates("2025-01-15", [
+      200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 6000, 0,
+      3200, 3200, 200, 200, 200, 200, 200, 200, 200, 200,
+    ]);
+    const market = marketUtcHourlyFrom(now, [100, 100, 100, 100, 100]);
+    const { schedulingResult } = calculateSchedule(
+      solar,
+      market,
+      { ...baseSettings, bestSlotMode: "combined", minKwh: 1000 },
+      2,
+      5,
+      now,
+    );
+    expect(schedulingResult?.reason).toBe("solar");
+    expect(schedulingResult?.bestTime.toISOString()).toBe(
+      "2025-01-15T14:00:00.000Z",
+    );
+    expect(schedulingResult?.avgSolarProduction).toBeCloseTo(3200, 5);
+  });
+
+  it("combined mode prefers a spike window when it still has the highest qualifying average", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const solar = solarFromHourlyRates("2025-01-15", [
+      200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 6000, 2000,
+      3200, 3200, 200, 200, 200, 200, 200, 200, 200, 200,
+    ]);
+    const market = marketUtcHourlyFrom(now, [100, 100, 100, 100, 100]);
+    const { schedulingResult } = calculateSchedule(
+      solar,
+      market,
+      { ...baseSettings, bestSlotMode: "combined", minKwh: 1000 },
+      2,
+      5,
+      now,
+    );
+    expect(schedulingResult?.reason).toBe("solar");
+    expect(schedulingResult?.bestTime.toISOString()).toBe(
+      "2025-01-15T12:00:00.000Z",
+    );
+    expect(schedulingResult?.avgSolarProduction).toBeCloseTo(4000, 5);
   });
 
   it("combined mode falls back to price when solar never qualifies", () => {
@@ -333,6 +467,28 @@ describe("calculateSchedule", () => {
     expect(schedulingResult?.avgPrice).toBeCloseTo(140, 5);
   });
 
+  it("combined mode ignores cheaper non-qualifying windows when a qualifying solar window exists", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const solar = solarFromHourlyRates("2025-01-15", [
+      200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 500, 500,
+      1600, 1600, 200, 200, 200, 200, 200, 200, 200, 200,
+    ]);
+    const market = marketUtcHourlyFrom(now, [1, 1, 500, 500, 500]);
+    const { schedulingResult } = calculateSchedule(
+      solar,
+      market,
+      { ...baseSettings, bestSlotMode: "combined", minKwh: 1500 },
+      2,
+      5,
+      now,
+    );
+    expect(schedulingResult?.reason).toBe("solar");
+    expect(schedulingResult?.bestTime.toISOString()).toBe(
+      "2025-01-15T14:00:00.000Z",
+    );
+    expect(schedulingResult?.avgPrice).toBeCloseTo(500, 5);
+  });
+
   it("solar-only returns null scheduling when no slot meets minKwh but still returns top slots", () => {
     const now = new Date("2025-01-15T12:00:00.000Z");
     const solar = solarWithResult(flatSolarCurve("2025-01-15", 100));
@@ -352,6 +508,67 @@ describe("calculateSchedule", () => {
     expect(schedulingResult).toBeNull();
     expect(topSlotsResult?.topSolarSlots.length).toBeGreaterThan(0);
     expect(topSlotsResult?.topPriceSlots).toEqual([]);
+  });
+
+  it("solar-only with duration 3 prefers a sustained plateau over a single strong hour", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const solar = solarFromHourlyRates("2025-01-15", [
+      200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 4500, 0,
+      2800, 2800, 2800, 200, 200, 200, 200, 200, 200, 200,
+    ]);
+    const { schedulingResult } = calculateSchedule(
+      solar,
+      null,
+      { ...baseSettings, bestSlotMode: "solar-only", minKwh: 1000 },
+      3,
+      6,
+      now,
+    );
+    expect(schedulingResult?.reason).toBe("solar");
+    expect(schedulingResult?.bestTime.toISOString()).toBe(
+      "2025-01-15T14:00:00.000Z",
+    );
+    expect(schedulingResult?.avgSolarProduction).toBeCloseTo(2800, 5);
+  });
+
+  it("price-only breaks ties by keeping the earliest slot", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const solar = solarWithResult(flatSolarCurve("2025-01-15", 500));
+    const market = marketUtcHourlyFrom(now, [20, 20, 20, 20]);
+    const { schedulingResult } = calculateSchedule(
+      solar,
+      market,
+      { ...baseSettings, bestSlotMode: "price-only", minKwh: 99999 },
+      2,
+      4,
+      now,
+    );
+    expect(schedulingResult?.bestTime.toISOString()).toBe(
+      "2025-01-15T12:00:00.000Z",
+    );
+    expect(schedulingResult?.avgPrice).toBeCloseTo(20, 5);
+  });
+
+  it("combined mode breaks equal qualifying solar ties by keeping the earliest slot", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const solar = solarFromHourlyRates("2025-01-15", [
+      200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 2000, 2000,
+      2000, 2000, 200, 200, 200, 200, 200, 200, 200, 200,
+    ]);
+    const market = marketUtcHourlyFrom(now, [50, 50, 50, 50, 50]);
+    const { schedulingResult } = calculateSchedule(
+      solar,
+      market,
+      { ...baseSettings, bestSlotMode: "combined", minKwh: 1500 },
+      2,
+      5,
+      now,
+    );
+    expect(schedulingResult?.reason).toBe("solar");
+    expect(schedulingResult?.bestTime.toISOString()).toBe(
+      "2025-01-15T12:00:00.000Z",
+    );
+    expect(schedulingResult?.avgSolarProduction).toBeCloseTo(2000, 5);
   });
 
   it("price-only: picks lowest average over the full run, not the window that merely starts at the cheapest hour", () => {
@@ -504,6 +721,25 @@ describe("calculateSchedule", () => {
     expect(tops[0]!.startTime.getUTCHours()).toBe(14);
   });
 
+  it("topPriceSlots is ordered by avg price ascending across all candidate windows", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const solar = solarWithResult(flatSolarCurve("2025-01-15", 500));
+    const market = marketUtcHourlyFrom(now, [100, 20, 60, 40, 10]);
+    const { topSlotsResult } = calculateSchedule(
+      solar,
+      market,
+      { ...baseSettings, bestSlotMode: "price-only", minKwh: 99999 },
+      1,
+      5,
+      now,
+    );
+    const tops = topSlotsResult!.topPriceSlots;
+    expect(tops.length).toBe(3);
+    expect(tops[0]!.avgPrice).toBeLessThanOrEqual(tops[1]!.avgPrice);
+    expect(tops[1]!.avgPrice).toBeLessThanOrEqual(tops[2]!.avgPrice);
+    expect(tops[0]!.avgPrice).toBe(10);
+  });
+
   it("first candidate starts at the next UTC hour when now is not on the hour", () => {
     const now = new Date("2025-01-15T12:23:00.000Z");
     const solar = solarWithResult(flatSolarCurve("2025-01-15", 2000));
@@ -522,5 +758,21 @@ describe("calculateSchedule", () => {
     expect(schedulingResult?.bestTime.toISOString()).toBe(
       "2025-01-15T13:00:00.000Z",
     );
+  });
+
+  it("returns null when the search window is shorter than the consumer duration", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const solar = solarWithResult(flatSolarCurve("2025-01-15", 2000));
+    const market = marketUtcHourlyFrom(now, [10, 20]);
+    const result = calculateSchedule(
+      solar,
+      market,
+      { ...baseSettings, bestSlotMode: "combined" },
+      3,
+      2,
+      now,
+    );
+    expect(result.schedulingResult).toBeNull();
+    expect(result.topSlotsResult).toBeNull();
   });
 });
