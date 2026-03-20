@@ -2,9 +2,24 @@
 
 import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useSettings } from "@/lib/settings-context";
 import { useScheduling } from "@/hooks/use-scheduling";
 import {
+  clearCacheEntry,
   getCacheInfo,
   MARKET_CACHE_KEY,
   SOLAR_CACHE_KEY,
@@ -54,6 +69,10 @@ function formatCacheAge(ageMs: number) {
   }
 
   return "Just now";
+}
+
+function formatDateTime(value: string | number) {
+  return new Date(value).toLocaleString();
 }
 
 function SectionCard({
@@ -153,6 +172,7 @@ export default function Debug() {
     longitude: number;
   } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [cacheRefreshToken, setCacheRefreshToken] = useState(0);
   const hasGeolocationSupport = useSyncExternalStore(
     subscribeToGeolocationSupport,
     getGeolocationSupportSnapshot,
@@ -188,6 +208,7 @@ export default function Debug() {
   const cacheInfo =
     position && settings
       ? (() => {
+          void cacheRefreshToken;
           const { latitude, longitude } = position;
           const { angle, azimut, kwh } = settings;
           const roundedLat = roundCoordinate(latitude);
@@ -201,6 +222,13 @@ export default function Debug() {
           };
         })()
       : null;
+  const solarRows = solarData ? Object.entries(solarData.result) : [];
+  const marketRows = marketData?.data ?? [];
+
+  const handleClearCache = (cacheKey: string) => {
+    clearCacheEntry(cacheKey);
+    setCacheRefreshToken((currentValue) => currentValue + 1);
+  };
 
   return (
     <div className="relative min-h-dvh overflow-hidden bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.18),transparent_28%),linear-gradient(135deg,#050505_0%,#151515_42%,#3b2b0f_100%)] px-4 py-8 md:px-6 md:py-10">
@@ -345,43 +373,70 @@ export default function Debug() {
               description="Whether solar and market API responses are currently available in local storage."
             >
               {cacheInfo ? (
-                <div className="space-y-4">
-                  <InfoTile
-                    label="Solar Cache"
-                    value={
-                      cacheInfo.solar.exists
-                        ? cacheInfo.solar.data
-                          ? "Cached"
-                          : "Expired or invalid"
-                        : "Not cached"
-                    }
-                  />
-                  {cacheInfo.solar.timestamp ? (
-                    <InfoTile
-                      label="Solar Cache Age"
-                      value={`${formatCacheAge(cacheInfo.solar.age || 0)}${
-                        cacheInfo.solar.isExpired ? " (expired)" : ""
-                      }`}
-                    />
-                  ) : null}
-                  <InfoTile
-                    label="Market Cache"
-                    value={
-                      cacheInfo.market.exists
-                        ? cacheInfo.market.data
-                          ? "Cached"
-                          : "Expired or invalid"
-                        : "Not cached"
-                    }
-                  />
-                  {cacheInfo.market.timestamp ? (
-                    <InfoTile
-                      label="Market Cache Age"
-                      value={`${formatCacheAge(cacheInfo.market.age || 0)}${
-                        cacheInfo.market.isExpired ? " (expired)" : ""
-                      }`}
-                    />
-                  ) : null}
+                <div className="grid gap-4">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="space-y-3">
+                        <div className="text-[11px] uppercase tracking-[0.22em] text-yellow-200/70">
+                          Solar Cache
+                        </div>
+                        <div className="text-sm leading-6 text-white">
+                          {cacheInfo.solar.exists
+                            ? cacheInfo.solar.data
+                              ? "Cached"
+                              : "Expired or invalid"
+                            : "Not cached"}
+                        </div>
+                        <div className="text-sm leading-6 text-gray-400">
+                          {cacheInfo.solar.timestamp
+                            ? `${formatCacheAge(cacheInfo.solar.age || 0)}${
+                                cacheInfo.solar.isExpired ? " (expired)" : ""
+                              }`
+                            : "No timestamp available"}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleClearCache(SOLAR_CACHE_KEY)}
+                        className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/6 px-4 py-2 text-sm font-medium text-white transition-colors hover:border-yellow-300/35 hover:bg-yellow-300/10 hover:text-yellow-100"
+                      >
+                        Clear solar cache
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="space-y-3">
+                        <div className="text-[11px] uppercase tracking-[0.22em] text-yellow-200/70">
+                          Market Cache
+                        </div>
+                        <div className="text-sm leading-6 text-white">
+                          {cacheInfo.market.exists
+                            ? cacheInfo.market.data
+                              ? "Cached"
+                              : "Expired or invalid"
+                            : "Not cached"}
+                        </div>
+                        <div className="text-sm leading-6 text-gray-400">
+                          {cacheInfo.market.timestamp
+                            ? `${formatCacheAge(cacheInfo.market.age || 0)}${
+                                cacheInfo.market.isExpired ? " (expired)" : ""
+                              }`
+                            : "No timestamp available"}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleClearCache(MARKET_CACHE_KEY)}
+                        className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/6 px-4 py-2 text-sm font-medium text-white transition-colors hover:border-yellow-300/35 hover:bg-yellow-300/10 hover:text-yellow-100"
+                      >
+                        Clear market cache
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-gray-300">
@@ -421,6 +476,113 @@ export default function Debug() {
                   API Error: {apiError}
                 </div>
               ) : null}
+
+              <Accordion
+                type="multiple"
+                className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] px-4"
+              >
+                <AccordionItem value="solar-data" className="border-white/10">
+                  <AccordionTrigger className="text-white hover:no-underline">
+                    <div>
+                      <div className="text-sm font-semibold">Solar data table</div>
+                      <div className="mt-1 text-xs text-gray-400">
+                        {solarData
+                          ? `${solarRows.length} loaded rows`
+                          : "No solar data loaded"}
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    {solarData ? (
+                      <Table className="text-gray-200">
+                        <TableHeader>
+                          <TableRow className="border-white/10 hover:bg-white/[0.03]">
+                            <TableHead className="text-gray-300">Timestamp</TableHead>
+                            <TableHead className="text-right text-gray-300">
+                              Production (Wh)
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {solarRows.map(([timestamp, production]) => (
+                            <TableRow
+                              key={timestamp}
+                              className="border-white/10 hover:bg-white/[0.03]"
+                            >
+                              <TableCell>{formatDateTime(timestamp)}</TableCell>
+                              <TableCell className="text-right">
+                                {production.toFixed(0)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-gray-300">
+                        Solar data is not loaded yet.
+                      </div>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="market-data" className="border-white/10">
+                  <AccordionTrigger className="text-white hover:no-underline">
+                    <div>
+                      <div className="text-sm font-semibold">Market data table</div>
+                      <div className="mt-1 text-xs text-gray-400">
+                        {settings.bestSlotMode === "solar-only"
+                          ? "Ignored in solar-only mode"
+                          : marketData
+                          ? `${marketRows.length} loaded rows`
+                          : "No market data loaded"}
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    {settings.bestSlotMode === "solar-only" ? (
+                      <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-gray-300">
+                        Market data is skipped while solar-only mode is active.
+                      </div>
+                    ) : marketData ? (
+                      <Table className="text-gray-200">
+                        <TableHeader>
+                          <TableRow className="border-white/10 hover:bg-white/[0.03]">
+                            <TableHead className="text-gray-300">Start</TableHead>
+                            <TableHead className="text-gray-300">End</TableHead>
+                            <TableHead className="text-right text-gray-300">
+                              Price
+                            </TableHead>
+                            <TableHead className="text-gray-300">Unit</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {marketRows.map((entry) => (
+                            <TableRow
+                              key={entry.start_timestamp}
+                              className="border-white/10 hover:bg-white/[0.03]"
+                            >
+                              <TableCell>
+                                {formatDateTime(entry.start_timestamp)}
+                              </TableCell>
+                              <TableCell>
+                                {formatDateTime(entry.end_timestamp)}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {entry.marketprice.toFixed(3)}
+                              </TableCell>
+                              <TableCell>{entry.unit}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-gray-300">
+                        Market data is not loaded yet.
+                      </div>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </SectionCard>
           </div>
 
