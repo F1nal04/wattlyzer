@@ -2,6 +2,8 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { MarketData } from "./types";
 
+const HOUR_MS = 60 * 60 * 1000;
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -39,7 +41,8 @@ export function isDebugMode(): boolean {
  */
 export function checkMarketDataSufficiency(
   marketData: MarketData | null,
-  searchTimespanHours: number
+  searchTimespanHours: number,
+  now: Date = new Date()
 ): {
   isSufficient: boolean;
   hoursAvailable: number;
@@ -53,19 +56,49 @@ export function checkMarketDataSufficiency(
     };
   }
 
-  const now = new Date().getTime();
-
-  // Count how many hourly data points are available from now onwards
-  // Market data is in hourly slots, so we count complete hour coverage
-  const availableDataPoints = marketData.data.filter(
-    (item) => item.end_timestamp > now
+  const firstRelevantHour = new Date(
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      now.getUTCHours(),
+      0,
+      0,
+      0
+    )
   );
+  if (now.getTime() > firstRelevantHour.getTime()) {
+    firstRelevantHour.setTime(firstRelevantHour.getTime() + HOUR_MS);
+  }
 
-  const hoursAvailable = availableDataPoints.length;
+  const lastRequiredSampleMs =
+    now.getTime() + (searchTimespanHours - 1) * HOUR_MS;
+  const requiredHours =
+    firstRelevantHour.getTime() > lastRequiredSampleMs
+      ? 0
+      : Math.floor(
+          (lastRequiredSampleMs - firstRelevantHour.getTime()) / HOUR_MS
+        ) + 1;
 
-  // Check if we have enough hourly data points to cover the search span
-  // We need at least searchTimespanHours complete hours of data
-  const isSufficient = hoursAvailable >= searchTimespanHours;
+  const sortedData = [...marketData.data].sort(
+    (a, b) => a.start_timestamp - b.start_timestamp
+  );
+  let coverageEndMs = firstRelevantHour.getTime();
+
+  for (const item of sortedData) {
+    if (
+      item.start_timestamp <= coverageEndMs &&
+      item.end_timestamp > coverageEndMs
+    ) {
+      coverageEndMs = item.end_timestamp;
+    }
+  }
+
+  const hoursAvailable = Math.max(
+    0,
+    Math.floor((coverageEndMs - firstRelevantHour.getTime()) / HOUR_MS)
+  );
+  const isSufficient = hoursAvailable >= requiredHours;
 
   return {
     isSufficient,
