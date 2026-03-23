@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/F1nal04/wattlyzer/compare/v1.7.0...v1.7.1) (2026-03-23)
+
+
+### Bug Fixes
+
+* market data sufficiency checks for partial hours ([72ef495](https://github.com/F1nal04/wattlyzer/commit/72ef495693a5df8f091552bc923a12271b559785))
+
 ## [1.7.0](https://github.com/F1nal04/wattlyzer/compare/v1.6.0...v1.7.0) (2026-03-20)
 
 
