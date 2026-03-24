@@ -44,7 +44,7 @@ export type SchedulingResult = {
 export type SlotResult = {
   startTime: Date;
   avgSolarProduction: number;
-  avgPrice: number;
+  avgPrice: number | null;
   solarQualifies: boolean;
 };
 

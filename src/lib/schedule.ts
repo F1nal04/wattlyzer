@@ -137,6 +137,30 @@ export function calculateMarketPrice(
   return priceData ? priceData.marketprice : 0;
 }
 
+function findMarketPrice(
+  marketData: MarketData | null,
+  targetTime: Date,
+): number | null {
+  if (!marketData?.data) {
+    return null;
+  }
+
+  const targetTimestamp = targetTime.getTime();
+  const priceData = marketData.data.find(
+    (item) =>
+      targetTimestamp >= item.start_timestamp &&
+      targetTimestamp < item.end_timestamp,
+  );
+
+  return priceData ? priceData.marketprice : null;
+}
+
+function hasAvgPrice(
+  slot: SlotResult,
+): slot is SlotResult & { avgPrice: number } {
+  return slot.avgPrice !== null;
+}
+
 export function calculateSchedule(
   solarData: SolarData | null,
   marketData: MarketData | null,
@@ -172,6 +196,7 @@ export function calculateSchedule(
 
     let totalSolarProduction = 0;
     let totalPrice = 0;
+    let hasCompleteMarketCoverage = true;
 
     for (let i = 0; i < consumerDuration; i++) {
       const targetTime = new Date(startMs + i * HOUR_MS);
@@ -180,17 +205,26 @@ export function calculateSchedule(
         settings,
         targetTime,
       );
-      totalPrice += calculateMarketPrice(marketData, targetTime);
+
+      if (needsMarketData) {
+        const price = findMarketPrice(marketData, targetTime);
+        if (price === null) {
+          hasCompleteMarketCoverage = false;
+          break;
+        }
+        totalPrice += price;
+      }
     }
 
     const avgSolarProduction = totalSolarProduction / consumerDuration;
-    const avgPrice = totalPrice / consumerDuration;
     const solarQualifies = avgSolarProduction >= settings.minKwh;
 
     results.push({
       startTime: new Date(startMs),
       avgSolarProduction,
-      avgPrice,
+      avgPrice: hasCompleteMarketCoverage
+        ? totalPrice / consumerDuration
+        : null,
       solarQualifies,
     });
   }
@@ -209,7 +243,8 @@ export function calculateSchedule(
       solarQualifies: slot.solarQualifies,
     }));
 
-  const topPriceSlots = [...results]
+  const topPriceSlots = results
+    .filter(hasAvgPrice)
     .sort((a, b) => a.avgPrice - b.avgPrice)
     .slice(0, 3)
     .map((slot) => ({
@@ -225,9 +260,20 @@ export function calculateSchedule(
   };
 
   if (settings.bestSlotMode === "price-only") {
-    const cheapest = results.reduce((best, current) =>
-      current.avgPrice < best.avgPrice ? current : best,
-    );
+    const cheapest = results
+      .filter(hasAvgPrice)
+      .reduce<(SlotResult & { avgPrice: number }) | null>(
+        (best, current) =>
+          !best || current.avgPrice < best.avgPrice ? current : best,
+        null,
+      );
+
+    if (!cheapest) {
+      return {
+        schedulingResult: null,
+        topSlotsResult,
+      };
+    }
 
     return {
       schedulingResult: {
@@ -278,23 +324,34 @@ export function calculateSchedule(
         bestTime: best.startTime,
         reason: "solar" as const,
         avgSolarProduction: best.avgSolarProduction,
-        avgPrice: best.avgPrice,
+        avgPrice: best.avgPrice ?? undefined,
       },
       topSlotsResult,
     };
   }
 
-  const cheapest = results.reduce((best, current) =>
-    current.avgPrice < best.avgPrice ? current : best,
-  );
+  const cheapest = results
+    .filter(hasAvgPrice)
+    .reduce<(SlotResult & { avgPrice: number }) | null>(
+      (best, current) =>
+        !best || current.avgPrice < best.avgPrice ? current : best,
+      null,
+    );
+
+  if (!cheapest) {
+    return {
+      schedulingResult: null,
+      topSlotsResult,
+    };
+  }
 
   return {
-    schedulingResult: {
-      bestTime: cheapest.startTime,
-      reason: "price" as const,
-      avgSolarProduction: cheapest.avgSolarProduction,
-      avgPrice: cheapest.avgPrice,
-    },
-    topSlotsResult,
-  };
+      schedulingResult: {
+        bestTime: cheapest.startTime,
+        reason: "price" as const,
+        avgSolarProduction: cheapest.avgSolarProduction,
+        avgPrice: cheapest.avgPrice,
+      },
+      topSlotsResult,
+    };
 }

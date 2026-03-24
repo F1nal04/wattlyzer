@@ -228,6 +228,8 @@ export default function Debug() {
 
   const solarRows = solarData ? Object.entries(solarData.result) : [];
   const marketRows = marketData?.data ?? [];
+  const formatAvgPrice = (avgPrice: number | null | undefined) =>
+    avgPrice == null ? "Unavailable" : `${(avgPrice / 1000).toFixed(3)} €/kWh`;
 
   const handleClearCache = (cacheKey: string) => {
     clearCacheEntry(cacheKey);
@@ -616,7 +618,7 @@ export default function Debug() {
                       <div className="mt-2 text-sm leading-6 text-gray-300">
                         Solar: {slot.avgSolarProduction.toFixed(0)} Wh
                         <br />
-                        Price: {(slot.avgPrice / 1000).toFixed(3)} €/kWh
+                        Price: {formatAvgPrice(slot.avgPrice)}
                         <br />
                         Qualifies: {slot.solarQualifies ? "Yes" : "No"}
                       </div>
@@ -640,7 +642,7 @@ export default function Debug() {
                         <div className="mt-2 text-sm leading-6 text-gray-300">
                           Solar: {slot.avgSolarProduction.toFixed(0)} Wh
                           <br />
-                          Price: {(slot.avgPrice / 1000).toFixed(3)} €/kWh
+                          Price: {formatAvgPrice(slot.avgPrice)}
                           <br />
                           Qualifies: {slot.solarQualifies ? "Yes" : "No"}
                         </div>
@@ -684,7 +686,7 @@ export default function Debug() {
                   Price:{" "}
                   {settings.bestSlotMode === "solar-only"
                     ? "Ignored"
-                    : `${((schedulingResult.avgPrice || 0) / 1000).toFixed(3)} €/kWh`}
+                    : formatAvgPrice(schedulingResult.avgPrice)}
                 </div>
               </div>
             ) : null}

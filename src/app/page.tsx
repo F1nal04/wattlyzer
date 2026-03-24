@@ -242,6 +242,12 @@ function SchedulingPanel() {
     !!solarData &&
     !schedulingResult &&
     !apiError;
+  const averagePriceLabel =
+    settings.bestSlotMode === "solar-only"
+      ? "Ignored"
+      : schedulingResult?.avgPrice == null
+        ? "Unavailable"
+        : `${(schedulingResult.avgPrice / 1000).toFixed(3)} €/kWh`;
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -444,9 +450,7 @@ function SchedulingPanel() {
                         Average Price
                       </div>
                       <div className="mt-2 text-2xl font-semibold text-white">
-                        {settings.bestSlotMode === "solar-only"
-                          ? "Ignored"
-                          : `${((schedulingResult.avgPrice || 0) / 1000).toFixed(3)} €/kWh`}
+                        {averagePriceLabel}
                       </div>
                     </div>
                   </div>
