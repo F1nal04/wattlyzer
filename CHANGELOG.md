@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.2](https://github.com/F1nal04/wattlyzer/compare/v1.7.1...v1.7.2) (2026-03-24)
+
+
+### Bug Fixes
+
+* improve missing price handling and market data checks ([a1891c3](https://github.com/F1nal04/wattlyzer/commit/a1891c3f6a1aff32157681e8e9e1deee5bf83f85))
+
 ## [1.7.1](https://github.com/F1nal04/wattlyzer/compare/v1.7.0...v1.7.1) (2026-03-23)
 
 
