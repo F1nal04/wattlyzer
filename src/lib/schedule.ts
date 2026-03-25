@@ -210,7 +210,7 @@ export function calculateSchedule(
         const price = findMarketPrice(marketData, targetTime);
         if (price === null) {
           hasCompleteMarketCoverage = false;
-          break;
+          continue;
         }
         totalPrice += price;
       }
