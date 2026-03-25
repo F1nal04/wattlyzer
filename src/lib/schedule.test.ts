@@ -68,6 +68,22 @@ function solarFromHourlyRates(day: string, rates: number[]): SolarData {
   return solarWithResult(out);
 }
 
+function solarFromHourlyRatesStartingAt(
+  anchorUtcHourStart: Date,
+  rates: number[],
+): SolarData {
+  const out: Record<string, number> = {};
+  let cumulative = 0;
+
+  for (let h = 0; h < rates.length; h++) {
+    const timestamp = new Date(anchorUtcHourStart.getTime() + h * HOUR_MS);
+    out[timestamp.toISOString()] = cumulative;
+    cumulative += rates[h] / 0.7;
+  }
+
+  return solarWithResult(out);
+}
+
 const HOUR_MS = 3600_000;
 
 function marketUtcHourlyFrom(
@@ -669,6 +685,31 @@ describe("calculateSchedule", () => {
     expect(schedulingResult?.bestTime.toISOString()).toBe(
       "2025-01-15T14:00:00.000Z",
     );
+    expect(schedulingResult?.avgPrice).toBeUndefined();
+  });
+
+  it("combined: still uses late solar windows after market data runs out", () => {
+    const now = new Date("2025-01-15T00:00:00.000Z");
+    const rates = Array.from({ length: 48 }, (_, h) =>
+      h >= 26 && h <= 29 ? 2600 : 200,
+    );
+    const solar = solarFromHourlyRatesStartingAt(now, rates);
+    const market = marketUtcHourlyFrom(now, Array.from({ length: 10 }, () => 100));
+
+    const { schedulingResult } = calculateSchedule(
+      solar,
+      market,
+      { ...baseSettings, bestSlotMode: "combined", minKwh: 2000 },
+      2,
+      30,
+      now,
+    );
+
+    expect(schedulingResult?.reason).toBe("solar");
+    expect(schedulingResult?.bestTime.toISOString()).toBe(
+      "2025-01-16T02:00:00.000Z",
+    );
+    expect(schedulingResult?.avgSolarProduction).toBeCloseTo(2600, 5);
     expect(schedulingResult?.avgPrice).toBeUndefined();
   });
 
