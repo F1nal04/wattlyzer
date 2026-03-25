@@ -111,19 +111,15 @@ function SectionCard({
   );
 }
 
-function InfoTile({
-  label,
-  value,
-}: {
-  label: string;
-  value: ReactNode;
-}) {
+function InfoTile({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
       <div className="text-[11px] uppercase tracking-[0.22em] text-yellow-200/70">
         {label}
       </div>
-      <div className="mt-2 break-words text-sm leading-6 text-white">{value}</div>
+      <div className="mt-2 break-words text-sm leading-6 text-white">
+        {value}
+      </div>
     </div>
   );
 }
@@ -147,7 +143,8 @@ function getSystemInfoSnapshot() {
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     language: navigator.language,
     online: navigator.onLine ? "Online" : "Offline",
-    localStorage: typeof Storage !== "undefined" ? "Available" : "Not available",
+    localStorage:
+      typeof Storage !== "undefined" ? "Available" : "Not available",
   };
 
   const isUnchanged =
@@ -180,12 +177,12 @@ export default function Debug() {
   const hasGeolocationSupport = useSyncExternalStore(
     subscribeToGeolocationSupport,
     getGeolocationSupportSnapshot,
-    getGeolocationSupportServerSnapshot
+    getGeolocationSupportServerSnapshot,
   );
   const systemInfo = useSyncExternalStore(
     subscribeToSystemInfo,
     getSystemInfoSnapshot,
-    getSystemInfoServerSnapshot
+    getSystemInfoServerSnapshot,
   );
 
   const { solarData, marketData, schedulingResult, topSlotsResult, apiError } =
@@ -205,7 +202,7 @@ export default function Debug() {
       },
       (error) => {
         setLocationError(error.message);
-      }
+      },
     );
   }, [hasGeolocationSupport]);
 
@@ -261,7 +258,7 @@ export default function Debug() {
             </div>
 
             <Link
-              href="/"
+              href="/?debug=true"
               className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/6 px-5 py-3 text-center text-sm font-medium text-white whitespace-nowrap transition-colors hover:border-yellow-300/35 hover:bg-yellow-300/10 hover:text-yellow-100"
             >
               Back to Wattlyzer
@@ -289,8 +286,14 @@ export default function Debug() {
             description="The exact values used by the solar and scheduling logic."
           >
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <InfoTile label="Azimut (Compass)" value={`${settings.azimut}°`} />
-              <InfoTile label="Azimut (API)" value={`${(settings.azimut % 360) - 180}°`} />
+              <InfoTile
+                label="Azimut (Compass)"
+                value={`${settings.azimut}°`}
+              />
+              <InfoTile
+                label="Azimut (API)"
+                value={`${(settings.azimut % 360) - 180}°`}
+              />
               <InfoTile label="Tilt Angle" value={`${settings.angle}°`} />
               <InfoTile label="System Size" value={`${settings.kwh} kW`} />
               <InfoTile
@@ -319,8 +322,8 @@ export default function Debug() {
                   settings.bestSlotMode === "price-only"
                     ? "Price only"
                     : settings.bestSlotMode === "solar-only"
-                    ? "Solar only"
-                    : "Combined"
+                      ? "Solar only"
+                      : "Combined"
                 }
               />
             </div>
@@ -471,8 +474,8 @@ export default function Debug() {
                     settings.bestSlotMode === "solar-only"
                       ? "Ignored in solar-only mode"
                       : marketData
-                      ? `${marketData.data?.length || 0} price points`
-                      : "Not loaded"
+                        ? `${marketData.data?.length || 0} price points`
+                        : "Not loaded"
                   }
                 />
               </div>
@@ -490,7 +493,9 @@ export default function Debug() {
                 <AccordionItem value="solar-data" className="border-white/10">
                   <AccordionTrigger className="text-white hover:no-underline">
                     <div>
-                      <div className="text-sm font-semibold">Solar data table</div>
+                      <div className="text-sm font-semibold">
+                        Solar data table
+                      </div>
                       <div className="mt-1 text-xs text-gray-400">
                         {solarData
                           ? cacheInfo?.solar.exists
@@ -505,7 +510,9 @@ export default function Debug() {
                       <Table className="text-gray-200">
                         <TableHeader>
                           <TableRow className="border-white/10 hover:bg-white/[0.03]">
-                            <TableHead className="text-gray-300">Timestamp</TableHead>
+                            <TableHead className="text-gray-300">
+                              Timestamp
+                            </TableHead>
                             <TableHead className="text-right text-gray-300">
                               Production (Wh)
                             </TableHead>
@@ -536,15 +543,17 @@ export default function Debug() {
                 <AccordionItem value="market-data" className="border-white/10">
                   <AccordionTrigger className="text-white hover:no-underline">
                     <div>
-                      <div className="text-sm font-semibold">Market data table</div>
+                      <div className="text-sm font-semibold">
+                        Market data table
+                      </div>
                       <div className="mt-1 text-xs text-gray-400">
                         {settings.bestSlotMode === "solar-only"
                           ? "Ignored in solar-only mode"
                           : marketData
-                          ? cacheInfo?.market.exists
-                            ? `${marketRows.length} loaded rows`
-                            : `${marketRows.length} rows loaded in memory only`
-                          : "No market data loaded"}
+                            ? cacheInfo?.market.exists
+                              ? `${marketRows.length} loaded rows`
+                              : `${marketRows.length} rows loaded in memory only`
+                            : "No market data loaded"}
                       </div>
                     </div>
                   </AccordionTrigger>
@@ -557,12 +566,16 @@ export default function Debug() {
                       <Table className="text-gray-200">
                         <TableHeader>
                           <TableRow className="border-white/10 hover:bg-white/[0.03]">
-                            <TableHead className="text-gray-300">Start</TableHead>
+                            <TableHead className="text-gray-300">
+                              Start
+                            </TableHead>
                             <TableHead className="text-gray-300">End</TableHead>
                             <TableHead className="text-right text-gray-300">
                               Price
                             </TableHead>
-                            <TableHead className="text-gray-300">Unit</TableHead>
+                            <TableHead className="text-gray-300">
+                              Unit
+                            </TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -676,12 +689,15 @@ export default function Debug() {
                   {settings.bestSlotMode === "solar-only"
                     ? "Solar only"
                     : settings.bestSlotMode === "price-only"
-                    ? "Price only"
-                    : schedulingResult.reason === "solar"
-                    ? "Solar"
-                    : "Price"}
+                      ? "Price only"
+                      : schedulingResult.reason === "solar"
+                        ? "Solar"
+                        : "Price"}
                   <br />
-                  Solar: {(schedulingResult.avgSolarProduction || 0).toFixed(0)} Wh
+                  Solar: {(schedulingResult.avgSolarProduction || 0).toFixed(
+                    0,
+                  )}{" "}
+                  Wh
                   <br />
                   Price:{" "}
                   {settings.bestSlotMode === "solar-only"
