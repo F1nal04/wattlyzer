@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.4](https://github.com/F1nal04/wattlyzer/compare/v1.7.3...v1.7.4) (2026-03-25)
+
+
+### Bug Fixes
+
+* **debug:** ref link allows to reach debug page from home ([80467be](https://github.com/F1nal04/wattlyzer/commit/80467be3737ebb35b72ff64c4f8e6e457d803c6a))
+
 ## [1.7.3](https://github.com/F1nal04/wattlyzer/compare/v1.7.2...v1.7.3) (2026-03-25)
 
 
