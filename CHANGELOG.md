@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.3](https://github.com/F1nal04/wattlyzer/compare/v1.7.2...v1.7.3) (2026-03-25)
+
+
+### Bug Fixes
+
+* **schedule:** update handling of missing market prices in schedule calculation ([4210631](https://github.com/F1nal04/wattlyzer/commit/4210631d46e139df9e7daa43a30392285a8c4406))
+
 ## [1.7.2](https://github.com/F1nal04/wattlyzer/compare/v1.7.1...v1.7.2) (2026-03-24)
 
 
