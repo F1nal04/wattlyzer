@@ -1,5 +1,12 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import {
+  ArrowLeft,
+  Clock3,
+  HardDrive,
+  MapPin,
+  ShieldCheck,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { FooterLinks } from "@/components/footer-links";
 
@@ -11,13 +18,18 @@ export const metadata: Metadata = {
 function PrivacyCard({
   title,
   children,
+  icon: Icon,
 }: {
   title: string;
   children: ReactNode;
+  icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
     <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-      <h2 className="text-xl font-semibold text-white">{title}</h2>
+      <h2 className="flex items-center gap-2 text-xl font-semibold text-white">
+        <Icon className="size-5 text-yellow-300" />
+        {title}
+      </h2>
       <div className="mt-3 text-sm leading-7 text-gray-300">{children}</div>
     </section>
   );
@@ -52,6 +64,7 @@ export default function Privacy() {
               href="/"
               className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/6 px-5 py-3 text-center text-sm font-medium text-white whitespace-nowrap transition-colors hover:border-yellow-300/35 hover:bg-yellow-300/10 hover:text-yellow-100"
             >
+              <ArrowLeft className="mr-2 size-4" />
               Back to Wattlyzer
             </Link>
           </div>
@@ -62,9 +75,14 @@ export default function Privacy() {
             <div className="text-[11px] uppercase tracking-[0.28em] text-yellow-300/70">
               Privacy Overview
             </div>
-            <h2 className="mt-2 text-2xl font-semibold text-white md:text-3xl">
-              Local-first data handling
-            </h2>
+            <div className="mt-2 flex items-center gap-3">
+              <div className="rounded-full border border-white/10 bg-white/5 p-2 text-yellow-300">
+                <ShieldCheck className="size-5" />
+              </div>
+              <h2 className="text-2xl font-semibold text-white md:text-3xl">
+                Local-first data handling
+              </h2>
+            </div>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
               The app only requests what it needs for solar and price
               estimation, and most persistence stays in the browser.
@@ -72,24 +90,24 @@ export default function Privacy() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <PrivacyCard title="Location data usage">
+            <PrivacyCard title="Location data usage" icon={MapPin}>
               Your location is used only to provide solar energy estimates for
               your area. This information is sent to the solar estimation API
               so the forecast can reflect local conditions.
             </PrivacyCard>
 
-            <PrivacyCard title="Local storage">
+            <PrivacyCard title="Local storage" icon={HardDrive}>
               Your settings and cached API responses are stored locally in the
               browser to improve performance and reduce unnecessary API calls.
             </PrivacyCard>
 
-            <PrivacyCard title="Data sharing">
+            <PrivacyCard title="Data sharing" icon={ShieldCheck}>
               We do not sell or distribute your personal data. External
               communication is limited to the solar and market APIs required to
               generate recommendations.
             </PrivacyCard>
 
-            <PrivacyCard title="Retention">
+            <PrivacyCard title="Retention" icon={Clock3}>
               Cached data remains on your device and can be cleared manually.
               No personal data is retained on Wattlyzer servers.
             </PrivacyCard>

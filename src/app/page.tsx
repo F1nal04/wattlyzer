@@ -1,6 +1,16 @@
 "use client";
 
 import {
+  BadgeEuro,
+  ChevronDown,
+  CircleAlert,
+  LoaderCircle,
+  Scale,
+  Sun,
+  SunMedium,
+  TriangleAlert,
+} from "lucide-react";
+import {
   useEffect,
   useRef,
   useState,
@@ -145,11 +155,27 @@ function StatusPanel({
     yellow:
       "border-yellow-300/35 bg-yellow-400/15 text-yellow-50 shadow-[0_0_0_1px_rgba(253,224,71,0.12)]",
   };
+  const icons = {
+    red: CircleAlert,
+    orange: TriangleAlert,
+    gray: LoaderCircle,
+    yellow: SunMedium,
+  };
+  const Icon = icons[accent];
 
   return (
     <div className={`rounded-2xl border p-5 ${tones[accent]}`}>
-      <div className="text-lg font-semibold">{title}</div>
-      <p className="mt-2 text-sm leading-6 text-gray-300">{body}</p>
+      <div className="flex items-start gap-3">
+        <Icon
+          className={`mt-0.5 size-5 shrink-0 ${
+            accent === "gray" ? "animate-spin" : ""
+          }`}
+        />
+        <div>
+          <div className="text-lg font-semibold">{title}</div>
+          <p className="mt-2 text-sm leading-6 text-gray-300">{body}</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -437,16 +463,18 @@ function SchedulingPanel() {
                   </div>
 
                   <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl border border-white/8 bg-white/[0.04] p-4">
-                      <div className="text-[11px] uppercase tracking-[0.22em] text-yellow-200/70">
+                    <div className="rounded-2xl border border-white/8 bg-white/[0.04] p-4 text-center">
+                      <div className="flex items-center justify-center gap-2 text-[11px] uppercase tracking-[0.22em] text-yellow-200/70">
+                        <Sun className="size-4" />
                         Average Solar
                       </div>
                       <div className="mt-2 text-2xl font-semibold text-white">
                         {(schedulingResult.avgSolarProduction || 0).toFixed(0)} Wh
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-white/8 bg-white/[0.04] p-4">
-                      <div className="text-[11px] uppercase tracking-[0.22em] text-yellow-200/70">
+                    <div className="rounded-2xl border border-white/8 bg-white/[0.04] p-4 text-center">
+                      <div className="flex items-center justify-center gap-2 text-[11px] uppercase tracking-[0.22em] text-yellow-200/70">
+                        <BadgeEuro className="size-4" />
                         Average Price
                       </div>
                       <div className="mt-2 text-2xl font-semibold text-white">
@@ -465,7 +493,10 @@ function SchedulingPanel() {
 
               {apiError && (
                 <div className="rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                  API Error: {apiError}
+                  <div className="flex items-start gap-2">
+                    <CircleAlert className="mt-0.5 size-4 shrink-0" />
+                    <span>API Error: {apiError}</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -491,7 +522,7 @@ function SchedulingPanel() {
                   showAdvancedOptions ? "rotate-180" : ""
                 }`}
               >
-                ▼
+                <ChevronDown className="size-5" />
               </span>
             </button>
 
@@ -583,9 +614,30 @@ function SchedulingPanel() {
                       className="mt-4"
                     >
                       <TabsList className="grid h-auto w-full grid-cols-3 gap-1 bg-white/10 p-1">
-                        <TabsTrigger value="combined">Combined</TabsTrigger>
-                        <TabsTrigger value="solar-only">Solar only</TabsTrigger>
-                        <TabsTrigger value="price-only">Price only</TabsTrigger>
+                        <TabsTrigger
+                          value="combined"
+                          className="gap-1 px-1.5 text-[11px] sm:gap-1.5 sm:px-3 sm:text-sm"
+                        >
+                          <Scale className="size-3.5 sm:size-4" />
+                          <span className="sm:hidden">Both</span>
+                          <span className="hidden sm:inline">Combined</span>
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="solar-only"
+                          className="gap-1 px-1.5 text-[11px] sm:gap-1.5 sm:px-3 sm:text-sm"
+                        >
+                          <Sun className="size-3.5 sm:size-4" />
+                          <span className="sm:hidden">Solar</span>
+                          <span className="hidden sm:inline">Solar only</span>
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="price-only"
+                          className="gap-1 px-1.5 text-[11px] sm:gap-1.5 sm:px-3 sm:text-sm"
+                        >
+                          <BadgeEuro className="size-3.5 sm:size-4" />
+                          <span className="sm:hidden">Price</span>
+                          <span className="hidden sm:inline">Price only</span>
+                        </TabsTrigger>
                       </TabsList>
                     </Tabs>
                   </div>

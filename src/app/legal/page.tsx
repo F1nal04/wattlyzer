@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { ArrowLeft, Building2, Mail, Phone, Scale } from "lucide-react";
 import type { ReactNode } from "react";
 import { FooterLinks } from "@/components/footer-links";
 
@@ -11,13 +12,18 @@ export const metadata: Metadata = {
 function InfoCard({
   title,
   children,
+  icon: Icon,
 }: {
   title: string;
   children: ReactNode;
+  icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
     <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-      <h2 className="text-xl font-semibold text-white">{title}</h2>
+      <h2 className="flex items-center gap-2 text-xl font-semibold text-white">
+        <Icon className="size-5 text-yellow-300" />
+        {title}
+      </h2>
       <div className="mt-3 text-sm leading-7 text-gray-300">{children}</div>
     </section>
   );
@@ -52,6 +58,7 @@ export default function Legal() {
               href="/"
               className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/6 px-5 py-3 text-center text-sm font-medium text-white whitespace-nowrap transition-colors hover:border-yellow-300/35 hover:bg-yellow-300/10 hover:text-yellow-100"
             >
+              <ArrowLeft className="mr-2 size-4" />
               Back to Wattlyzer
             </Link>
           </div>
@@ -63,13 +70,18 @@ export default function Legal() {
               <div className="text-[11px] uppercase tracking-[0.28em] text-yellow-300/70">
                 Required Information
               </div>
-              <h2 className="mt-2 text-2xl font-semibold text-white md:text-3xl">
-                Information according to § 5 TMG
-              </h2>
+              <div className="mt-2 flex items-center gap-3">
+                <div className="rounded-full border border-white/10 bg-white/5 p-2 text-yellow-300">
+                  <Scale className="size-5" />
+                </div>
+                <h2 className="text-2xl font-semibold text-white md:text-3xl">
+                  Information according to § 5 TMG
+                </h2>
+              </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <InfoCard title="Operator">
+              <InfoCard title="Operator" icon={Building2}>
                 Leon Bojanowski
                 <br />
                 Marienstraße 3b
@@ -79,9 +91,10 @@ export default function Legal() {
                 Germany
               </InfoCard>
 
-              <InfoCard title="Contact">
+              <InfoCard title="Contact" icon={Mail}>
                 E-Mail: leongaborbojanowski04@gmail.com
                 <br />
+                <Phone className="mr-2 inline size-4 text-yellow-300" />
                 Phone: +49 160 3020390
               </InfoCard>
             </div>

@@ -2,6 +2,17 @@
 
 import Link from "next/link";
 import {
+  ArrowLeft,
+  BarChart3,
+  Database,
+  Laptop,
+  MapPinned,
+  MonitorCog,
+  SlidersHorizontal,
+  Trash2,
+  Wifi,
+} from "lucide-react";
+import {
   useEffect,
   useState,
   useSyncExternalStore,
@@ -85,11 +96,13 @@ function SectionCard({
   title,
   description,
   children,
+  icon: Icon,
 }: {
   eyebrow: string;
   title: string;
   description?: string;
   children: ReactNode;
+  icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
     <section className="rounded-[28px] border border-white/10 bg-gray-950/55 p-5 shadow-[0_24px_80px_-48px_rgba(251,191,36,0.45)] backdrop-blur-md md:p-7">
@@ -97,9 +110,14 @@ function SectionCard({
         <div className="text-[11px] uppercase tracking-[0.28em] text-yellow-300/70">
           {eyebrow}
         </div>
-        <h2 className="mt-2 text-2xl font-semibold text-white md:text-3xl">
-          {title}
-        </h2>
+        <div className="mt-2 flex items-center gap-3">
+          <div className="rounded-full border border-white/10 bg-white/5 p-2 text-yellow-300">
+            <Icon className="size-5" />
+          </div>
+          <h2 className="text-2xl font-semibold text-white md:text-3xl">
+            {title}
+          </h2>
+        </div>
         {description ? (
           <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
             {description}
@@ -261,6 +279,7 @@ export default function Debug() {
               href="/?debug=true"
               className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/6 px-5 py-3 text-center text-sm font-medium text-white whitespace-nowrap transition-colors hover:border-yellow-300/35 hover:bg-yellow-300/10 hover:text-yellow-100"
             >
+              <ArrowLeft className="mr-2 size-4" />
               Back to Wattlyzer
             </Link>
           </div>
@@ -271,6 +290,7 @@ export default function Debug() {
             eyebrow="Runtime"
             title="Build and environment"
             description="Basic versioning and runtime context for the current browser session."
+            icon={MonitorCog}
           >
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <InfoTile label="Version" value={packageJson.version} />
@@ -284,6 +304,7 @@ export default function Debug() {
             eyebrow="Configuration"
             title="Current settings"
             description="The exact values used by the solar and scheduling logic."
+            icon={SlidersHorizontal}
           >
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <InfoTile
@@ -333,6 +354,7 @@ export default function Debug() {
             eyebrow="Location"
             title="Geolocation and cache keys"
             description="Coordinates used for the solar estimate and the derived cache key."
+            icon={MapPinned}
           >
             {position ? (
               <div className="space-y-4">
@@ -380,6 +402,7 @@ export default function Debug() {
               eyebrow="Cache"
               title="Cache status"
               description="Whether solar and market API responses are currently available in local storage."
+              icon={Database}
             >
               {cacheInfo ? (
                 <div className="grid gap-4">
@@ -410,6 +433,7 @@ export default function Debug() {
                         onClick={() => handleClearCache(SOLAR_CACHE_KEY)}
                         className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/6 px-4 py-2 text-sm font-medium text-white transition-colors hover:border-yellow-300/35 hover:bg-yellow-300/10 hover:text-yellow-100"
                       >
+                        <Trash2 className="mr-2 size-4" />
                         Clear solar cache
                       </button>
                     </div>
@@ -442,6 +466,7 @@ export default function Debug() {
                         onClick={() => handleClearCache(MARKET_CACHE_KEY)}
                         className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/6 px-4 py-2 text-sm font-medium text-white transition-colors hover:border-yellow-300/35 hover:bg-yellow-300/10 hover:text-yellow-100"
                       >
+                        <Trash2 className="mr-2 size-4" />
                         Clear market cache
                       </button>
                     </div>
@@ -458,6 +483,7 @@ export default function Debug() {
               eyebrow="API"
               title="Loaded data"
               description="Whether the current solar and market requests have resolved and if any API error was captured."
+              icon={Wifi}
             >
               <div className="grid gap-4 sm:grid-cols-2">
                 <InfoTile
@@ -613,6 +639,7 @@ export default function Debug() {
             eyebrow="Ranking"
             title="Top scheduling slots"
             description="The best solar-heavy windows, the cheapest windows, and the final recommendation for the current debug run."
+            icon={BarChart3}
           >
             {topSlotsResult ? (
               <div className="grid gap-6 xl:grid-cols-2">
@@ -712,6 +739,7 @@ export default function Debug() {
             eyebrow="Client"
             title="Browser information"
             description="Useful runtime details when debugging layout, storage, or browser-specific behavior."
+            icon={Laptop}
           >
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <InfoTile label="Screen Size" value={systemInfo.screenSize} />
