@@ -1,6 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import {
+  ArrowLeft,
+  BatteryCharging,
+  CloudSun,
+  Compass,
+  PanelsTopLeft,
+  Ruler,
+  Sun,
+  Sunrise,
+  Sunset,
+  Trash2,
+  Zap,
+} from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { FooterLinks } from "@/components/footer-links";
 import { Slider } from "@/components/ui/slider";
@@ -38,13 +51,16 @@ function getDirectionLabel(azimut: number) {
 function SummaryItem({
   label,
   value,
+  icon: Icon,
 }: {
   label: string;
   value: string;
+  icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-black/25 px-4 py-4 backdrop-blur-sm">
-      <div className="text-[11px] uppercase tracking-[0.24em] text-yellow-200/70">
+      <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.24em] text-yellow-200/70">
+        <Icon className="size-4" />
         {label}
       </div>
       <div className="mt-2 text-lg font-semibold text-white">{value}</div>
@@ -57,11 +73,13 @@ function SectionCard({
   title,
   description,
   children,
+  icon: Icon,
 }: {
   eyebrow: string;
   title: string;
   description: string;
   children: ReactNode;
+  icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
     <section className="rounded-[28px] border border-white/10 bg-gray-950/55 p-5 shadow-[0_24px_80px_-48px_rgba(251,191,36,0.45)] backdrop-blur-md md:p-7">
@@ -69,9 +87,14 @@ function SectionCard({
         <div className="text-[11px] uppercase tracking-[0.28em] text-yellow-300/70">
           {eyebrow}
         </div>
-        <h2 className="mt-2 text-2xl font-semibold text-white md:text-3xl">
-          {title}
-        </h2>
+        <div className="mt-2 flex items-center gap-3">
+          <div className="rounded-full border border-white/10 bg-white/5 p-2 text-yellow-300">
+            <Icon className="size-5" />
+          </div>
+          <h2 className="text-2xl font-semibold text-white md:text-3xl">
+            {title}
+          </h2>
+        </div>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
           {description}
         </p>
@@ -86,6 +109,7 @@ function SliderSetting({
   label,
   valueLabel,
   description,
+  icon: Icon,
   value,
   min,
   max,
@@ -97,6 +121,7 @@ function SliderSetting({
   label: string;
   valueLabel: string;
   description: ReactNode;
+  icon: React.ComponentType<{ className?: string }>;
   value: number;
   min: number;
   max: number;
@@ -109,8 +134,9 @@ function SliderSetting({
       <div>
         <label
           htmlFor={id}
-          className="block text-lg font-semibold text-white md:text-xl"
+          className="flex items-center gap-2 text-lg font-semibold text-white md:text-xl"
         >
+          <Icon className="size-5 text-yellow-300" />
           {label}
         </label>
         <div className="mt-2 text-sm leading-6 text-gray-400">{description}</div>
@@ -143,6 +169,7 @@ function ToggleSetting({
   checked,
   onCheckedChange,
   accent,
+  icon: Icon,
 }: {
   id: string;
   title: string;
@@ -150,6 +177,7 @@ function ToggleSetting({
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   accent: string;
+  icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
     <div className="rounded-2xl border border-white/8 bg-white/[0.04] p-4">
@@ -157,8 +185,9 @@ function ToggleSetting({
         <div className="max-w-xl">
           <label
             htmlFor={id}
-            className="block text-lg font-semibold text-white md:text-xl"
+            className="flex items-center gap-2 text-lg font-semibold text-white md:text-xl"
           >
+            <Icon className="size-5 text-yellow-300" />
             {title}
           </label>
           <p className="mt-2 text-sm leading-6 text-gray-400">{description}</p>
@@ -221,6 +250,7 @@ export default function Settings() {
               href="/"
               className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/6 px-5 py-3 text-center text-sm font-medium text-white whitespace-nowrap transition-colors hover:border-yellow-300/35 hover:bg-yellow-300/10 hover:text-yellow-100"
             >
+              <ArrowLeft className="mr-2 size-4" />
               Back to Wattlyzer
             </Link>
           </div>
@@ -229,9 +259,14 @@ export default function Settings() {
             <SummaryItem
               label="Direction"
               value={`${directionLabel} (${settings.azimut}°)`}
+              icon={Compass}
             />
-            <SummaryItem label="Tilt" value={`${settings.angle}°`} />
-            <SummaryItem label="System Size" value={`${settings.kwh} kW`} />
+            <SummaryItem label="Tilt" value={`${settings.angle}°`} icon={Ruler} />
+            <SummaryItem
+              label="System Size"
+              value={`${settings.kwh} kW`}
+              icon={Zap}
+            />
             <SummaryItem
               label="Shading"
               value={
@@ -243,6 +278,7 @@ export default function Settings() {
                     }${settings.eveningShading ? "PM" : ""} active`
                   : "None"
               }
+              icon={CloudSun}
             />
           </div>
         </header>
@@ -252,11 +288,13 @@ export default function Settings() {
             eyebrow="Panel Setup"
             title="Core panel geometry"
             description="These values drive the solar forecast request directly. Keep them aligned with the physical panel installation rather than with short-term weather or electricity prices."
+            icon={PanelsTopLeft}
           >
             <SliderSetting
               id="azimut-slider"
               label="Azimut"
               valueLabel={`${settings.azimut}°`}
+              icon={Compass}
               description={
                 <>
                   Compass direction your panels face.
@@ -284,6 +322,7 @@ export default function Settings() {
               id="angle-slider"
               label="Tilt Angle"
               valueLabel={`${settings.angle}°`}
+              icon={Ruler}
               description="Panel angle from horizontal. Flat roofs sit near 0°, wall-mounted or steep roofs move higher."
               value={settings.angle}
               min={0}
@@ -304,6 +343,7 @@ export default function Settings() {
               id="kwh-slider"
               label="System Size"
               valueLabel={`${settings.kwh} kW`}
+              icon={BatteryCharging}
               description="Total peak capacity of the installed solar system."
               value={settings.kwh}
               min={1}
@@ -325,6 +365,7 @@ export default function Settings() {
             eyebrow="Shading Profile"
             title="Morning and evening losses"
             description="Use shading only when the forecast is consistently too optimistic because sunlight is blocked at the same time every day. The current model applies a fixed 50% reduction within the shaded window."
+            icon={CloudSun}
           >
             <ToggleSetting
               id="morning-shading-switch"
@@ -335,6 +376,7 @@ export default function Settings() {
                 updateSettings({ morningShading: checked })
               }
               accent="text-amber-200"
+              icon={Sunrise}
             />
 
             {settings.morningShading && (
@@ -343,6 +385,7 @@ export default function Settings() {
                   id="shading-end-time-slider"
                   label="Morning shading clears"
                   valueLabel={`${settings.shadingEndTime}:00`}
+                  icon={Sun}
                   description="Solar output is reduced before this hour."
                   value={settings.shadingEndTime}
                   min={6}
@@ -371,6 +414,7 @@ export default function Settings() {
                 updateSettings({ eveningShading: checked })
               }
               accent="text-orange-200"
+              icon={Sunset}
             />
 
             {settings.eveningShading && (
@@ -379,6 +423,7 @@ export default function Settings() {
                   id="shading-start-time-slider"
                   label="Evening shading begins"
                   valueLabel={`${settings.shadingStartTime}:00`}
+                  icon={Sun}
                   description="Solar output is reduced from this hour onward."
                   value={settings.shadingStartTime}
                   min={12}
@@ -403,6 +448,7 @@ export default function Settings() {
             eyebrow="Maintenance"
             title="Cache and recovery"
             description="Cached API results make the app faster. Clear them only when the forecast or price data looks stale or inconsistent."
+            icon={Trash2}
           >
             <div className="grid gap-5 rounded-2xl border border-red-400/15 bg-red-500/5 p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
               <div>
@@ -423,6 +469,7 @@ export default function Settings() {
                 className="inline-flex items-center justify-center rounded-full bg-red-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={cacheCleared}
               >
+                <Trash2 className="mr-2 size-4" />
                 {cacheCleared ? "Cache Cleared" : "Clear Cache"}
               </button>
             </div>

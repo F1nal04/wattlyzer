@@ -1,6 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import {
+  Bug,
+  ExternalLink,
+  Scale,
+  Settings as SettingsIcon,
+  Shield,
+} from "lucide-react";
 import { useSyncExternalStore } from "react";
 import { isDebugMode } from "@/lib/utils";
 
@@ -35,33 +42,38 @@ export function FooterLinks() {
           target="_blank"
           rel="noopener noreferrer"
           prefetch={false}
-          className="shrink-0 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
         >
+          <ExternalLink className="size-3.5" />
           GitHub
         </Link>
         <Link
           href="/legal"
-          className="shrink-0 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
         >
+          <Scale className="size-3.5" />
           Legal
         </Link>
         <Link
           href="/privacy"
-          className="shrink-0 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
         >
+          <Shield className="size-3.5" />
           Privacy
         </Link>
         <Link
           href="/settings"
-          className="shrink-0 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
         >
+          <SettingsIcon className="size-3.5" />
           Settings
         </Link>
         {showDebugLink && (
           <Link
             href="/debug"
-            className="shrink-0 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap transition-colors hover:bg-white/8 hover:text-white sm:px-3 sm:py-2 sm:text-sm"
           >
+            <Bug className="size-3.5" />
             Debug
           </Link>
         )}
