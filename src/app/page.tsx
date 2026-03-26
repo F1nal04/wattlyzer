@@ -5,7 +5,6 @@ import {
   ChevronDown,
   CircleAlert,
   LoaderCircle,
-  PanelsTopLeft,
   Scale,
   Sun,
   SunMedium,
@@ -667,10 +666,6 @@ export default function Home() {
         <header className="rounded-[32px] border border-white/12 bg-black/30 p-6 shadow-[0_28px_100px_-56px_rgba(251,191,36,0.6)] backdrop-blur-md md:p-8">
           <div className="flex flex-col items-center text-center">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-yellow-300/20 bg-yellow-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-yellow-200">
-                <PanelsTopLeft className="size-4" />
-                Solar-aware scheduling
-              </div>
               <h1 className="text-4xl font-bold text-white md:text-6xl">
                 <span className="sr-only">
                   wattlyzer - smart appliance scheduling
