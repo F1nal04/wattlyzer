@@ -36,7 +36,7 @@ export function FooterLinks() {
 
   return (
     <div className="mt-10 pb-safe-bottom">
-      <div className="flex flex-nowrap items-center justify-center gap-1 overflow-x-auto rounded-full border border-white/10 bg-black/25 px-2 py-1.5 backdrop-blur-sm">
+      <div className="flex flex-wrap items-center justify-center gap-1 rounded-[28px] border border-white/10 bg-black/25 px-2 py-1.5 backdrop-blur-sm sm:rounded-full">
         <Link
           href="https://github.com/F1nal04/wattlyzer"
           target="_blank"

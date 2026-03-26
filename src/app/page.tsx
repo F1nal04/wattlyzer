@@ -464,8 +464,8 @@ function SchedulingPanel() {
                   </div>
 
                   <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl border border-white/8 bg-white/[0.04] p-4">
-                      <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-yellow-200/70">
+                    <div className="rounded-2xl border border-white/8 bg-white/[0.04] p-4 text-center">
+                      <div className="flex items-center justify-center gap-2 text-[11px] uppercase tracking-[0.22em] text-yellow-200/70">
                         <Sun className="size-4" />
                         Average Solar
                       </div>
@@ -473,8 +473,8 @@ function SchedulingPanel() {
                         {(schedulingResult.avgSolarProduction || 0).toFixed(0)} Wh
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-white/8 bg-white/[0.04] p-4">
-                      <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-yellow-200/70">
+                    <div className="rounded-2xl border border-white/8 bg-white/[0.04] p-4 text-center">
+                      <div className="flex items-center justify-center gap-2 text-[11px] uppercase tracking-[0.22em] text-yellow-200/70">
                         <BadgeEuro className="size-4" />
                         Average Price
                       </div>
@@ -615,17 +615,29 @@ function SchedulingPanel() {
                       className="mt-4"
                     >
                       <TabsList className="grid h-auto w-full grid-cols-3 gap-1 bg-white/10 p-1">
-                        <TabsTrigger value="combined">
-                          <Scale className="size-4" />
-                          Combined
+                        <TabsTrigger
+                          value="combined"
+                          className="gap-1 px-1.5 text-[11px] sm:gap-1.5 sm:px-3 sm:text-sm"
+                        >
+                          <Scale className="size-3.5 sm:size-4" />
+                          <span className="sm:hidden">Both</span>
+                          <span className="hidden sm:inline">Combined</span>
                         </TabsTrigger>
-                        <TabsTrigger value="solar-only">
-                          <Sun className="size-4" />
-                          Solar only
+                        <TabsTrigger
+                          value="solar-only"
+                          className="gap-1 px-1.5 text-[11px] sm:gap-1.5 sm:px-3 sm:text-sm"
+                        >
+                          <Sun className="size-3.5 sm:size-4" />
+                          <span className="sm:hidden">Solar</span>
+                          <span className="hidden sm:inline">Solar only</span>
                         </TabsTrigger>
-                        <TabsTrigger value="price-only">
-                          <BadgeEuro className="size-4" />
-                          Price only
+                        <TabsTrigger
+                          value="price-only"
+                          className="gap-1 px-1.5 text-[11px] sm:gap-1.5 sm:px-3 sm:text-sm"
+                        >
+                          <BadgeEuro className="size-3.5 sm:size-4" />
+                          <span className="sm:hidden">Price</span>
+                          <span className="hidden sm:inline">Price only</span>
                         </TabsTrigger>
                       </TabsList>
                     </Tabs>
