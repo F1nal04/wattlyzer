@@ -147,11 +147,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main className="relative flex-1">{children}</main>
 
       <footer className="mt-8 border-t border-border/60 bg-background/60">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-6 pb-safe-bottom text-xs text-muted-foreground md:px-6">
-          <div className="tabular-nums">
-            © {new Date().getFullYear()} wattlyzer
-          </div>
-          <div className="flex flex-wrap items-center gap-1">
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-3 px-4 py-6 pb-safe-bottom text-xs text-muted-foreground md:px-6">
+          <nav className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1">
             <Link
               href="/legal"
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors hover:bg-foreground/5 hover:text-foreground"
@@ -183,6 +180,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <ExternalLink className="size-3.5" />
               GitHub
             </Link>
+          </nav>
+          <div className="tabular-nums">
+            © {new Date().getFullYear()} wattlyzer
           </div>
         </div>
       </footer>
