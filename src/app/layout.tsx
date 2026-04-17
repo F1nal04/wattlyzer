@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { SettingsProvider } from "@/lib/settings-context";
+import { getSiteUrl } from "@/lib/site-url";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -10,6 +11,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: { default: "wattlyzer", template: "%s | wattlyzer" },
   description: "Smart energy scheduling tool that optimizes when to run your appliances based on solar production and electricity prices.",
   manifest: "/site.webmanifest",
