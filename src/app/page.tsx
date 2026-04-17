@@ -1,186 +1,21 @@
 "use client";
 
-import {
-  BadgeEuro,
-  ChevronDown,
-  CircleAlert,
-  LoaderCircle,
-  Scale,
-  Sun,
-  SunMedium,
-  TriangleAlert,
-} from "lucide-react";
-import {
-  useEffect,
-  useRef,
-  useState,
-  Suspense,
-  type ReactNode,
-} from "react";
-import { Slider } from "@/components/ui/slider";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Suspense, useEffect, useState } from "react";
 import {
   SolarDataFetcher,
   MarketDataFetcher,
 } from "@/components/data-fetchers";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { FooterLinks } from "@/components/footer-links";
 import { useScheduling } from "@/hooks/use-scheduling";
 import { useSettings, type BestSlotMode } from "@/lib/settings-context";
+import { Callout } from "@/components/scheduler/callout";
+import { DurationControl } from "@/components/scheduler/duration-control";
+import { MinEnergyControl } from "@/components/scheduler/min-energy-control";
+import { ModeTabs } from "@/components/scheduler/mode-tabs";
+import { WindowSelect } from "@/components/scheduler/window-select";
+import { ResultHero } from "@/components/scheduler/result-hero";
 
-function formatRemainingTime(targetTime: Date) {
-  const now = new Date();
-  const diffMs = targetTime.getTime() - now.getTime();
-
-  if (diffMs <= 0) {
-    return "now";
-  }
-
-  const totalMinutes = Math.floor(diffMs / (1000 * 60));
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-
-  if (hours === 0) {
-    return `${minutes}m`;
-  }
-
-  if (minutes === 0) {
-    return `${hours}h`;
-  }
-
-  return `${hours}h ${minutes}m`;
-}
-
-function TypewriterTitle() {
-  const [displayText, setDisplayText] = useState("");
-  const fullText = "wattlyzer";
-
-  useEffect(() => {
-    let currentIndex = 0;
-    const typingInterval = setInterval(() => {
-      if (currentIndex <= fullText.length) {
-        setDisplayText(fullText.slice(0, currentIndex));
-        currentIndex += 1;
-      } else {
-        clearInterval(typingInterval);
-      }
-    }, 120);
-
-    return () => clearInterval(typingInterval);
-  }, []);
-
-  return (
-    <span aria-hidden="true">
-      {displayText}
-      <span aria-hidden="true" className="motion-safe:animate-blink">
-        |
-      </span>
-    </span>
-  );
-}
-
-function SectionCard({
-  eyebrow,
-  title,
-  description,
-  children,
-  className = "",
-}: {
-  eyebrow: string;
-  title: string;
-  description: string;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <section
-      className={`rounded-[28px] border border-white/10 bg-gray-950/55 p-5 shadow-[0_24px_80px_-48px_rgba(251,191,36,0.45)] backdrop-blur-md md:p-7 ${className}`}
-    >
-      <div className="mb-6">
-        <div className="text-[11px] uppercase tracking-[0.28em] text-yellow-300/70">
-          {eyebrow}
-        </div>
-        <h2 className="mt-2 text-2xl font-semibold text-white md:text-3xl">
-          {title}
-        </h2>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
-          {description}
-        </p>
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function ControlBlock({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="rounded-2xl border border-white/8 bg-white/[0.04] p-4">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-white">{title}</h3>
-        <p className="mt-2 text-sm leading-6 text-gray-400">{description}</p>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function StatusPanel({
-  title,
-  body,
-  accent,
-}: {
-  title: string;
-  body: string;
-  accent: "red" | "orange" | "gray" | "yellow";
-}) {
-  const tones = {
-    red: "border-red-400/20 bg-red-500/10 text-red-200",
-    orange: "border-orange-400/20 bg-orange-500/10 text-orange-200",
-    gray: "border-white/10 bg-white/[0.04] text-gray-200",
-    yellow:
-      "border-yellow-300/35 bg-yellow-400/15 text-yellow-50 shadow-[0_0_0_1px_rgba(253,224,71,0.12)]",
-  };
-  const icons = {
-    red: CircleAlert,
-    orange: TriangleAlert,
-    gray: LoaderCircle,
-    yellow: SunMedium,
-  };
-  const Icon = icons[accent];
-
-  return (
-    <div className={`rounded-2xl border p-5 ${tones[accent]}`}>
-      <div className="flex items-start gap-3">
-        <Icon
-          className={`mt-0.5 size-5 shrink-0 ${
-            accent === "gray" ? "animate-spin" : ""
-          }`}
-        />
-        <div>
-          <div className="text-lg font-semibold">{title}</div>
-          <p className="mt-2 text-sm leading-6 text-gray-300">{body}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SchedulingPanel() {
+function SchedulerBody() {
   const { settings, updateSettings } = useSettings();
   const [consumerDuration, setConsumerDuration] = useState(3);
   const [searchTimespan, setSearchTimespan] = useState<string>("24");
@@ -189,55 +24,56 @@ function SchedulingPanel() {
     longitude: number;
   } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
-  const [showRemainingTime, setShowRemainingTime] = useState(false);
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [hoursTillEndOfDay, setHoursTillEndOfDay] = useState(() => {
     const now = new Date();
     const endOfDay = new Date(now);
     endOfDay.setHours(23, 59, 59, 999);
     return Math.ceil((endOfDay.getTime() - now.getTime()) / (1000 * 60 * 60));
   });
-  const advancedOptionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem("wattlyzer_show_advanced");
-    if (saved !== null) {
-      setShowAdvancedOptions(JSON.parse(saved));
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem(
-      "wattlyzer_show_advanced",
-      JSON.stringify(showAdvancedOptions)
-    );
-  }, [showAdvancedOptions]);
-
-  useEffect(() => {
-    if (showAdvancedOptions && advancedOptionsRef.current) {
-      setTimeout(() => {
-        advancedOptionsRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-        });
-      }, 250);
-    }
-  }, [showAdvancedOptions]);
-
-  useEffect(() => {
-    const updateHours = () => {
+    const update = () => {
       const now = new Date();
       const endOfDay = new Date(now);
       endOfDay.setHours(23, 59, 59, 999);
       const hours = Math.ceil(
         (endOfDay.getTime() - now.getTime()) / (1000 * 60 * 60)
       );
-
       setHoursTillEndOfDay((prev) => (prev !== hours ? hours : prev));
     };
-
-    const interval = setInterval(updateHours, 60000);
+    const interval = setInterval(update, 60000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation not supported by browser");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (nextPosition) => {
+        setPosition({
+          latitude: nextPosition.coords.latitude,
+          longitude: nextPosition.coords.longitude,
+        });
+      },
+      (error) => {
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLocationError("Location access denied");
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setLocationError("Location information unavailable");
+            break;
+          case error.TIMEOUT:
+            setLocationError("Location request timed out");
+            break;
+          default:
+            setLocationError("Unknown location error");
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+    );
   }, []);
 
   const searchTimespanHours =
@@ -261,427 +97,197 @@ function SchedulingPanel() {
     searchTimespanHours >= consumerDuration &&
     !!marketDataSufficiency &&
     !marketDataSufficiency.isSufficient;
-  const showNoSuitableSolarSlotMessage =
+
+  const showNoSuitableSolarSlot =
     settings.bestSlotMode === "solar-only" &&
     !!position &&
     searchTimespanHours >= consumerDuration &&
     !!solarData &&
     !schedulingResult &&
     !apiError;
+
   const averagePriceLabel =
     settings.bestSlotMode === "solar-only"
-      ? "Ignored"
+      ? "—"
       : schedulingResult?.avgPrice == null
         ? "Unavailable"
         : `${(schedulingResult.avgPrice / 1000).toFixed(3)} €/kWh`;
 
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (nextPosition) => {
-          setPosition({
-            latitude: nextPosition.coords.latitude,
-            longitude: nextPosition.coords.longitude,
-          });
-        },
-        (error) => {
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              setLocationError("Location access denied by user");
-              break;
-            case error.POSITION_UNAVAILABLE:
-              setLocationError("Location information unavailable");
-              break;
-            case error.TIMEOUT:
-              setLocationError("Location request timed out");
-              break;
-            default:
-              setLocationError("Unknown location error");
-          }
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 300000,
-        }
-      );
-    } else {
-      setLocationError("Geolocation not supported by browser");
-    }
-  }, []);
-
   return (
-    <div className="mx-auto mt-8 max-w-xl space-y-6">
-      <SectionCard
-        eyebrow="Live Recommendation"
-        title="Best time to run"
-        description="Tap the big time to switch between clock time and remaining time."
-      >
-        <div className="space-y-5">
-          <ControlBlock
-            title="Consumer duration"
-            description="How long the appliance needs to run once it starts."
-          >
-            <div className="rounded-2xl border border-white/8 bg-black/20 p-4 text-center">
-              <div className="mb-4 text-2xl font-semibold text-yellow-300">
-                {consumerDuration} hours
-              </div>
-              <Slider
-                id="consumer-duration-slider"
-                min={1}
-                max={5}
-                defaultValue={[3]}
-                onValueChange={(value) => setConsumerDuration(value[0])}
-              />
-              <div className="mt-3 flex justify-between text-xs text-gray-300">
-                <span>1</span>
-                <span>2</span>
-                <span>3</span>
-                <span>4</span>
-                <span>5</span>
-              </div>
-            </div>
-          </ControlBlock>
+    <div className="mx-auto max-w-2xl px-4 pt-10 pb-20 md:px-6 md:pt-14">
+      {/* Intro */}
+      <section className="space-y-3">
+        <div className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
+          <span className="relative flex size-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+            <span className="relative inline-flex size-1.5 rounded-full bg-gradient-brand" />
+          </span>
+          Live scheduler
+        </div>
+        <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight md:text-5xl">
+          When should you run your
+          <br />
+          <span className="bg-gradient-brand bg-clip-text text-transparent">
+            next appliance?
+          </span>
+        </h1>
+        <p className="max-w-xl text-base text-muted-foreground md:text-lg">
+          Wattlyzer balances solar forecast and hourly electricity prices to find
+          the best run window for your home.
+        </p>
+      </section>
 
-          <ErrorBoundary
+      {/* Result */}
+      <section className="mt-10">
+        <ErrorBoundary
+          fallback={
+            <Callout tone="danger" title="Failed to load data">
+              A required data request failed. Try again in a moment or clear
+              the cache from settings.
+            </Callout>
+          }
+          onError={handleError}
+        >
+          <Suspense
             fallback={
-                <StatusPanel
-                  title="Failed to load data"
-                  body="A required data request failed. Try again in a moment or clear the cache in settings."
-                  accent="red"
-                />
-              }
-            onError={handleError}
-          >
-            <Suspense
-              fallback={
-                <StatusPanel
-                  title={locationError ? "Location required" : "Loading data"}
-                  body={
-                    locationError
-                      ? "Location permission is required to calculate solar production for your roof."
-                      : settings.bestSlotMode === "solar-only"
-                      ? "Fetching solar forecast."
-                      : "Fetching solar forecast and market prices."
-                  }
-                  accent="gray"
-                />
-              }
-            >
-              {solarDataPromise ? (
-                <SolarDataFetcher
-                  promise={solarDataPromise}
-                  onData={handleSolarData}
-                />
-              ) : null}
-              {marketDataPromise ? (
-                <MarketDataFetcher
-                  promise={marketDataPromise}
-                  onData={handleMarketData}
-                />
-              ) : null}
-            </Suspense>
-
-            <div className="space-y-4">
-              {!position && !locationError && (
-                <StatusPanel
-                  title="Requesting location"
-                  body="Wattlyzer needs your current position to estimate local solar production."
-                  accent="gray"
-                />
-              )}
-
-              {!position && locationError && (
-                <StatusPanel
-                  title="Location access required"
-                  body="Enable location services in your browser so the scheduler can load solar estimates for your area."
-                  accent="red"
-                />
-              )}
-
-              {position && searchTimespanHours < consumerDuration && (
-                <StatusPanel
-                  title="Invalid configuration"
-                  body={`Search window (${searchTimespanHours}h) must be longer than consumer duration (${consumerDuration}h).`}
-                  accent="orange"
-                />
-              )}
-
-              {showMarketDataWarning && marketDataSufficiency && (
-                <StatusPanel
-                  title="Limited market data"
-                  body={`Only ${marketDataSufficiency.hoursAvailable} hours of market data are available, but the selected search window is ${marketDataSufficiency.searchTimespanHours} hours.`}
-                  accent="orange"
-                />
-              )}
-
-              {showNoSuitableSolarSlotMessage && (
-                <StatusPanel
-                  title="No suitable solar window"
-                  body={`No slot in the selected search window reaches the ${(settings.minKwh / 1000).toFixed(1)} kWh solar minimum. Try lowering the threshold or expanding the search window.`}
-                  accent="yellow"
-                />
-              )}
-
-              {position &&
-              searchTimespanHours >= consumerDuration &&
-              schedulingResult ? (
-                <div className="rounded-2xl border border-white/8 bg-black/20 p-5 text-center">
-                  <div
-                    className="cursor-pointer text-6xl font-bold tracking-tight text-yellow-300 transition-colors hover:text-yellow-200 md:text-8xl"
-                    onClick={() => setShowRemainingTime((prev) => !prev)}
-                    title={
-                      showRemainingTime
-                        ? "Show absolute time"
-                        : "Show remaining time"
-                    }
-                  >
-                    {showRemainingTime
-                      ? formatRemainingTime(schedulingResult.bestTime)
-                      : schedulingResult.bestTime.toLocaleTimeString("en-US", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: false,
-                        })}
-                  </div>
-                  <div className="mt-3 text-lg text-gray-300">
-                    {schedulingResult.bestTime.toLocaleDateString("en-US", {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </div>
-
-                  <div className="mt-5 inline-flex rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-white">
-                    {settings.bestSlotMode === "solar-only"
-                      ? "Solar only mode"
-                      : settings.bestSlotMode === "price-only"
-                      ? "Price only mode"
-                      : schedulingResult.reason === "solar"
-                      ? "Solar optimized"
-                      : "Price optimized"}
-                  </div>
-
-                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl border border-white/8 bg-white/[0.04] p-4 text-center">
-                      <div className="flex items-center justify-center gap-2 text-[11px] uppercase tracking-[0.22em] text-yellow-200/70">
-                        <Sun className="size-4" />
-                        Average Solar
-                      </div>
-                      <div className="mt-2 text-2xl font-semibold text-white">
-                        {(schedulingResult.avgSolarProduction || 0).toFixed(0)} Wh
-                      </div>
-                    </div>
-                    <div className="rounded-2xl border border-white/8 bg-white/[0.04] p-4 text-center">
-                      <div className="flex items-center justify-center gap-2 text-[11px] uppercase tracking-[0.22em] text-yellow-200/70">
-                        <BadgeEuro className="size-4" />
-                        Average Price
-                      </div>
-                      <div className="mt-2 text-2xl font-semibold text-white">
-                        {averagePriceLabel}
-                      </div>
-                    </div>
-                  </div>
-
-                  {schedulingResult.reason === "solar" && (
-                    <div className="mt-4 text-sm font-medium text-yellow-200">
-                      Meets {(settings.minKwh / 1000).toFixed(1)} kWh solar minimum
-                    </div>
-                  )}
-                </div>
-              ) : null}
-
-              {apiError && (
-                <div className="rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                  <div className="flex items-start gap-2">
-                    <CircleAlert className="mt-0.5 size-4 shrink-0" />
-                    <span>API Error: {apiError}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </ErrorBoundary>
-          <div
-            ref={advancedOptionsRef}
-            className="rounded-2xl border border-white/8 bg-white/[0.04] p-4"
-          >
-            <button
-              onClick={() => setShowAdvancedOptions((prev) => !prev)}
-              className="flex w-full items-center justify-between gap-4 text-left text-white"
-              aria-expanded={showAdvancedOptions}
-              aria-controls="advanced-options"
-            >
-              <div>
-                <div className="text-lg font-semibold">Advanced options</div>
-                <div className="mt-2 text-sm leading-6 text-gray-400">
-                  Search horizon, solar threshold, and scheduling mode.
-                </div>
-              </div>
-              <span
-                className={`text-lg transition-transform ${
-                  showAdvancedOptions ? "rotate-180" : ""
-                }`}
+              <Callout
+                tone="loading"
+                title={locationError ? "Location required" : "Loading data"}
               >
-                <ChevronDown className="size-5" />
-              </span>
-            </button>
+                {locationError
+                  ? "Location permission is required to calculate solar production for your roof."
+                  : settings.bestSlotMode === "solar-only"
+                    ? "Fetching solar forecast."
+                    : "Fetching solar forecast and market prices."}
+              </Callout>
+            }
+          >
+            {solarDataPromise ? (
+              <SolarDataFetcher
+                promise={solarDataPromise}
+                onData={handleSolarData}
+              />
+            ) : null}
+            {marketDataPromise ? (
+              <MarketDataFetcher
+                promise={marketDataPromise}
+                onData={handleMarketData}
+              />
+            ) : null}
+          </Suspense>
 
-            <div
-              id="advanced-options"
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                showAdvancedOptions
-                  ? "mt-5 max-h-[760px] opacity-100"
-                  : "max-h-0 opacity-0"
-              }`}
-            >
-              <div className="space-y-4">
-                <ControlBlock
-                  title="Search window"
-                  description="How far ahead Wattlyzer should scan for a better slot."
-                >
-                  <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
-                    <Select
-                      value={searchTimespan}
-                      onValueChange={setSearchTimespan}
-                    >
-                      <SelectTrigger
-                        id="search-timespan-select"
-                        className="w-full bg-white/10 text-white border-white/20 hover:bg-white/20 transition-colors"
-                      >
-                        <SelectValue placeholder="Select timespan" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-gray-900 text-white border-white/20">
-                        <SelectItem value="3">Next 3 hours</SelectItem>
-                        <SelectItem value="6">Next 6 hours</SelectItem>
-                        <SelectItem value="12">Next 12 hours</SelectItem>
-                        <SelectItem value="24">Next 24 hours</SelectItem>
-                        <SelectItem value="eod">
-                          Till end of day ({hoursTillEndOfDay}h)
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </ControlBlock>
+          {!position && !locationError ? (
+            <Callout tone="loading" title="Requesting location">
+              Wattlyzer needs your current position to estimate local solar
+              production.
+            </Callout>
+          ) : null}
 
-                <ControlBlock
-                  title="Minimum solar requirement"
-                  description="Average solar output needed before the scheduler prefers solar over cheap pricing."
-                >
-                  <div className="rounded-2xl border border-white/8 bg-black/20 p-4 text-center">
-                    <div className="mb-4 text-2xl font-semibold text-yellow-300">
-                      {(settings.minKwh / 1000).toFixed(1)} kWh
-                    </div>
-                    <Slider
-                      id="min-kwh-slider"
-                      min={500}
-                      max={3000}
-                      step={100}
-                      value={[settings.minKwh]}
-                      onValueChange={(value) =>
-                        updateSettings({ minKwh: value[0] })
-                      }
-                    />
-                    <div className="mt-3 flex justify-between text-xs text-gray-300">
-                      <span>0.5</span>
-                      <span>1.0</span>
-                      <span>1.5</span>
-                      <span>2.0</span>
-                      <span>2.5</span>
-                      <span>3.0</span>
-                    </div>
-                  </div>
-                </ControlBlock>
+          {!position && locationError ? (
+            <Callout tone="danger" title="Location access required">
+              Enable location services in your browser so the scheduler can load
+              solar estimates for your area.
+            </Callout>
+          ) : null}
 
-                <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
-                  <div>
-                    <div>
-                      <div className="text-lg font-semibold text-white">
-                        Scheduling mode
-                      </div>
-                      <div className="mt-2 text-sm leading-6 text-gray-400">
-                        Choose whether Wattlyzer should balance both signals,
-                        prefer solar only, or optimize only for the lowest
-                        electricity price.
-                      </div>
-                    </div>
-                    <Tabs
-                      value={settings.bestSlotMode}
-                      onValueChange={(value) =>
-                        updateSettings({
-                          bestSlotMode: value as BestSlotMode,
-                        })
-                      }
-                      className="mt-4"
-                    >
-                      <TabsList className="grid h-auto w-full grid-cols-3 gap-1 bg-white/10 p-1">
-                        <TabsTrigger
-                          value="combined"
-                          className="gap-1 px-1.5 text-[11px] sm:gap-1.5 sm:px-3 sm:text-sm"
-                        >
-                          <Scale className="size-3.5 sm:size-4" />
-                          <span className="sm:hidden">Both</span>
-                          <span className="hidden sm:inline">Combined</span>
-                        </TabsTrigger>
-                        <TabsTrigger
-                          value="solar-only"
-                          className="gap-1 px-1.5 text-[11px] sm:gap-1.5 sm:px-3 sm:text-sm"
-                        >
-                          <Sun className="size-3.5 sm:size-4" />
-                          <span className="sm:hidden">Solar</span>
-                          <span className="hidden sm:inline">Solar only</span>
-                        </TabsTrigger>
-                        <TabsTrigger
-                          value="price-only"
-                          className="gap-1 px-1.5 text-[11px] sm:gap-1.5 sm:px-3 sm:text-sm"
-                        >
-                          <BadgeEuro className="size-3.5 sm:size-4" />
-                          <span className="sm:hidden">Price</span>
-                          <span className="hidden sm:inline">Price only</span>
-                        </TabsTrigger>
-                      </TabsList>
-                    </Tabs>
-                  </div>
-                </div>
-              </div>
-            </div>
+          {position && searchTimespanHours < consumerDuration ? (
+            <Callout tone="warning" title="Invalid configuration">
+              Search window ({searchTimespanHours}h) must be longer than run
+              duration ({consumerDuration}h).
+            </Callout>
+          ) : null}
+
+          {showMarketDataWarning && marketDataSufficiency ? (
+            <Callout tone="warning" title="Limited market data">
+              Only {marketDataSufficiency.hoursAvailable} hours of market data
+              are available, but the selected search window is{" "}
+              {marketDataSufficiency.searchTimespanHours} hours.
+            </Callout>
+          ) : null}
+
+          {showNoSuitableSolarSlot ? (
+            <Callout tone="warning" title="No suitable solar window">
+              No slot in the selected search window reaches the{" "}
+              {(settings.minKwh / 1000).toFixed(1)} kWh solar minimum. Try
+              lowering the threshold or expanding the search window.
+            </Callout>
+          ) : null}
+
+          {position &&
+          searchTimespanHours >= consumerDuration &&
+          schedulingResult ? (
+            <ResultHero
+              bestTime={schedulingResult.bestTime}
+              mode={settings.bestSlotMode}
+              reason={schedulingResult.reason}
+              avgSolarProduction={schedulingResult.avgSolarProduction || 0}
+              avgPriceEuroPerKwh={averagePriceLabel}
+              meetsSolarMinimum={
+                settings.bestSlotMode !== "price-only" &&
+                schedulingResult.reason === "solar"
+              }
+              minSolarKwh={settings.minKwh}
+            />
+          ) : null}
+
+          {apiError ? (
+            <Callout tone="danger" title="API error">
+              {apiError}
+            </Callout>
+          ) : null}
+        </ErrorBoundary>
+      </section>
+
+      {/* Controls */}
+      <section className="mt-12">
+        <div className="flex items-baseline justify-between border-b border-border pb-3">
+          <h2 className="font-display text-lg font-semibold tracking-tight">
+            This run
+          </h2>
+          <span className="text-xs text-muted-foreground">
+            Per-run parameters
+          </span>
+        </div>
+
+        <div className="divide-y divide-border">
+          <div className="py-6">
+            <DurationControl
+              value={consumerDuration}
+              onChange={setConsumerDuration}
+            />
+          </div>
+          <div className="py-6">
+            <MinEnergyControl
+              value={settings.minKwh}
+              onChange={(next) => updateSettings({ minKwh: next })}
+            />
+          </div>
+          <div className="py-6">
+            <WindowSelect
+              value={searchTimespan}
+              onChange={setSearchTimespan}
+              hoursTillEndOfDay={hoursTillEndOfDay}
+            />
+          </div>
+          <div className="space-y-3 py-6">
+            <div className="text-sm font-medium">Scheduling mode</div>
+            <p className="text-sm text-muted-foreground">
+              Balance both signals, prefer solar, or optimize for the cheapest
+              price.
+            </p>
+            <ModeTabs
+              value={settings.bestSlotMode}
+              onValueChange={(mode: BestSlotMode) =>
+                updateSettings({ bestSlotMode: mode })
+              }
+            />
           </div>
         </div>
-      </SectionCard>
-
-      <FooterLinks />
+      </section>
     </div>
   );
 }
 
 export default function Home() {
-  return (
-    <div className="relative min-h-dvh overflow-hidden bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.18),transparent_28%),linear-gradient(135deg,#050505_0%,#151515_42%,#3b2b0f_100%)] px-4 py-8 md:px-6 md:py-10">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-16 top-24 h-48 w-48 rounded-full bg-yellow-500/10 blur-3xl" />
-        <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-orange-500/10 blur-3xl" />
-        <div className="absolute bottom-12 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-amber-300/10 blur-3xl" />
-      </div>
-
-      <div className="relative mx-auto max-w-6xl">
-        <header className="rounded-[32px] border border-white/12 bg-black/30 p-6 shadow-[0_28px_100px_-56px_rgba(251,191,36,0.6)] backdrop-blur-md md:p-8">
-          <div className="flex flex-col items-center text-center">
-            <div>
-              <h1 className="text-4xl font-bold text-white md:text-6xl">
-                <span className="sr-only">
-                  wattlyzer - smart appliance scheduling
-                </span>
-                <TypewriterTitle />
-              </h1>
-              <p className="mt-4 max-w-2xl text-sm leading-6 text-gray-300 md:text-base">
-                Balance solar production and electricity prices to find the
-                smartest run window for today.
-              </p>
-            </div>
-          </div>
-        </header>
-
-        <SchedulingPanel />
-      </div>
-    </div>
-  );
+  return <SchedulerBody />;
 }
