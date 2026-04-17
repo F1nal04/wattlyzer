@@ -9,7 +9,6 @@ import {
   Scale,
   Settings as SettingsIcon,
   Shield,
-  Sparkles,
 } from "lucide-react";
 import { cn, isDebugMode } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -49,20 +48,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-4 py-safe-top md:px-6">
           <Link
             href="/"
-            className="group inline-flex items-center gap-2 text-base font-semibold tracking-tight"
+            className="font-display text-lg font-semibold tracking-tight transition-colors hover:text-foreground"
             aria-label="wattlyzer home"
           >
-            <span
-              aria-hidden="true"
-              className="relative inline-flex size-8 items-center justify-center rounded-xl bg-gradient-brand text-background shadow-lg shadow-primary/20 transition-transform group-hover:scale-105"
-            >
-              <Sparkles className="size-4 text-background" strokeWidth={2.25} />
-              <span className="absolute inset-0 rounded-xl ring-1 ring-inset ring-foreground/10" />
-            </span>
-            <span className="font-display text-lg">
-              wattlyzer
-              <span className="ml-0.5 inline-block size-1.5 translate-y-[-6px] rounded-full bg-gradient-brand" />
-            </span>
+            wattlyzer
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex">
@@ -96,19 +85,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             ) : null}
           </nav>
 
-          <div className="flex items-center gap-2">
-            <Link
-              href="https://github.com/F1nal04/wattlyzer"
-              target="_blank"
-              rel="noopener noreferrer"
-              prefetch={false}
-              aria-label="GitHub repository"
-              className="hidden size-9 items-center justify-center rounded-full border border-border bg-card/60 text-muted-foreground backdrop-blur transition-colors hover:border-primary/50 hover:bg-primary/10 hover:text-primary sm:inline-flex"
-            >
-              <ExternalLink className="size-4" />
-            </Link>
-            <ThemeToggle />
-          </div>
+          <ThemeToggle />
         </div>
 
         {/* Mobile nav row */}
