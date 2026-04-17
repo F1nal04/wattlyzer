@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
 import {
-  ArrowLeft,
   BatteryCharging,
   CloudSun,
   Compass,
@@ -12,95 +10,66 @@ import {
   Sunrise,
   Sunset,
   Trash2,
-  Zap,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
-import { FooterLinks } from "@/components/footer-links";
+import { useState, type ComponentType, type ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { clearCache } from "@/lib/cache";
 import { useSettings } from "@/lib/settings-context";
+import { cn } from "@/lib/utils";
 
 function getDirectionLabel(azimut: number) {
-  const normalized = ((azimut % 360) + 360) % 360;
-
-  if (normalized >= 337.5 || normalized < 22.5) {
-    return "North";
-  }
-  if (normalized < 67.5) {
-    return "North-East";
-  }
-  if (normalized < 112.5) {
-    return "East";
-  }
-  if (normalized < 157.5) {
-    return "South-East";
-  }
-  if (normalized < 202.5) {
-    return "South";
-  }
-  if (normalized < 247.5) {
-    return "South-West";
-  }
-  if (normalized < 292.5) {
-    return "West";
-  }
-  return "North-West";
+  const n = ((azimut % 360) + 360) % 360;
+  if (n >= 337.5 || n < 22.5) return "North";
+  if (n < 67.5) return "NE";
+  if (n < 112.5) return "East";
+  if (n < 157.5) return "SE";
+  if (n < 202.5) return "South";
+  if (n < 247.5) return "SW";
+  if (n < 292.5) return "West";
+  return "NW";
 }
 
-function SummaryItem({
-  label,
-  value,
-  icon: Icon,
-}: {
-  label: string;
-  value: string;
-  icon: React.ComponentType<{ className?: string }>;
-}) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-black/25 px-4 py-4 backdrop-blur-sm">
-      <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.24em] text-yellow-200/70">
-        <Icon className="size-4" />
-        {label}
-      </div>
-      <div className="mt-2 text-lg font-semibold text-white">{value}</div>
-    </div>
-  );
-}
+type AccentTone = "solar" | "price" | "combined";
 
-function SectionCard({
-  eyebrow,
+const accentGradient: Record<AccentTone, string> = {
+  solar: "bg-gradient-solar",
+  price: "bg-gradient-price",
+  combined: "bg-gradient-combined",
+};
+
+function SectionHeader({
   title,
   description,
-  children,
   icon: Icon,
+  tone = "solar",
 }: {
-  eyebrow: string;
   title: string;
   description: string;
-  children: ReactNode;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: ComponentType<{ className?: string }>;
+  tone?: AccentTone;
 }) {
   return (
-    <section className="rounded-[28px] border border-white/10 bg-gray-950/55 p-5 shadow-[0_24px_80px_-48px_rgba(251,191,36,0.45)] backdrop-blur-md md:p-7">
-      <div className="mb-6">
-        <div className="text-[11px] uppercase tracking-[0.28em] text-yellow-300/70">
-          {eyebrow}
-        </div>
-        <div className="mt-2 flex items-center gap-3">
-          <div className="rounded-full border border-white/10 bg-white/5 p-2 text-yellow-300">
-            <Icon className="size-5" />
-          </div>
-          <h2 className="text-2xl font-semibold text-white md:text-3xl">
-            {title}
-          </h2>
-        </div>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
+    <div className="flex items-start gap-4 border-b border-border pb-5">
+      <div
+        className={cn(
+          "relative flex size-10 shrink-0 items-center justify-center rounded-xl text-background shadow-sm",
+          accentGradient[tone]
+        )}
+      >
+        <Icon className="size-4" />
+        <span className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-foreground/10" />
+      </div>
+      <div>
+        <h2 className="font-display text-xl font-semibold leading-tight tracking-tight">
+          {title}
+        </h2>
+        <p className="mt-1 max-w-xl text-sm text-muted-foreground">
           {description}
         </p>
       </div>
-      <div className="space-y-4">{children}</div>
-    </section>
+    </div>
   );
 }
 
@@ -121,7 +90,7 @@ function SliderSetting({
   label: string;
   valueLabel: string;
   description: ReactNode;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: ComponentType<{ className?: string }>;
   value: number;
   min: number;
   max: number;
@@ -130,22 +99,18 @@ function SliderSetting({
   marks: ReactNode;
 }) {
   return (
-    <div className="grid gap-5 rounded-2xl border border-white/8 bg-white/[0.04] p-4 md:grid-cols-[minmax(0,0.95fr)_minmax(280px,1.05fr)] md:items-center">
-      <div>
-        <label
-          htmlFor={id}
-          className="flex items-center gap-2 text-lg font-semibold text-white md:text-xl"
-        >
-          <Icon className="size-5 text-yellow-300" />
+    <div className="space-y-4">
+      <div className="flex items-baseline justify-between gap-4">
+        <label htmlFor={id} className="flex items-center gap-2 text-sm font-medium">
+          <Icon className="size-4 text-muted-foreground" />
           {label}
         </label>
-        <div className="mt-2 text-sm leading-6 text-gray-400">{description}</div>
-      </div>
-
-      <div className="rounded-2xl border border-white/8 bg-black/20 p-4 text-center">
-        <div className="mb-4 text-2xl font-semibold text-yellow-300">
+        <div className="font-display text-xl font-semibold leading-none tracking-tight tabular-nums">
           {valueLabel}
         </div>
+      </div>
+      <div className="text-sm text-muted-foreground">{description}</div>
+      <div>
         <Slider
           id={id}
           min={min}
@@ -154,7 +119,7 @@ function SliderSetting({
           value={[value]}
           onValueChange={onValueChange}
         />
-        <div className="mt-3 flex justify-between text-xs text-gray-300">
+        <div className="mt-2.5 flex justify-between text-xs text-muted-foreground tabular-nums">
           {marks}
         </div>
       </div>
@@ -168,7 +133,6 @@ function ToggleSetting({
   description,
   checked,
   onCheckedChange,
-  accent,
   icon: Icon,
 }: {
   id: string;
@@ -176,35 +140,39 @@ function ToggleSetting({
   description: string;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
-  accent: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="rounded-2xl border border-white/8 bg-white/[0.04] p-4">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="max-w-xl">
-          <label
-            htmlFor={id}
-            className="flex items-center gap-2 text-lg font-semibold text-white md:text-xl"
-          >
-            <Icon className="size-5 text-yellow-300" />
-            {title}
-          </label>
-          <p className="mt-2 text-sm leading-6 text-gray-400">{description}</p>
+    <div className="flex items-start justify-between gap-4">
+      <label htmlFor={id} className="flex-1 cursor-pointer">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Icon className="size-4 text-muted-foreground" />
+          {title}
         </div>
+        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+      </label>
+      <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} />
+    </div>
+  );
+}
 
-        <div className="flex items-center gap-4 self-start md:self-center">
-          <span
-            className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${
-              checked
-                ? `${accent} border-current/30`
-                : "border-white/10 text-gray-500"
-            }`}
-          >
-            {checked ? "Active" : "Off"}
-          </span>
-          <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} />
-        </div>
+function SummaryStat({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: string;
+  icon: ComponentType<{ className?: string }>;
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        <Icon className="size-3.5" />
+        {label}
+      </div>
+      <div className="mt-1 font-display text-lg font-semibold tracking-tight tabular-nums">
+        {value}
       </div>
     </div>
   );
@@ -223,73 +191,60 @@ export default function Settings() {
   const directionLabel = getDirectionLabel(settings.azimut);
 
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.18),transparent_28%),linear-gradient(135deg,#050505_0%,#151515_42%,#3b2b0f_100%)] px-4 py-8 md:px-6 md:py-10">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-16 top-24 h-48 w-48 rounded-full bg-yellow-500/10 blur-3xl" />
-        <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-orange-500/10 blur-3xl" />
-        <div className="absolute bottom-12 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-amber-300/10 blur-3xl" />
+    <div className="mx-auto max-w-2xl px-4 pt-10 pb-20 md:px-6 md:pt-14">
+      <header className="space-y-3">
+        <div className="text-xs font-medium text-muted-foreground">
+          Settings
+        </div>
+        <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight md:text-5xl">
+          Shape the solar model
+          <br />
+          <span className="bg-gradient-solar bg-clip-text text-transparent">
+            to match your roof.
+          </span>
+        </h1>
+        <p className="max-w-xl text-base text-muted-foreground md:text-lg">
+          Persistent hardware, shading, and maintenance preferences. Per-run
+          parameters live on the scheduler.
+        </p>
+      </header>
+
+      <div className="mt-8 grid grid-cols-2 gap-6 border-y border-border py-6 md:grid-cols-4">
+        <SummaryStat
+          label="Direction"
+          value={`${directionLabel} ${settings.azimut}°`}
+          icon={Compass}
+        />
+        <SummaryStat label="Tilt" value={`${settings.angle}°`} icon={Ruler} />
+        <SummaryStat
+          label="System"
+          value={`${settings.kwh} kW`}
+          icon={BatteryCharging}
+        />
+        <SummaryStat
+          label="Shading"
+          value={
+            settings.morningShading || settings.eveningShading
+              ? `${settings.morningShading ? "AM" : ""}${
+                  settings.morningShading && settings.eveningShading
+                    ? " + "
+                    : ""
+                }${settings.eveningShading ? "PM" : ""}`
+              : "None"
+          }
+          icon={CloudSun}
+        />
       </div>
 
-      <div className="relative mx-auto max-w-5xl">
-        <header className="rounded-[32px] border border-white/12 bg-black/30 p-6 shadow-[0_28px_100px_-56px_rgba(251,191,36,0.6)] backdrop-blur-md md:p-8">
-          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-            <div>
-              <div className="inline-flex rounded-full border border-yellow-300/20 bg-yellow-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-yellow-200">
-                System Settings
-              </div>
-              <h1 className="mt-4 text-4xl font-bold text-white md:text-5xl">
-                Shape the solar model to match your roof.
-              </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-300 md:text-base">
-                Hardware lives here. Daily recommendation tuning stays on the
-                main page.
-              </p>
-            </div>
-
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/6 px-5 py-3 text-center text-sm font-medium text-white whitespace-nowrap transition-colors hover:border-yellow-300/35 hover:bg-yellow-300/10 hover:text-yellow-100"
-            >
-              <ArrowLeft className="mr-2 size-4" />
-              Back to Wattlyzer
-            </Link>
-          </div>
-
-          <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <SummaryItem
-              label="Direction"
-              value={`${directionLabel} (${settings.azimut}°)`}
-              icon={Compass}
-            />
-            <SummaryItem label="Tilt" value={`${settings.angle}°`} icon={Ruler} />
-            <SummaryItem
-              label="System Size"
-              value={`${settings.kwh} kW`}
-              icon={Zap}
-            />
-            <SummaryItem
-              label="Shading"
-              value={
-                settings.morningShading || settings.eveningShading
-                  ? `${settings.morningShading ? "AM" : ""}${
-                      settings.morningShading && settings.eveningShading
-                        ? " + "
-                        : ""
-                    }${settings.eveningShading ? "PM" : ""} active`
-                  : "None"
-              }
-              icon={CloudSun}
-            />
-          </div>
-        </header>
-
-        <div className="mt-8 space-y-6">
-          <SectionCard
-            eyebrow="Panel Setup"
-            title="Core panel geometry"
-            description="These values drive the solar forecast request directly. Keep them aligned with the physical panel installation rather than with short-term weather or electricity prices."
-            icon={PanelsTopLeft}
-          >
+      <section className="mt-12">
+        <SectionHeader
+          icon={PanelsTopLeft}
+          tone="solar"
+          title="Core panel geometry"
+          description="These values drive the solar forecast directly. Align them with the physical panel installation."
+        />
+        <div className="divide-y divide-border">
+          <div className="py-6">
             <SliderSetting
               id="azimut-slider"
               label="Azimut"
@@ -297,16 +252,16 @@ export default function Settings() {
               icon={Compass}
               description={
                 <>
-                  Compass direction your panels face.
-                  <span className="mt-2 block text-yellow-200/80">
-                    0° north, 90° east, 180° south, 270° west.
+                  Compass direction your panels face.{" "}
+                  <span className="text-foreground/70">
+                    0° N · 90° E · 180° S · 270° W.
                   </span>
                 </>
               }
               value={settings.azimut}
               min={0}
               max={360}
-              onValueChange={(value) => updateSettings({ azimut: value[0] })}
+              onValueChange={(v) => updateSettings({ azimut: v[0] })}
               marks={
                 <>
                   <span>N 0°</span>
@@ -317,17 +272,18 @@ export default function Settings() {
                 </>
               }
             />
-
+          </div>
+          <div className="py-6">
             <SliderSetting
               id="angle-slider"
-              label="Tilt Angle"
+              label="Tilt angle"
               valueLabel={`${settings.angle}°`}
               icon={Ruler}
-              description="Panel angle from horizontal. Flat roofs sit near 0°, wall-mounted or steep roofs move higher."
+              description="Panel angle from horizontal. Flat roofs sit near 0°; steep roofs go higher."
               value={settings.angle}
               min={0}
               max={90}
-              onValueChange={(value) => updateSettings({ angle: value[0] })}
+              onValueChange={(v) => updateSettings({ angle: v[0] })}
               marks={
                 <>
                   <span>0°</span>
@@ -338,17 +294,18 @@ export default function Settings() {
                 </>
               }
             />
-
+          </div>
+          <div className="py-6">
             <SliderSetting
               id="kwh-slider"
-              label="System Size"
+              label="System size"
               valueLabel={`${settings.kwh} kW`}
               icon={BatteryCharging}
               description="Total peak capacity of the installed solar system."
               value={settings.kwh}
               min={1}
               max={10}
-              onValueChange={(value) => updateSettings({ kwh: value[0] })}
+              onValueChange={(v) => updateSettings({ kwh: v[0] })}
               marks={
                 <>
                   <span>1</span>
@@ -359,52 +316,54 @@ export default function Settings() {
                 </>
               }
             />
-          </SectionCard>
+          </div>
+        </div>
+      </section>
 
-          <SectionCard
-            eyebrow="Shading Profile"
-            title="Morning and evening losses"
-            description="Use shading only when the forecast is consistently too optimistic because sunlight is blocked at the same time every day. The current model applies a fixed 50% reduction within the shaded window."
-            icon={CloudSun}
-          >
+      <section className="mt-12">
+        <SectionHeader
+          icon={CloudSun}
+          tone="combined"
+          title="Morning &amp; evening shading"
+          description="Use shading only when the forecast is consistently too optimistic because sunlight is blocked at the same time every day."
+        />
+        <div className="divide-y divide-border">
+          <div className="py-6">
             <ToggleSetting
               id="morning-shading-switch"
               title="Morning shading"
-              description="Use this when trees, neighboring houses, or roof structures block the panels after sunrise."
+              description="Use this when trees or structures block the panels after sunrise."
               checked={settings.morningShading}
               onCheckedChange={(checked) =>
                 updateSettings({ morningShading: checked })
               }
-              accent="text-amber-200"
               icon={Sunrise}
             />
-
-            {settings.morningShading && (
-              <div className="rounded-2xl border border-amber-300/15 bg-amber-300/6 p-4 md:ml-8">
-                <SliderSetting
-                  id="shading-end-time-slider"
-                  label="Morning shading clears"
-                  valueLabel={`${settings.shadingEndTime}:00`}
-                  icon={Sun}
-                  description="Solar output is reduced before this hour."
-                  value={settings.shadingEndTime}
-                  min={6}
-                  max={12}
-                  onValueChange={(value) =>
-                    updateSettings({ shadingEndTime: value[0] })
-                  }
-                  marks={
-                    <>
-                      <span>6:00</span>
-                      <span>8:00</span>
-                      <span>10:00</span>
-                      <span>12:00</span>
-                    </>
-                  }
-                />
-              </div>
-            )}
-
+          </div>
+          {settings.morningShading ? (
+            <div className="py-6">
+              <SliderSetting
+                id="shading-end-time-slider"
+                label="Morning shading clears at"
+                valueLabel={`${settings.shadingEndTime}:00`}
+                icon={Sun}
+                description="Solar output is reduced before this hour."
+                value={settings.shadingEndTime}
+                min={6}
+                max={12}
+                onValueChange={(v) => updateSettings({ shadingEndTime: v[0] })}
+                marks={
+                  <>
+                    <span>6:00</span>
+                    <span>8:00</span>
+                    <span>10:00</span>
+                    <span>12:00</span>
+                  </>
+                }
+              />
+            </div>
+          ) : null}
+          <div className="py-6">
             <ToggleSetting
               id="evening-shading-switch"
               title="Evening shading"
@@ -413,72 +372,67 @@ export default function Settings() {
               onCheckedChange={(checked) =>
                 updateSettings({ eveningShading: checked })
               }
-              accent="text-orange-200"
               icon={Sunset}
             />
-
-            {settings.eveningShading && (
-              <div className="rounded-2xl border border-orange-300/15 bg-orange-300/6 p-4 md:ml-8">
-                <SliderSetting
-                  id="shading-start-time-slider"
-                  label="Evening shading begins"
-                  valueLabel={`${settings.shadingStartTime}:00`}
-                  icon={Sun}
-                  description="Solar output is reduced from this hour onward."
-                  value={settings.shadingStartTime}
-                  min={12}
-                  max={21}
-                  onValueChange={(value) =>
-                    updateSettings({ shadingStartTime: value[0] })
-                  }
-                  marks={
-                    <>
-                      <span>12:00</span>
-                      <span>15:00</span>
-                      <span>18:00</span>
-                      <span>21:00</span>
-                    </>
-                  }
-                />
-              </div>
-            )}
-          </SectionCard>
-
-          <SectionCard
-            eyebrow="Maintenance"
-            title="Cache and recovery"
-            description="Cached API results make the app faster. Clear them only when the forecast or price data looks stale or inconsistent."
-            icon={Trash2}
-          >
-            <div className="grid gap-5 rounded-2xl border border-red-400/15 bg-red-500/5 p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-              <div>
-                <h3 className="text-lg font-semibold text-white">Clear cached data</h3>
-                <p className="mt-2 max-w-xl text-sm leading-6 text-gray-400">
-                  Removes stored solar and market responses so the next load
-                  pulls fresh data from the APIs.
-                </p>
-                {cacheCleared && (
-                  <p className="mt-3 text-sm font-medium text-green-400">
-                    Cache cleared successfully.
-                  </p>
-                )}
-              </div>
-
-              <button
-                onClick={handleClearCache}
-                className="inline-flex items-center justify-center rounded-full bg-red-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={cacheCleared}
-              >
-                <Trash2 className="mr-2 size-4" />
-                {cacheCleared ? "Cache Cleared" : "Clear Cache"}
-              </button>
+          </div>
+          {settings.eveningShading ? (
+            <div className="py-6">
+              <SliderSetting
+                id="shading-start-time-slider"
+                label="Evening shading begins at"
+                valueLabel={`${settings.shadingStartTime}:00`}
+                icon={Sun}
+                description="Solar output is reduced from this hour onward."
+                value={settings.shadingStartTime}
+                min={12}
+                max={21}
+                onValueChange={(v) =>
+                  updateSettings({ shadingStartTime: v[0] })
+                }
+                marks={
+                  <>
+                    <span>12:00</span>
+                    <span>15:00</span>
+                    <span>18:00</span>
+                    <span>21:00</span>
+                  </>
+                }
+              />
             </div>
-          </SectionCard>
-
+          ) : null}
         </div>
+      </section>
 
-        <FooterLinks />
-      </div>
+      <section className="mt-12">
+        <SectionHeader
+          icon={Trash2}
+          tone="price"
+          title="Cache &amp; recovery"
+          description="Cached responses make the app faster. Clear them only when forecast or price data looks stale."
+        />
+        <div className="flex flex-wrap items-start justify-between gap-4 py-6">
+          <div className="flex-1 min-w-[220px]">
+            <div className="text-sm font-medium">Clear cached data</div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Removes stored solar and market responses so the next load pulls
+              fresh data.
+            </p>
+            {cacheCleared ? (
+              <p className="mt-2 text-sm font-medium text-success">
+                Cache cleared successfully.
+              </p>
+            ) : null}
+          </div>
+          <Button
+            onClick={handleClearCache}
+            disabled={cacheCleared}
+            variant="destructive"
+          >
+            <Trash2 className="size-4" />
+            {cacheCleared ? "Cleared" : "Clear cache"}
+          </Button>
+        </div>
+      </section>
     </div>
   );
 }
