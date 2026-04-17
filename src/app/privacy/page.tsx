@@ -13,6 +13,7 @@ import { FooterLinks } from "@/components/footer-links";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description: "Privacy policy for wattlyzer - how we handle your data",
+  robots: { index: false, follow: false },
 };
 
 function PrivacyCard({

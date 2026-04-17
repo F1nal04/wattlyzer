@@ -7,6 +7,7 @@ import { FooterLinks } from "@/components/footer-links";
 export const metadata: Metadata = {
   title: "Legal Notice",
   description: "Legal notice and contact information for wattlyzer",
+  robots: { index: false, follow: false },
 };
 
 function InfoCard({
