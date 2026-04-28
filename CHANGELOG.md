@@ -6,8 +6,6 @@
 ### Features
 
 * **seo:** add robots.txt, sitemap, and homepage-only indexing ([8296410](https://github.com/F1nal04/wattlyzer/commit/8296410d1c16ac8cd4170ea9160f301e86f98392))
-* **seo:** robots.txt, sitemap, homepage-only indexing ([ce29095](https://github.com/F1nal04/wattlyzer/commit/ce29095765dd71373adf23a79cc652f23ccdac5a))
-* **ui:** add custom not-found page ([3f2d665](https://github.com/F1nal04/wattlyzer/commit/3f2d6657c77fb00b7c033549f40dbd0e34fa76aa))
 * **ui:** add custom not-found page ([c977ebd](https://github.com/F1nal04/wattlyzer/commit/c977ebd1dd5bc2a97b980a5578a1eabc650bc9a1))
 * **ui:** enhance UI with icons and improve layout across multiple pages ([71cba36](https://github.com/F1nal04/wattlyzer/commit/71cba3697f87c7cb0bf67fd8a3820621775e17c7))
 
