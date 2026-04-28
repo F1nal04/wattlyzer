@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.8.0](https://github.com/F1nal04/wattlyzer/compare/v1.7.4...v1.8.0) (2026-04-28)
+
+
+### Features
+
+* **seo:** add robots.txt, sitemap, and homepage-only indexing ([8296410](https://github.com/F1nal04/wattlyzer/commit/8296410d1c16ac8cd4170ea9160f301e86f98392))
+* **ui:** add custom not-found page ([c977ebd](https://github.com/F1nal04/wattlyzer/commit/c977ebd1dd5bc2a97b980a5578a1eabc650bc9a1))
+* **ui:** enhance UI with icons and improve layout across multiple pages ([71cba36](https://github.com/F1nal04/wattlyzer/commit/71cba3697f87c7cb0bf67fd8a3820621775e17c7))
+
+
+### Bug Fixes
+
+* **ui:** improve layout and accessibility in SchedulingPanel and FooterLinks ([03e16a8](https://github.com/F1nal04/wattlyzer/commit/03e16a84f586b7aeda7b48ddbacf39d329f2e76e))
+
 ## [1.7.4](https://github.com/F1nal04/wattlyzer/compare/v1.7.3...v1.7.4) (2026-03-25)
 
 
