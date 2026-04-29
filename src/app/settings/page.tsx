@@ -214,13 +214,8 @@ export default function Settings() {
   const { settings, updateSettings } = useSettings();
   const [cacheCleared, setCacheCleared] = useState(false);
 
-  const handleClearCache = async () => {
+  const handleClearCache = () => {
     clearCache();
-    try {
-      await fetch("/api/cache/revalidate", { method: "POST" });
-    } catch {
-      // Ignore network errors; localStorage was cleared regardless
-    }
     setCacheCleared(true);
     setTimeout(() => setCacheCleared(false), 3000);
   };
