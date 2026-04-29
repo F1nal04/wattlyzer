@@ -36,8 +36,7 @@ function getSolarDataPromise(
     return existingPromise;
   }
 
-  const apiAzimut = (azimut % 360) - 180;
-  const url = `https://api.forecast.solar/estimate/watthours/${latitude}/${longitude}/${angle}/${apiAzimut}/${kwh}`;
+  const url = `/api/solar?lat=${roundedLat}&lng=${roundedLng}&angle=${angle}&azimut=${azimut}&kwh=${kwh}`;
 
   const promise = fetch(url)
     .then((response) => {
@@ -70,7 +69,7 @@ function getMarketDataPromise() {
     return marketRequestPromise;
   }
 
-  marketRequestPromise = fetch("https://api.awattar.de/v1/marketdata")
+  marketRequestPromise = fetch("/api/market")
     .then((response) => {
       if (!response.ok) {
         throw new Error(`Market API error: ${response.status}`);
