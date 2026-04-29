@@ -1,6 +1,6 @@
-[![Version](https://img.shields.io/github/package-json/v/f1nal04/wattlyzer?style=flat-square&color=yellow)](https://github.com/F1nal04/wattlyzer/releases)
-[![License](https://img.shields.io/github/license/f1nal04/wattlyzer?style=flat-square&color=yellow)](LICENSE)
-[![Next.js](https://img.shields.io/github/package-json/dependency-version/f1nal04/wattlyzer/next?style=flat-square&logo=next.js&color=black)](https://nextjs.org/)
+[![Version](https://img.shields.io/github/package-json/v/f1nal04/wattlyzer-app?style=flat-square&color=yellow)](https://github.com/F1nal04/wattlyzer-app/releases)
+[![License](https://img.shields.io/github/license/f1nal04/wattlyzer-app?style=flat-square&color=yellow)](LICENSE)
+[![Next.js](https://img.shields.io/github/package-json/dependency-version/f1nal04/wattlyzer-app/next?style=flat-square&logo=next.js&color=black)](https://nextjs.org/)
 
 [![Production](https://img.shields.io/badge/Production-brightgreen?logo=netlify&label=env&style=flat-square)](https://wattlyzer.com) [![Website Status](https://img.shields.io/website?url=https%3A%2F%2Fwattlyzer.de&up_color=lightgreen&down_color=red&style=flat-square)](https://wattlyzer.de)
 

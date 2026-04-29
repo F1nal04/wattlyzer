@@ -38,7 +38,7 @@ export function FooterLinks() {
     <div className="mt-10 pb-safe-bottom">
       <div className="flex flex-wrap items-center justify-center gap-1 rounded-[28px] border border-white/10 bg-black/25 px-2 py-1.5 backdrop-blur-sm sm:rounded-full">
         <Link
-          href="https://github.com/F1nal04/wattlyzer"
+          href="https://github.com/F1nal04/wattlyzer-app"
           target="_blank"
           rel="noopener noreferrer"
           prefetch={false}
