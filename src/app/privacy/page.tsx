@@ -1,14 +1,11 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import {
-  ArrowLeft,
   Clock3,
   HardDrive,
   MapPin,
   ShieldCheck,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import { FooterLinks } from "@/components/footer-links";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -16,107 +13,66 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-function PrivacyCard({
+function PrivacyItem({
+  icon: Icon,
   title,
   children,
-  icon: Icon,
 }: {
+  icon: React.ComponentType<{ className?: string }>;
   title: string;
   children: ReactNode;
-  icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-      <h2 className="flex items-center gap-2 text-xl font-semibold text-white">
-        <Icon className="size-5 text-yellow-300" />
+    <div className="py-6">
+      <div className="flex items-center gap-2 text-sm font-medium">
+        <Icon className="size-4 text-muted-foreground" />
         {title}
-      </h2>
-      <div className="mt-3 text-sm leading-7 text-gray-300">{children}</div>
-    </section>
+      </div>
+      <p className="mt-2 text-sm leading-7 text-muted-foreground">{children}</p>
+    </div>
   );
 }
 
 export default function Privacy() {
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.18),transparent_28%),linear-gradient(135deg,#050505_0%,#151515_42%,#3b2b0f_100%)] px-4 py-8 md:px-6 md:py-10">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-16 top-24 h-48 w-48 rounded-full bg-yellow-500/10 blur-3xl" />
-        <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-orange-500/10 blur-3xl" />
-        <div className="absolute bottom-12 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-amber-300/10 blur-3xl" />
-      </div>
+    <div className="mx-auto max-w-2xl px-4 pt-10 pb-20 md:px-6 md:pt-14">
+      <header className="space-y-3">
+        <div className="text-xs font-medium text-muted-foreground">
+          Privacy
+        </div>
+        <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight md:text-5xl">
+          How wattlyzer
+          <br />
+          <span className="bg-gradient-combined bg-clip-text text-transparent">
+            handles your data.
+          </span>
+        </h1>
+        <p className="max-w-xl text-base text-muted-foreground">
+          Wattlyzer is built around local processing and local caching. Here is
+          exactly what is used and why.
+        </p>
+      </header>
 
-      <div className="relative mx-auto max-w-4xl">
-        <header className="rounded-[32px] border border-white/12 bg-black/30 p-6 shadow-[0_28px_100px_-56px_rgba(251,191,36,0.6)] backdrop-blur-md md:p-8">
-          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-            <div>
-              <div className="inline-flex rounded-full border border-yellow-300/20 bg-yellow-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-yellow-200">
-                Privacy
-              </div>
-              <h1 className="mt-4 text-4xl font-bold text-white md:text-5xl">
-                How Wattlyzer handles your data.
-              </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-300 md:text-base">
-                The app is built around local processing and local caching. This
-                page explains what is used and why.
-              </p>
-            </div>
-
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/6 px-5 py-3 text-center text-sm font-medium text-white whitespace-nowrap transition-colors hover:border-yellow-300/35 hover:bg-yellow-300/10 hover:text-yellow-100"
-            >
-              <ArrowLeft className="mr-2 size-4" />
-              Back to Wattlyzer
-            </Link>
-          </div>
-        </header>
-
-        <section className="mt-8 rounded-[28px] border border-white/10 bg-gray-950/55 p-5 shadow-[0_24px_80px_-48px_rgba(251,191,36,0.45)] backdrop-blur-md md:p-7">
-          <div className="mb-6">
-            <div className="text-[11px] uppercase tracking-[0.28em] text-yellow-300/70">
-              Privacy Overview
-            </div>
-            <div className="mt-2 flex items-center gap-3">
-              <div className="rounded-full border border-white/10 bg-white/5 p-2 text-yellow-300">
-                <ShieldCheck className="size-5" />
-              </div>
-              <h2 className="text-2xl font-semibold text-white md:text-3xl">
-                Local-first data handling
-              </h2>
-            </div>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
-              The app only requests what it needs for solar and price
-              estimation, and most persistence stays in the browser.
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <PrivacyCard title="Location data usage" icon={MapPin}>
-              Your location is used only to provide solar energy estimates for
-              your area. This information is sent to the solar estimation API
-              so the forecast can reflect local conditions.
-            </PrivacyCard>
-
-            <PrivacyCard title="Local storage" icon={HardDrive}>
-              Your settings and cached API responses are stored locally in the
-              browser to improve performance and reduce unnecessary API calls.
-            </PrivacyCard>
-
-            <PrivacyCard title="Data sharing" icon={ShieldCheck}>
-              We do not sell or distribute your personal data. External
-              communication is limited to the solar and market APIs required to
-              generate recommendations.
-            </PrivacyCard>
-
-            <PrivacyCard title="Retention" icon={Clock3}>
-              Cached data remains on your device and can be cleared manually.
-              No personal data is retained on Wattlyzer servers.
-            </PrivacyCard>
-          </div>
-        </section>
-
-        <FooterLinks />
-      </div>
+      <section className="mt-10 divide-y divide-border border-y border-border">
+        <PrivacyItem icon={MapPin} title="Location data">
+          Your location is used only to provide solar energy estimates for your
+          area. It is sent to the solar estimation API so the forecast can
+          reflect local conditions.
+        </PrivacyItem>
+        <PrivacyItem icon={HardDrive} title="Local storage">
+          Your settings and cached API responses are stored locally in the
+          browser to improve performance and reduce unnecessary API calls.
+        </PrivacyItem>
+        <PrivacyItem icon={ShieldCheck} title="Data sharing">
+          We do not sell or distribute your personal data. External
+          communication is limited to the solar and market APIs required for
+          recommendations.
+        </PrivacyItem>
+        <PrivacyItem icon={Clock3} title="Retention">
+          Cached data remains on your device and can be cleared manually. No
+          personal data is retained on wattlyzer servers.
+        </PrivacyItem>
+      </section>
     </div>
   );
 }

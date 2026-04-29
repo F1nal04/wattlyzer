@@ -1,23 +1,32 @@
-import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SettingsProvider } from "@/lib/settings-context";
+import { ThemeProvider } from "@/components/theme-provider";
+import { AppShell } from "@/components/app-shell";
 import { getSiteUrl } from "@/lib/site-url";
 
-const poppins = Poppins({
-  variable: "--font-poppins",
+const geistSans = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  display: "swap",
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
-  title: { default: "wattlyzer", template: "%s | wattlyzer" },
-  description: "Smart energy scheduling tool that optimizes when to run your appliances based on solar production and electricity prices.",
+  title: { default: "wattlyzer", template: "%s · wattlyzer" },
+  description:
+    "Smart energy scheduling that balances solar forecast and hourly electricity prices.",
   manifest: "/site.webmanifest",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
     title: "wattlyzer",
   },
   icons: {
@@ -32,24 +41,33 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fbf9f3" },
+    { media: "(prefers-color-scheme: dark)", color: "#111322" },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
-      <head>
-        <meta
-          name="apple-mobile-web-app-status-bar-style"
-          content="black-translucent"
-        />
-        <meta name="theme-color" content="#000000" />
-      </head>
-      <body className={`${poppins.variable} antialiased`}>
-        <SettingsProvider>
-          <div className="min-h-[100dvh] w-full overflow-hidden">{children}</div>
-        </SettingsProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <SettingsProvider>
+            <AppShell>{children}</AppShell>
+          </SettingsProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
