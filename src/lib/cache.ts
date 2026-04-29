@@ -5,7 +5,7 @@ type CachedData<T> = {
   key: string;
 };
 
-const CACHE_DURATION_MS = 1 * 60 * 60 * 1000; // 1 hour
+const CACHE_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 export const SOLAR_CACHE_KEY = "wattlyzer_solar_cache";
 export const MARKET_CACHE_KEY = "wattlyzer_market_cache";
 
