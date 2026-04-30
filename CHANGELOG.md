@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.9.0](https://github.com/F1nal04/wattlyzer-app/compare/v1.8.0...v1.9.0) (2026-04-30)
+
+
+### Features
+
+* **cache:** add server-side API proxy routes to reduce upstream requests ([5bdf833](https://github.com/F1nal04/wattlyzer-app/commit/5bdf83355c872c8bdfd4f0c8666fda38bc472511))
+
+
+### Bug Fixes
+
+* **cache:** pass revalidateTag profile for Next.js 16 ([3c113d0](https://github.com/F1nal04/wattlyzer-app/commit/3c113d02fb78d28adb8be26b2f19f801a292a361))
+
+
+### Reverts
+
+* **settings:** clear cache button only clears localStorage ([f48fc8f](https://github.com/F1nal04/wattlyzer-app/commit/f48fc8fd45319676081699dacced46b2af0926a6))
+
 ## [1.8.0](https://github.com/F1nal04/wattlyzer-app/compare/v1.7.4...v1.8.0) (2026-04-28)
 
 ### Features
