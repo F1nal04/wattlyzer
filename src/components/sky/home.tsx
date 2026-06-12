@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   FONT_DISPLAY,
   FONT_MONO,
@@ -14,7 +8,7 @@ import {
 import type { SchedulingResult } from "@/lib/types";
 import type { WeatherKind } from "@/lib/weather";
 import { SkyClouds, SkySunCloud } from "@/components/sky/clouds";
-import { Hills, SkySlider } from "@/components/sky/primitives";
+import { SkySlider } from "@/components/sky/primitives";
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
@@ -397,20 +391,5 @@ export function DurationDock({
         onChange={onChange}
       />
     </div>
-  );
-}
-
-export function SkyBackground({
-  t,
-  children,
-}: {
-  t: SkyTheme;
-  children?: ReactNode;
-}) {
-  return (
-    <>
-      <Hills t={t} />
-      {children}
-    </>
   );
 }

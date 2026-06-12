@@ -6,7 +6,7 @@ import type { SkyTheme } from "@/lib/sky-theme";
 const CLOUD_PATH =
   "M46 96 C24 96 10 82 14 66 C2 54 12 34 32 34 C36 16 62 6 80 18 C92 2 124 2 136 18 C156 8 180 18 182 38 C200 42 208 62 196 76 C204 90 190 100 172 96 Z";
 
-export function Cloud({
+function Cloud({
   left,
   top,
   scale = 1,
