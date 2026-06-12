@@ -56,9 +56,9 @@ export function WIcon({
     );
   if (name === "settings")
     return (
-      <svg viewBox="0 0 24 24" style={s} fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round">
+      <svg viewBox="0 0 24 24" style={s} fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
         <circle cx="12" cy="12" r="3" />
-        <circle cx="12" cy="12" r="9" strokeDasharray="2 3" />
       </svg>
     );
   if (name === "sliders")
@@ -97,18 +97,20 @@ export function WIcon({
   if (name === "euro")
     return (
       <svg viewBox="0 0 24 24" style={s} fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 5a7 7 0 1 0 0 14" />
-        <line x1="5" y1="10" x2="14" y2="10" />
-        <line x1="5" y1="14" x2="14" y2="14" />
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="M14.8 8.7a3.9 3.9 0 1 0 0 6.6" />
+        <line x1="8.6" y1="10.9" x2="12.8" y2="10.9" />
+        <line x1="8.6" y1="13.1" x2="12.8" y2="13.1" />
       </svg>
     );
   if (name === "scale")
     return (
-      <svg viewBox="0 0 24 24" style={s} fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round">
-        <line x1="12" y1="4" x2="12" y2="20" />
-        <circle cx="6" cy="10" r="3" />
-        <circle cx="18" cy="10" r="3" />
-        <line x1="4" y1="20" x2="20" y2="20" />
+      <svg viewBox="0 0 24 24" style={s} fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="12" y1="3.5" x2="12" y2="21" />
+        <line x1="5" y1="6" x2="19" y2="6" />
+        <path d="M5 6 L2.6 11 M5 6 L7.4 11 M2.2 11 a2.8 2.8 0 0 0 5.6 0" />
+        <path d="M19 6 L16.6 11 M19 6 L21.4 11 M16.2 11 a2.8 2.8 0 0 0 5.6 0" />
+        <line x1="8.5" y1="21" x2="15.5" y2="21" />
       </svg>
     );
   return null;
