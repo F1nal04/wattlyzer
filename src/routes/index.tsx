@@ -116,13 +116,69 @@ function HomeScreen() {
     !isLoading &&
     !!schedulingResult &&
     !marketDataSufficiency.isSufficient;
-  const noSuitableSolarSlot =
-    settings.bestSlotMode === "solar-only" &&
-    !!position &&
-    !invalidConfig &&
-    !!solarData &&
-    !schedulingResult &&
-    !apiError;
+
+  // Mutually exclusive status messages, picked in precedence order. The
+  // success case (ClockCluster) is rendered separately below and can coexist
+  // with the loading message while a stale result is still on screen.
+  function pickClockStatus(): { title: string; body: string } | null {
+    if (!position) {
+      return locationError
+        ? {
+            title: "Location needed.",
+            body: "Enable location services in your browser so the forecast can match your roof.",
+          }
+        : {
+            title: "Finding your sky…",
+            body: "Wattlyzer needs your current position to estimate local solar production.",
+          };
+    }
+
+    if (invalidConfig) {
+      return {
+        title: "Window too short.",
+        body: `The search window (${searchTimespanHours}h) must be at least as long as the run (${prefs.duration}h). Widen it in Quick controls.`,
+      };
+    }
+
+    if (isLoading) {
+      return {
+        title: "Reading sun and prices…",
+        body:
+          settings.bestSlotMode === "solar-only"
+            ? "Fetching the solar forecast."
+            : "Fetching the solar forecast and market prices.",
+      };
+    }
+
+    if (schedulingResult) {
+      return null;
+    }
+
+    if (apiError) {
+      return {
+        title: "Forecast unavailable.",
+        body: `A data request failed (${apiError}). Try again in a moment.`,
+      };
+    }
+
+    if (settings.bestSlotMode !== "solar-only") {
+      return {
+        title: "No window found.",
+        body: "Market prices don't cover the search window yet. Widen it in Quick controls or check back later.",
+      };
+    }
+
+    if (solarData) {
+      return {
+        title: "No sunny window.",
+        body: `No slot reaches the ${(settings.minKwh / 1000).toFixed(1)} kWh solar minimum. Lower it or widen the search window in Quick controls.`,
+      };
+    }
+
+    return null;
+  }
+
+  const clockStatus = pickClockStatus();
 
   return (
     <SkyScreen
@@ -158,63 +214,8 @@ function HomeScreen() {
             }
           />
 
-          {!position && !locationError && (
-            <ClockStatus
-              t={t}
-              title="Finding your sky…"
-              body="Wattlyzer needs your current position to estimate local solar production."
-            />
-          )}
-          {!position && locationError && (
-            <ClockStatus
-              t={t}
-              title="Location needed."
-              body="Enable location services in your browser so the forecast can match your roof."
-            />
-          )}
-          {position && invalidConfig && (
-            <ClockStatus
-              t={t}
-              title="Window too short."
-              body={`The search window (${searchTimespanHours}h) must be at least as long as the run (${prefs.duration}h). Widen it in Quick controls.`}
-            />
-          )}
-          {position && !invalidConfig && isLoading && (
-            <ClockStatus
-              t={t}
-              title="Reading sun and prices…"
-              body={
-                settings.bestSlotMode === "solar-only"
-                  ? "Fetching the solar forecast."
-                  : "Fetching the solar forecast and market prices."
-              }
-            />
-          )}
-          {position && !invalidConfig && !isLoading && apiError && !schedulingResult && (
-            <ClockStatus
-              t={t}
-              title="Forecast unavailable."
-              body={`A data request failed (${apiError}). Try again in a moment.`}
-            />
-          )}
-          {position &&
-            !invalidConfig &&
-            !isLoading &&
-            !apiError &&
-            !schedulingResult &&
-            settings.bestSlotMode !== "solar-only" && (
-              <ClockStatus
-                t={t}
-                title="No window found."
-                body="Market prices don't cover the search window yet. Widen it in Quick controls or check back later."
-              />
-            )}
-          {noSuitableSolarSlot && (
-            <ClockStatus
-              t={t}
-              title="No sunny window."
-              body={`No slot reaches the ${(settings.minKwh / 1000).toFixed(1)} kWh solar minimum. Lower it or widen the search window in Quick controls.`}
-            />
+          {clockStatus && (
+            <ClockStatus t={t} title={clockStatus.title} body={clockStatus.body} />
           )}
           {position && !invalidConfig && schedulingResult && (
             <ClockCluster t={t} result={schedulingResult} duration={prefs.duration} />

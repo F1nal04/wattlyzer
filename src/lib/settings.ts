@@ -1,5 +1,88 @@
 import { useSyncExternalStore } from "react";
 
+interface StoreOptions<T> {
+  storageKey: string;
+  defaults: T;
+  load: () => T;
+  // Apply derived fields before persisting (e.g. keep two flags in sync)
+  transform?: (next: T, patch: Partial<T>) => T;
+  // Reflect cross-tab writes to storageKey back into the store
+  syncAcrossTabs?: boolean;
+}
+
+interface Store<T> {
+  getSnapshot: () => T;
+  getServerSnapshot: () => T;
+  subscribe: (listener: () => void) => () => void;
+  update: (patch: Partial<T>) => void;
+}
+
+function createStore<T extends object>(options: StoreOptions<T>): Store<T> {
+  const { storageKey, defaults, load, transform, syncAcrossTabs } = options;
+  const listeners = new Set<() => void>();
+  let cached = defaults;
+  let hasLoaded = false;
+
+  function getSnapshot(): T {
+    if (typeof window === "undefined") {
+      return defaults;
+    }
+
+    if (!hasLoaded) {
+      cached = load();
+      hasLoaded = true;
+    }
+
+    return cached;
+  }
+
+  function emit() {
+    listeners.forEach((listener) => listener());
+  }
+
+  function subscribe(listener: () => void) {
+    listeners.add(listener);
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== storageKey) {
+        return;
+      }
+
+      const next = load();
+      if (next !== cached) {
+        cached = next;
+        emit();
+      }
+    };
+
+    if (syncAcrossTabs) {
+      window.addEventListener("storage", handleStorage);
+    }
+
+    return () => {
+      listeners.delete(listener);
+      if (syncAcrossTabs) {
+        window.removeEventListener("storage", handleStorage);
+      }
+    };
+  }
+
+  function update(patch: Partial<T>) {
+    const next = { ...getSnapshot(), ...patch };
+    cached = transform ? transform(next, patch) : next;
+    hasLoaded = true;
+    localStorage.setItem(storageKey, JSON.stringify(cached));
+    emit();
+  }
+
+  return {
+    getSnapshot,
+    getServerSnapshot: () => defaults,
+    subscribe,
+    update,
+  };
+}
+
 export type BestSlotMode = "combined" | "solar-only" | "price-only";
 
 export interface SettingsData {
@@ -29,10 +112,6 @@ const defaultSettings: SettingsData = {
 };
 
 const SETTINGS_STORAGE_KEY = "wattlyzer_settings";
-const settingsServerSnapshot = defaultSettings;
-let cachedSettings = defaultSettings;
-let hasLoadedSettings = false;
-const listeners = new Set<() => void>();
 
 function loadSavedSettings(): SettingsData {
   if (typeof window === "undefined") {
@@ -68,74 +147,32 @@ function loadSavedSettings(): SettingsData {
   }
 }
 
-function getSettingsSnapshot(): SettingsData {
-  if (typeof window === "undefined") {
-    return settingsServerSnapshot;
-  }
-
-  if (!hasLoadedSettings) {
-    cachedSettings = loadSavedSettings();
-    hasLoadedSettings = true;
-  }
-
-  return cachedSettings;
-}
-
-function getSettingsServerSnapshot(): SettingsData {
-  return settingsServerSnapshot;
-}
-
-function emitSettingsChange() {
-  listeners.forEach((listener) => listener());
-}
-
-function subscribeToSettings(listener: () => void) {
-  listeners.add(listener);
-
-  const handleStorage = (event: StorageEvent) => {
-    if (event.key !== SETTINGS_STORAGE_KEY) {
-      return;
+const settingsStore = createStore<SettingsData>({
+  storageKey: SETTINGS_STORAGE_KEY,
+  defaults: defaultSettings,
+  load: loadSavedSettings,
+  syncAcrossTabs: true,
+  transform: (next, patch) => {
+    if (patch.bestSlotMode !== undefined) {
+      next.ignoreSolarForBestSlot = patch.bestSlotMode === "price-only";
+    } else if (patch.ignoreSolarForBestSlot !== undefined) {
+      next.bestSlotMode = patch.ignoreSolarForBestSlot
+        ? "price-only"
+        : "combined";
     }
-
-    const nextSettings = loadSavedSettings();
-    if (nextSettings !== cachedSettings) {
-      cachedSettings = nextSettings;
-      emitSettingsChange();
-    }
-  };
-
-  window.addEventListener("storage", handleStorage);
-
-  return () => {
-    listeners.delete(listener);
-    window.removeEventListener("storage", handleStorage);
-  };
-}
+    return next;
+  },
+});
 
 export function updateSettings(newSettings: Partial<SettingsData>) {
-  const currentSettings = getSettingsSnapshot();
-  const updatedSettings = { ...currentSettings, ...newSettings };
-
-  if (newSettings.bestSlotMode !== undefined) {
-    updatedSettings.ignoreSolarForBestSlot =
-      newSettings.bestSlotMode === "price-only";
-  } else if (newSettings.ignoreSolarForBestSlot !== undefined) {
-    updatedSettings.bestSlotMode = newSettings.ignoreSolarForBestSlot
-      ? "price-only"
-      : "combined";
-  }
-
-  cachedSettings = updatedSettings;
-  hasLoadedSettings = true;
-  localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(updatedSettings));
-  emitSettingsChange();
+  settingsStore.update(newSettings);
 }
 
 export function useSettings() {
   const settings = useSyncExternalStore(
-    subscribeToSettings,
-    getSettingsSnapshot,
-    getSettingsServerSnapshot,
+    settingsStore.subscribe,
+    settingsStore.getSnapshot,
+    settingsStore.getServerSnapshot,
   );
 
   return { settings, updateSettings };
@@ -160,9 +197,6 @@ const defaultPrefs: PrefsData = {
 };
 
 const PREFS_STORAGE_KEY = "wattlyzer_prefs";
-let cachedPrefs = defaultPrefs;
-let hasLoadedPrefs = false;
-const prefListeners = new Set<() => void>();
 
 function loadSavedPrefs(): PrefsData {
   if (typeof window === "undefined") {
@@ -181,38 +215,21 @@ function loadSavedPrefs(): PrefsData {
   }
 }
 
-function getPrefsSnapshot(): PrefsData {
-  if (typeof window === "undefined") {
-    return defaultPrefs;
-  }
-
-  if (!hasLoadedPrefs) {
-    cachedPrefs = loadSavedPrefs();
-    hasLoadedPrefs = true;
-  }
-
-  return cachedPrefs;
-}
-
-function subscribeToPrefs(listener: () => void) {
-  prefListeners.add(listener);
-  return () => {
-    prefListeners.delete(listener);
-  };
-}
+const prefsStore = createStore<PrefsData>({
+  storageKey: PREFS_STORAGE_KEY,
+  defaults: defaultPrefs,
+  load: loadSavedPrefs,
+});
 
 export function updatePrefs(newPrefs: Partial<PrefsData>) {
-  cachedPrefs = { ...getPrefsSnapshot(), ...newPrefs };
-  hasLoadedPrefs = true;
-  localStorage.setItem(PREFS_STORAGE_KEY, JSON.stringify(cachedPrefs));
-  prefListeners.forEach((listener) => listener());
+  prefsStore.update(newPrefs);
 }
 
 export function usePrefs() {
   const prefs = useSyncExternalStore(
-    subscribeToPrefs,
-    getPrefsSnapshot,
-    () => defaultPrefs,
+    prefsStore.subscribe,
+    prefsStore.getSnapshot,
+    prefsStore.getServerSnapshot,
   );
 
   return { prefs, updatePrefs };
