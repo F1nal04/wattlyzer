@@ -3,6 +3,7 @@ import {
   formatClock,
   formatCountdown,
   formatRange,
+  isSameLocalDay,
 } from "@/components/sky/home";
 
 // Tests run with TZ=UTC (see package.json scripts), so local time == UTC.
@@ -78,5 +79,37 @@ describe("formatCountdown", () => {
     expect(
       formatCountdown(at("2025-01-16T15:30:00.000Z"), at("2025-01-15T14:00:00.000Z")),
     ).toEqual({ hours: "25h", minutes: "30m" });
+  });
+});
+
+describe("isSameLocalDay", () => {
+  const at = (iso: string) => new Date(iso);
+
+  it("is true for two times on the same day", () => {
+    expect(
+      isSameLocalDay(at("2026-06-12T00:00:00.000Z"), at("2026-06-12T23:59:00.000Z")),
+    ).toBe(true);
+  });
+
+  it("is false across midnight — the 16:39 / tomorrow-10:00 case", () => {
+    expect(
+      isSameLocalDay(at("2026-06-13T10:00:00.000Z"), at("2026-06-12T16:39:00.000Z")),
+    ).toBe(false);
+  });
+
+  it("compares full dates, not just the day-of-month", () => {
+    // same day number in a different month / year
+    expect(
+      isSameLocalDay(at("2026-07-12T10:00:00.000Z"), at("2026-06-12T10:00:00.000Z")),
+    ).toBe(false);
+    expect(
+      isSameLocalDay(at("2027-06-12T10:00:00.000Z"), at("2026-06-12T10:00:00.000Z")),
+    ).toBe(false);
+  });
+
+  it("handles year boundaries", () => {
+    expect(
+      isSameLocalDay(at("2027-01-01T00:30:00.000Z"), at("2026-12-31T23:30:00.000Z")),
+    ).toBe(false);
   });
 });

@@ -22,6 +22,14 @@ export function formatRange(start: Date, durationHours: number) {
   return `${f(start)} – ${f(end)}`;
 }
 
+export function isSameLocalDay(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
 // Time remaining until `target`, e.g. { hours: "3h", minutes: "38m" }.
 // Minutes are rounded up so "in 1 second" still reads as 1m, not 0m.
 export function formatCountdown(target: Date, now: Date) {
@@ -120,17 +128,19 @@ export function ClockCluster({
   const [showCountdown, setShowCountdown] = useState(false);
   const [now, setNow] = useState(() => new Date());
 
-  // Tick while the countdown is visible so it never goes stale
+  // Tick so the countdown and the today/tomorrow label never go stale
   useEffect(() => {
-    if (!showCountdown) return;
     setNow(new Date());
     const timer = setInterval(() => setNow(new Date()), 30_000);
     return () => clearInterval(timer);
-  }, [showCountdown]);
+  }, []);
 
   const clock = formatClock(result.bestTime);
   const countdown = formatCountdown(result.bestTime, now);
   const started = showCountdown && countdown.hours === "" && countdown.minutes === "0m";
+  const dayLabel = isSameLocalDay(result.bestTime, now)
+    ? "Best time today"
+    : "Best time tomorrow";
 
   // Shrink-to-fit guard: the font size never changes between clock and
   // countdown — only if the text physically can't fit (e.g. "23h 59m" on a
@@ -171,7 +181,7 @@ export function ClockCluster({
           marginBottom: 14,
         }}
       >
-        {showCountdown ? (started ? "Best time today" : "Starts in") : "Best time today"}
+        {showCountdown ? (started ? dayLabel : "Starts in") : dayLabel}
       </div>
       <button
         type="button"
