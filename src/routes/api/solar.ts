@@ -1,10 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// Best-effort in-memory cache to keep upstream request volume low,
-// mirroring the previous Next.js revalidate window (1 hour).
-const CACHE_TTL_MS = 60 * 60 * 1000;
-const cache = new Map<string, { body: string; timestamp: number }>();
-
+// Plain pass-through proxy — caching happens client-side in the
+// persisted TanStack Query cache (local-first).
 export const Route = createFileRoute("/api/solar")({
   server: {
     handlers: {
@@ -27,17 +24,6 @@ export const Route = createFileRoute("/api/solar")({
         const apiAzimut = (azimut % 360) - 180;
         const url = `https://api.forecast.solar/estimate/watthours/${lat}/${lng}/${angle}/${apiAzimut}/${kwh}`;
 
-        const cached = cache.get(url);
-        if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-          return new Response(cached.body, {
-            status: 200,
-            headers: {
-              "content-type": "application/json",
-              "x-cache": "hit",
-            },
-          });
-        }
-
         const upstream = await fetch(url);
         if (!upstream.ok) {
           return Response.json(
@@ -46,15 +32,9 @@ export const Route = createFileRoute("/api/solar")({
           );
         }
 
-        const body = await upstream.text();
-        cache.set(url, { body, timestamp: Date.now() });
-
-        return new Response(body, {
+        return new Response(upstream.body, {
           status: 200,
-          headers: {
-            "content-type": "application/json",
-            "cache-control": "public, s-maxage=3600, stale-while-revalidate=600",
-          },
+          headers: { "content-type": "application/json" },
         });
       },
     },
