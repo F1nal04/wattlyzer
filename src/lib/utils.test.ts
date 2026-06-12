@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 import { checkMarketDataSufficiency } from "@/lib/utils";
 import type { MarketData } from "@/lib/types";
 

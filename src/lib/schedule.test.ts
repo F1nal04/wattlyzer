@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 import type { SettingsData } from "@/lib/settings";
 import type { MarketData, SolarData } from "@/lib/types";
 import {
