@@ -328,16 +328,6 @@ function SettingsScreen() {
         </SetGroup>
 
         <SetGroup title="More" t={t}>
-          <LinkRow
-            label="Install on iPhone"
-            t={t}
-            onClick={() => navigate({ to: "/install/ios" })}
-          />
-          <LinkRow
-            label="Install on Android"
-            t={t}
-            onClick={() => navigate({ to: "/install/android" })}
-          />
           <LinkRow label="Privacy" t={t} onClick={() => navigate({ to: "/privacy" })} />
           <LinkRow label="Legal" t={t} onClick={() => navigate({ to: "/legal" })} />
           <LinkRow
