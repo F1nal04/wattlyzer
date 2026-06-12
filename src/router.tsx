@@ -2,6 +2,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 import { DATA_STALE_TIME_MS } from "@/lib/queries";
+import { NotFound } from "@/components/sky/not-found";
 
 export function getRouter() {
   const queryClient = new QueryClient({
@@ -17,6 +18,7 @@ export function getRouter() {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
+    defaultNotFoundComponent: NotFound,
   });
 
   return router;
