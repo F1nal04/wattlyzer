@@ -1,4 +1,10 @@
-import type { ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   FONT_DISPLAY,
   FONT_MONO,
@@ -20,6 +26,18 @@ export function formatRange(start: Date, durationHours: number) {
   const end = new Date(start.getTime() + durationHours * 60 * 60 * 1000);
   const f = (d: Date) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
   return `${f(start)} – ${f(end)}`;
+}
+
+// Time remaining until `target`, e.g. { hours: "3h", minutes: "38m" }.
+// Minutes are rounded up so "in 1 second" still reads as 1m, not 0m.
+export function formatCountdown(target: Date, now: Date) {
+  const totalMinutes = Math.max(
+    0,
+    Math.ceil((target.getTime() - now.getTime()) / 60_000),
+  );
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return { hours: h > 0 ? `${h}h` : "", minutes: `${m}m` };
 }
 
 // Weather-aware hero — sun arcs over the day (apex at noon, centered),
@@ -105,7 +123,39 @@ export function ClockCluster({
   result: SchedulingResult;
   duration: number;
 }) {
-  const { hours, minutes } = formatClock(result.bestTime);
+  const [showCountdown, setShowCountdown] = useState(false);
+  const [now, setNow] = useState(() => new Date());
+
+  // Tick while the countdown is visible so it never goes stale
+  useEffect(() => {
+    if (!showCountdown) return;
+    setNow(new Date());
+    const timer = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(timer);
+  }, [showCountdown]);
+
+  const clock = formatClock(result.bestTime);
+  const countdown = formatCountdown(result.bestTime, now);
+  const started = showCountdown && countdown.hours === "" && countdown.minutes === "0m";
+
+  // Shrink-to-fit guard: the font size never changes between clock and
+  // countdown — only if the text physically can't fit (e.g. "23h 59m" on a
+  // narrow phone) is it scaled down just enough.
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [fit, setFit] = useState(1);
+  useLayoutEffect(() => {
+    const measure = () => {
+      const el = textRef.current;
+      const box = el?.parentElement;
+      if (!el || !box) return;
+      const avail = box.clientWidth - 12;
+      setFit(el.scrollWidth > avail ? avail / el.scrollWidth : 1);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [showCountdown, countdown.hours, countdown.minutes]);
+
   return (
     <div
       style={{
@@ -127,25 +177,65 @@ export function ClockCluster({
           marginBottom: 14,
         }}
       >
-        Best time today
+        {showCountdown ? (started ? "Best time today" : "Starts in") : "Best time today"}
       </div>
-      <div
+      <button
+        type="button"
+        onClick={() => setShowCountdown((v) => !v)}
+        aria-label={
+          showCountdown
+            ? "Show start time"
+            : "Show time remaining until start"
+        }
         style={{
+          display: "block",
+          width: "100%",
+          padding: 0,
+          margin: 0,
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          textAlign: "center",
           fontFamily: FONT_DISPLAY,
           fontWeight: 400,
           fontSize: 124,
           lineHeight: 0.9,
+          whiteSpace: "nowrap",
           letterSpacing: "-0.04em",
           color: t.fg,
           fontVariantNumeric: "tabular-nums",
           textShadow: t.mode === "dark" ? "0 2px 24px rgba(0,0,0,0.35)" : "none",
         }}
       >
-        {hours}
-        <span style={{ fontStyle: "italic", fontWeight: 300, opacity: 0.7 }}>
-          :{minutes}
+        <span
+          ref={textRef}
+          style={{
+            display: "inline-block",
+            transform: fit < 1 ? `scale(${fit})` : undefined,
+            transformOrigin: "center",
+          }}
+        >
+        {showCountdown ? (
+          started ? (
+            <span style={{ fontStyle: "italic", fontWeight: 300 }}>now</span>
+          ) : (
+            <>
+              {countdown.hours && <>{countdown.hours}{"\u2009"}</>}
+              <span style={{ fontStyle: "italic", fontWeight: 300, opacity: 0.7 }}>
+                {countdown.minutes}
+              </span>
+            </>
+          )
+        ) : (
+          <>
+            {clock.hours}
+            <span style={{ fontStyle: "italic", fontWeight: 300, opacity: 0.7 }}>
+              :{clock.minutes}
+            </span>
+          </>
+        )}
         </span>
-      </div>
+      </button>
       <div style={{ marginTop: 14, fontSize: 16, color: t.fgDim, fontWeight: 500 }}>
         {formatRange(result.bestTime, duration)} · {duration}h run
       </div>
