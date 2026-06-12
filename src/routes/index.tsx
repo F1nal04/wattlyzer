@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { weatherQueryOptions } from "@/lib/queries";
 import { FONT_MONO, skyTheme } from "@/lib/sky-theme";
 import { usePrefs, useSettings } from "@/lib/settings";
 import { useGeolocation, useScheduling } from "@/lib/use-scheduling";
-import { forecastWeather } from "@/lib/weather";
+import { weatherAt } from "@/lib/weather";
 import {
   ClockCluster,
   ClockStatus,
@@ -86,7 +88,20 @@ function HomeScreen() {
     : now.getHours();
   const t = skyTheme(themeHour);
   const [c1, c2, c3] = t.sky;
-  const weather = forecastWeather(solarData, settings, now);
+
+  // Real DWD cloud cover for the hero. Purely cosmetic, so a failed request
+  // never surfaces as an error — weatherAt falls back to the solar heuristic.
+  const weatherQuery = useQuery({
+    ...weatherQueryOptions(position ?? { latitude: 0, longitude: 0 }, now),
+    enabled: position !== null,
+  });
+  // The hero depicts the recommended moment, so the clouds match it too
+  const weather = weatherAt(
+    weatherQuery.data ?? null,
+    solarData,
+    settings,
+    schedulingResult?.bestTime ?? now,
+  );
 
   const invalidConfig = searchTimespanHours < prefs.duration;
   const showMarketDataWarning =

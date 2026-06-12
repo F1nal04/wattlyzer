@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import type { MarketData, SolarData } from "@/lib/types";
+import type { MarketData, SolarData, WeatherData } from "@/lib/types";
 
 // Purely local-first: the browser calls the upstream APIs directly (both
 // send permissive CORS headers) and caches responses for an hour in the
@@ -43,6 +43,27 @@ export function solarQueryOptions(params: SolarParams) {
       fetchJson<SolarData>(
         `https://api.forecast.solar/estimate/watthours/${lat}/${lng}/${angle}/${apiAzimut}/${kwh}`,
         "Solar",
+      ),
+    staleTime: DATA_STALE_TIME_MS,
+    gcTime: DATA_STALE_TIME_MS,
+  });
+}
+
+// UTC calendar date, the granularity BrightSky's date params expect
+export const utcDate = (d: Date) => d.toISOString().slice(0, 10);
+
+export function weatherQueryOptions(position: Position, now: Date) {
+  const lat = roundCoordinate(position.latitude);
+  const lng = roundCoordinate(position.longitude);
+  // 48h window so a best slot after midnight still has a record
+  const date = utcDate(now);
+  const lastDate = utcDate(new Date(now.getTime() + 48 * 60 * 60 * 1000));
+  return queryOptions({
+    queryKey: ["weather", lat, lng, date],
+    queryFn: () =>
+      fetchJson<WeatherData>(
+        `https://api.brightsky.dev/weather?lat=${lat}&lon=${lng}&date=${date}&last_date=${lastDate}`,
+        "Weather",
       ),
     staleTime: DATA_STALE_TIME_MS,
     gcTime: DATA_STALE_TIME_MS,

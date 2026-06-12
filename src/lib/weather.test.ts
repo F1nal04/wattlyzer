@@ -1,7 +1,12 @@
 import { describe, expect, it } from "bun:test";
 import type { SettingsData } from "@/lib/settings";
-import type { SolarData } from "@/lib/types";
-import { forecastWeather } from "@/lib/weather";
+import type { SolarData, WeatherData } from "@/lib/types";
+import {
+  cloudCoverAt,
+  cloudCoverToKind,
+  forecastWeather,
+  weatherAt,
+} from "@/lib/weather";
 
 const baseSettings: SettingsData = {
   azimut: 180,
@@ -137,5 +142,83 @@ describe("forecastWeather", () => {
     expect(forecastWeather(null, baseSettings, noon)).toBe("sunny");
     const zeroSystem: SettingsData = { ...baseSettings, kwh: 0 };
     expect(forecastWeather(dayWithPeak(2800), zeroSystem, noon)).toBe("sunny");
+  });
+});
+
+function brightSky(records: Array<[string, number | null]>): WeatherData {
+  return {
+    weather: records.map(([timestamp, cloud_cover]) => ({
+      timestamp,
+      cloud_cover,
+    })),
+  };
+}
+
+describe("cloudCoverToKind", () => {
+  it("maps cloud-cover bands at the 25 / 50 / 85 boundaries", () => {
+    expect(cloudCoverToKind(0)).toBe("sunny");
+    expect(cloudCoverToKind(25)).toBe("sunny");
+    expect(cloudCoverToKind(26)).toBe("partly");
+    expect(cloudCoverToKind(50)).toBe("partly");
+    expect(cloudCoverToKind(51)).toBe("cloudy");
+    expect(cloudCoverToKind(85)).toBe("cloudy");
+    expect(cloudCoverToKind(86)).toBe("overcast");
+    expect(cloudCoverToKind(100)).toBe("overcast");
+  });
+});
+
+describe("cloudCoverAt", () => {
+  it("picks the hourly record covering the given moment", () => {
+    const data = brightSky([
+      ["2025-01-15T11:00:00+00:00", 10],
+      ["2025-01-15T12:00:00+00:00", 95],
+      ["2025-01-15T13:00:00+00:00", 20],
+    ]);
+    // 12:42 falls inside the 12:00 record, not the nearest (13:00)
+    expect(cloudCoverAt(data, new Date("2025-01-15T12:42:00.000Z"))).toBe(95);
+  });
+
+  it("matches timestamps with non-UTC offsets", () => {
+    // 13:00+01:00 is 12:00 UTC
+    const data = brightSky([["2025-01-15T13:00:00+01:00", 60]]);
+    expect(cloudCoverAt(data, new Date("2025-01-15T12:30:00.000Z"))).toBe(60);
+  });
+
+  it("returns null without data or a record for that hour", () => {
+    expect(cloudCoverAt(null, noon)).toBe(null);
+    const otherHour = brightSky([["2025-01-15T09:00:00+00:00", 50]]);
+    expect(cloudCoverAt(otherHour, noon)).toBe(null);
+  });
+});
+
+describe("weatherAt", () => {
+  it("uses real cloud cover when a record covers the moment", () => {
+    const data = brightSky([["2025-01-15T12:00:00+00:00", 100]]);
+    // The solar forecast says sunny — measured cloud cover must win
+    expect(weatherAt(data, dayWithPeak(2800), baseSettings, noon)).toBe(
+      "overcast",
+    );
+  });
+
+  it("falls back to the solar heuristic without weather data", () => {
+    expect(weatherAt(null, dayWithPeak(2800), baseSettings, noon)).toBe(
+      "sunny",
+    );
+    expect(weatherAt(null, dayWithPeak(200), baseSettings, noon)).toBe(
+      "overcast",
+    );
+  });
+
+  it("falls back when the hour is missing or its cloud cover is null", () => {
+    const wrongHour = brightSky([["2025-01-15T09:00:00+00:00", 100]]);
+    expect(weatherAt(wrongHour, dayWithPeak(2800), baseSettings, noon)).toBe(
+      "sunny",
+    );
+    // overcast fallback proves the heuristic is consulted — a broken null
+    // check would coerce null cover to 0% and report sunny
+    const nullCover = brightSky([["2025-01-15T12:00:00+00:00", null]]);
+    expect(weatherAt(nullCover, dayWithPeak(200), baseSettings, noon)).toBe(
+      "overcast",
+    );
   });
 });

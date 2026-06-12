@@ -4,6 +4,8 @@ import {
   marketQueryOptions,
   roundCoordinate,
   solarQueryOptions,
+  utcDate,
+  weatherQueryOptions,
 } from "@/lib/queries";
 
 const realFetch = globalThis.fetch;
@@ -99,6 +101,40 @@ describe("solarQueryOptions", () => {
     stubFetch({ ok: false, status: 429 });
     expect(runQueryFn(solarQueryOptions(params))).rejects.toThrow(
       "Solar API error: 429",
+    );
+  });
+});
+
+describe("weatherQueryOptions", () => {
+  const position = { latitude: 52.3905, longitude: 13.2249 };
+  const now = new Date("2025-01-15T12:00:00.000Z");
+
+  it("extracts the UTC calendar date", () => {
+    expect(utcDate(now)).toBe("2025-01-15");
+    expect(utcDate(new Date("2025-01-15T23:59:59.999Z"))).toBe("2025-01-15");
+  });
+
+  it("keys the cache on rounded coordinates and the UTC date", () => {
+    expect([...weatherQueryOptions(position, now).queryKey]).toEqual([
+      "weather",
+      52.39,
+      13.22,
+      "2025-01-15",
+    ]);
+  });
+
+  it("fetches a 48h BrightSky window from the current UTC date", async () => {
+    const calls = stubFetch({ ok: true, body: { weather: [] } });
+    await runQueryFn(weatherQueryOptions(position, now));
+    expect(calls).toEqual([
+      "https://api.brightsky.dev/weather?lat=52.39&lon=13.22&date=2025-01-15&last_date=2025-01-17",
+    ]);
+  });
+
+  it("throws a labelled error on a non-ok response", async () => {
+    stubFetch({ ok: false, status: 503 });
+    expect(runQueryFn(weatherQueryOptions(position, now))).rejects.toThrow(
+      "Weather API error: 503",
     );
   });
 });
