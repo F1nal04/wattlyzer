@@ -1,4 +1,10 @@
+import { useId } from "react";
 import type { SkyTheme } from "@/lib/sky-theme";
+
+// Smooth vector cloud — one continuous silhouette path (no stacked blobs),
+// vertical gradient for volume and a soft blurred highlight on top.
+const CLOUD_PATH =
+  "M46 96 C24 96 10 82 14 66 C2 54 12 34 32 34 C36 16 62 6 80 18 C92 2 124 2 136 18 C156 8 180 18 182 38 C200 42 208 62 196 76 C204 90 190 100 172 96 Z";
 
 export function Cloud({
   left,
@@ -7,6 +13,8 @@ export function Cloud({
   opacity = 0.95,
   tint = "#ffffff",
   shade = "rgba(255,255,255,0.55)",
+  flip = false,
+  drift = 0,
 }: {
   left: number | string;
   top: number | string;
@@ -14,11 +22,13 @@ export function Cloud({
   opacity?: number;
   tint?: string;
   shade?: string;
+  flip?: boolean;
+  /** Drift animation phase — 0 disables, 1..n staggers timing */
+  drift?: number;
 }) {
-  // Composed from overlapping circles via radial-gradients on a single box.
-  // Soft top highlight + slightly darker bottom for volume.
-  const w = 180 * scale,
-    h = 90 * scale;
+  const id = useId();
+  const w = 190 * scale,
+    h = 95 * scale;
   return (
     <div
       style={{
@@ -28,37 +38,48 @@ export function Cloud({
         width: w,
         height: h,
         opacity,
-        filter: "drop-shadow(0 6px 14px rgba(20,16,30,0.18))",
+        animation: drift
+          ? `sky-cloud-drift ${26 + drift * 7}s ease-in-out ${drift * -9}s infinite alternate`
+          : undefined,
       }}
     >
-      <div
+      <svg
+        viewBox="0 0 212 104"
+        width={w}
+        height={h}
         style={{
-          position: "absolute",
-          inset: 0,
-          background: `
-          radial-gradient(ellipse 30% 70% at 18% 70%, ${shade} 0%, ${tint} 55%, rgba(255,255,255,0) 60%),
-          radial-gradient(ellipse 28% 90% at 38% 45%, ${tint} 0%, ${tint} 55%, rgba(255,255,255,0) 60%),
-          radial-gradient(ellipse 22% 80% at 58% 35%, ${tint} 0%, ${tint} 55%, rgba(255,255,255,0) 60%),
-          radial-gradient(ellipse 26% 80% at 76% 50%, ${tint} 0%, ${tint} 55%, rgba(255,255,255,0) 60%),
-          radial-gradient(ellipse 20% 65% at 88% 70%, ${shade} 0%, ${tint} 55%, rgba(255,255,255,0) 60%)
-        `,
+          display: "block",
+          overflow: "visible",
+          transform: flip ? "scaleX(-1)" : undefined,
+          filter: "drop-shadow(0 8px 16px rgba(20,16,30,0.16))",
         }}
-      />
-      {/* highlight ribbon */}
-      <div
-        style={{
-          position: "absolute",
-          left: "20%",
-          right: "20%",
-          top: "18%",
-          height: "18%",
-          background:
-            "linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0))",
-          borderRadius: "50%",
-          filter: "blur(6px)",
-          opacity: 0.7,
-        }}
-      />
+      >
+        <defs>
+          <linearGradient id={`${id}-body`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={tint} />
+            <stop offset="62%" stopColor={tint} />
+            <stop offset="100%" stopColor={shade} />
+          </linearGradient>
+          <filter id={`${id}-soft`} x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="7" />
+          </filter>
+          <clipPath id={`${id}-clip`}>
+            <path d={CLOUD_PATH} />
+          </clipPath>
+        </defs>
+        <path d={CLOUD_PATH} fill={`url(#${id}-body)`} />
+        {/* soft top highlight, clipped to the silhouette */}
+        <g clipPath={`url(#${id}-clip)`}>
+          <ellipse
+            cx="92"
+            cy="26"
+            rx="74"
+            ry="26"
+            fill="rgba(255,255,255,0.85)"
+            filter={`url(#${id}-soft)`}
+          />
+        </g>
+      </svg>
     </div>
   );
 }
@@ -95,36 +116,37 @@ export function SkySunCloud({
         left="calc(40% - 30px)"
         top="14%"
         scale={1.05}
+        drift={1}
         tint={t.mode === "dark" ? "rgba(245,240,250,0.92)" : "#ffffff"}
-        shade={t.mode === "dark" ? "rgba(180,180,200,0.55)" : "rgba(220,215,225,0.7)"}
+        shade={t.mode === "dark" ? "rgba(180,180,200,0.55)" : "rgba(214,210,222,0.85)"}
       />
     </>
   );
 }
 
 export function SkyClouds({ heavy, t }: { heavy: boolean; t: SkyTheme }) {
-  // Layered puffs at varied scales — heavier overcast = more clouds, dimmer
+  // Layered clouds at varied scales — heavier overcast = more clouds, dimmer
   const tint = heavy
     ? t.mode === "dark"
-      ? "rgba(210,212,225,0.82)"
-      : "#e9eaf0"
+      ? "rgba(210,212,225,0.85)"
+      : "#eceef3"
     : t.mode === "dark"
-      ? "rgba(240,238,250,0.92)"
+      ? "rgba(240,238,250,0.94)"
       : "#ffffff";
   const shade = heavy
     ? t.mode === "dark"
-      ? "rgba(150,152,170,0.6)"
-      : "rgba(180,182,195,0.7)"
+      ? "rgba(150,152,170,0.7)"
+      : "rgba(176,180,196,0.9)"
     : t.mode === "dark"
-      ? "rgba(195,195,215,0.55)"
-      : "rgba(220,215,225,0.7)";
+      ? "rgba(195,195,215,0.6)"
+      : "rgba(214,210,222,0.85)";
   return (
     <>
-      <Cloud left="6%" top="11%" scale={1.15} opacity={heavy ? 0.95 : 0.92} tint={tint} shade={shade} />
-      <Cloud left="48%" top="6%" scale={0.85} opacity={heavy ? 0.92 : 0.85} tint={tint} shade={shade} />
-      <Cloud left="28%" top="22%" scale={1.0} opacity={heavy ? 0.9 : 0.78} tint={tint} shade={shade} />
+      <Cloud left="4%" top="9%" scale={1.2} drift={1} opacity={heavy ? 0.96 : 0.94} tint={tint} shade={shade} />
+      <Cloud left="52%" top="4%" scale={0.8} drift={2} flip opacity={heavy ? 0.9 : 0.8} tint={tint} shade={shade} />
+      <Cloud left="30%" top="21%" scale={1.0} drift={3} opacity={heavy ? 0.92 : 0.85} tint={tint} shade={shade} />
       {heavy && (
-        <Cloud left="62%" top="20%" scale={1.1} opacity={0.88} tint={tint} shade={shade} />
+        <Cloud left="64%" top="19%" scale={1.05} drift={4} flip opacity={0.9} tint={tint} shade={shade} />
       )}
     </>
   );
