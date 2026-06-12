@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import type { ReactNode } from "react";
+import { Suspense, lazy, type ReactNode } from "react";
 import {
   HeadContent,
   Outlet,
@@ -64,6 +64,37 @@ export const Route = createRootRouteWithContext<{
   shellComponent: RootDocument,
 })
 
+// Dev-only: the unified devtools shell does NOT exclude itself from
+// production bundles, so gate it behind a statically eliminable branch.
+const Devtools = import.meta.env.DEV
+  ? lazy(async () => {
+      const [devtools, router, query] = await Promise.all([
+        import("@tanstack/react-devtools"),
+        import("@tanstack/react-router-devtools"),
+        import("@tanstack/react-query-devtools"),
+      ]);
+      const { TanStackDevtools } = devtools;
+      const { TanStackRouterDevtoolsPanel } = router;
+      const { ReactQueryDevtoolsPanel } = query;
+      return {
+        default: () => (
+          <TanStackDevtools
+            plugins={[
+              {
+                name: "TanStack Router",
+                render: <TanStackRouterDevtoolsPanel />,
+              },
+              {
+                name: "TanStack Query",
+                render: <ReactQueryDevtoolsPanel />,
+              },
+            ]}
+          />
+        ),
+      };
+    })
+  : () => null;
+
 const persister = createSyncStoragePersister({
   storage: typeof window !== "undefined" ? window.localStorage : null,
   key: "wattlyzer_query_cache",
@@ -77,6 +108,9 @@ function RootComponent() {
       persistOptions={{ persister, maxAge: DATA_STALE_TIME_MS }}
     >
       <Outlet />
+      <Suspense fallback={null}>
+        <Devtools />
+      </Suspense>
     </PersistQueryClientProvider>
   );
 }
