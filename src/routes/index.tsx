@@ -81,11 +81,16 @@ function HomeScreen() {
     }
   }, [mounted, prefs.onboarded, navigate]);
 
-  // Theme follows the recommended hour; before a result exists, the current hour.
+  // Theme follows the recommended hour; before a result exists, the current
+  // hour. Until mounted it must be a fixed hour so the server-rendered and
+  // first client render agree — React never patches hydration mismatches,
+  // which would freeze the background on the server's palette.
   const now = new Date();
-  const themeHour = schedulingResult
-    ? schedulingResult.bestTime.getHours()
-    : now.getHours();
+  const themeHour = !mounted
+    ? 11
+    : schedulingResult
+      ? schedulingResult.bestTime.getHours()
+      : now.getHours();
   const t = skyTheme(themeHour);
   const [c1, c2, c3] = t.sky;
 
