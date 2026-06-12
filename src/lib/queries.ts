@@ -10,6 +10,10 @@ export const DATA_STALE_TIME_MS = 60 * 60 * 1000;
 export const roundCoordinate = (coord: number) =>
   Math.round(coord * 100) / 100;
 
+// Settings store azimuth in compass degrees (0 = North, 180 = South);
+// forecast.solar expects -180..180 with 0 = South.
+export const compassToApiAzimuth = (azimut: number) => (azimut % 360) - 180;
+
 export type Position = { latitude: number; longitude: number };
 
 export type SolarParams = {
@@ -32,8 +36,7 @@ export function solarQueryOptions(params: SolarParams) {
   const lat = roundCoordinate(params.latitude);
   const lng = roundCoordinate(params.longitude);
   const { angle, azimut, kwh } = params;
-  // forecast.solar expects azimuth as -180..180 with 0 = South
-  const apiAzimut = (azimut % 360) - 180;
+  const apiAzimut = compassToApiAzimuth(azimut);
   return queryOptions({
     queryKey: ["solar", lat, lng, angle, azimut, kwh],
     queryFn: () =>
