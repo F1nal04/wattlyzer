@@ -16,8 +16,6 @@ import { Route as LegalRouteImport } from './routes/legal'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InstallIosRouteImport } from './routes/install.ios'
 import { Route as InstallAndroidRouteImport } from './routes/install.android'
-import { Route as ApiSolarRouteImport } from './routes/api/solar'
-import { Route as ApiMarketRouteImport } from './routes/api/market'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -54,16 +52,6 @@ const InstallAndroidRoute = InstallAndroidRouteImport.update({
   path: '/install/android',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiSolarRoute = ApiSolarRouteImport.update({
-  id: '/api/solar',
-  path: '/api/solar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiMarketRoute = ApiMarketRouteImport.update({
-  id: '/api/market',
-  path: '/api/market',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -71,8 +59,6 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
-  '/api/market': typeof ApiMarketRoute
-  '/api/solar': typeof ApiSolarRoute
   '/install/android': typeof InstallAndroidRoute
   '/install/ios': typeof InstallIosRoute
 }
@@ -82,8 +68,6 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
-  '/api/market': typeof ApiMarketRoute
-  '/api/solar': typeof ApiSolarRoute
   '/install/android': typeof InstallAndroidRoute
   '/install/ios': typeof InstallIosRoute
 }
@@ -94,8 +78,6 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
-  '/api/market': typeof ApiMarketRoute
-  '/api/solar': typeof ApiSolarRoute
   '/install/android': typeof InstallAndroidRoute
   '/install/ios': typeof InstallIosRoute
 }
@@ -107,8 +89,6 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/privacy'
     | '/settings'
-    | '/api/market'
-    | '/api/solar'
     | '/install/android'
     | '/install/ios'
   fileRoutesByTo: FileRoutesByTo
@@ -118,8 +98,6 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/privacy'
     | '/settings'
-    | '/api/market'
-    | '/api/solar'
     | '/install/android'
     | '/install/ios'
   id:
@@ -129,8 +107,6 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/privacy'
     | '/settings'
-    | '/api/market'
-    | '/api/solar'
     | '/install/android'
     | '/install/ios'
   fileRoutesById: FileRoutesById
@@ -141,8 +117,6 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   PrivacyRoute: typeof PrivacyRoute
   SettingsRoute: typeof SettingsRoute
-  ApiMarketRoute: typeof ApiMarketRoute
-  ApiSolarRoute: typeof ApiSolarRoute
   InstallAndroidRoute: typeof InstallAndroidRoute
   InstallIosRoute: typeof InstallIosRoute
 }
@@ -198,20 +172,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InstallAndroidRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/solar': {
-      id: '/api/solar'
-      path: '/api/solar'
-      fullPath: '/api/solar'
-      preLoaderRoute: typeof ApiSolarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/market': {
-      id: '/api/market'
-      path: '/api/market'
-      fullPath: '/api/market'
-      preLoaderRoute: typeof ApiMarketRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -221,8 +181,6 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   PrivacyRoute: PrivacyRoute,
   SettingsRoute: SettingsRoute,
-  ApiMarketRoute: ApiMarketRoute,
-  ApiSolarRoute: ApiSolarRoute,
   InstallAndroidRoute: InstallAndroidRoute,
   InstallIosRoute: InstallIosRoute,
 }

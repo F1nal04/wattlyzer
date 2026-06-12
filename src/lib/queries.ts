@@ -1,9 +1,10 @@
 import { queryOptions } from "@tanstack/react-query";
 import type { MarketData, SolarData } from "@/lib/types";
 
-// Matches the upstream cache window: solar + market proxies revalidate
-// server-side, the client treats data younger than 15 minutes as fresh.
-export const DATA_STALE_TIME_MS = 15 * 60 * 1000;
+// Purely local-first: the browser calls the upstream APIs directly (both
+// send permissive CORS headers) and caches responses for an hour in the
+// persisted TanStack Query cache.
+export const DATA_STALE_TIME_MS = 60 * 60 * 1000;
 
 // Round to 2 decimal places (~1km precision) for consistent cache keys
 export const roundCoordinate = (coord: number) =>
@@ -31,11 +32,13 @@ export function solarQueryOptions(params: SolarParams) {
   const lat = roundCoordinate(params.latitude);
   const lng = roundCoordinate(params.longitude);
   const { angle, azimut, kwh } = params;
+  // forecast.solar expects azimuth as -180..180 with 0 = South
+  const apiAzimut = (azimut % 360) - 180;
   return queryOptions({
     queryKey: ["solar", lat, lng, angle, azimut, kwh],
     queryFn: () =>
       fetchJson<SolarData>(
-        `/api/solar?lat=${lat}&lng=${lng}&angle=${angle}&azimut=${azimut}&kwh=${kwh}`,
+        `https://api.forecast.solar/estimate/watthours/${lat}/${lng}/${angle}/${apiAzimut}/${kwh}`,
         "Solar",
       ),
     staleTime: DATA_STALE_TIME_MS,
@@ -46,7 +49,8 @@ export function solarQueryOptions(params: SolarParams) {
 export function marketQueryOptions() {
   return queryOptions({
     queryKey: ["market"],
-    queryFn: () => fetchJson<MarketData>("/api/market", "Market"),
+    queryFn: () =>
+      fetchJson<MarketData>("https://api.awattar.de/v1/marketdata", "Market"),
     staleTime: DATA_STALE_TIME_MS,
     gcTime: DATA_STALE_TIME_MS,
   });
