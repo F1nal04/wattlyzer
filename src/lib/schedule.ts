@@ -1,4 +1,4 @@
-import type { SettingsData } from "@/lib/settings-context";
+import type { SettingsData } from "@/lib/settings";
 import type {
   MarketData,
   SchedulingResult,

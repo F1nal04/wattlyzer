@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { SettingsData } from "@/lib/settings-context";
+import type { SettingsData } from "@/lib/settings";
 import type { MarketData, SolarData } from "@/lib/types";
 import {
   calculateMarketPrice,

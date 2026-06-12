@@ -1,6 +1,6 @@
 [![Version](https://img.shields.io/github/package-json/v/f1nal04/wattlyzer-app?style=flat-square&color=yellow)](https://github.com/F1nal04/wattlyzer-app/releases)
 [![License](https://img.shields.io/github/license/f1nal04/wattlyzer-app?style=flat-square&color=yellow)](LICENSE)
-[![Next.js](https://img.shields.io/github/package-json/dependency-version/f1nal04/wattlyzer-app/next?style=flat-square&logo=next.js&color=black)](https://nextjs.org/)
+[![TanStack Start](https://img.shields.io/github/package-json/dependency-version/f1nal04/wattlyzer-app/@tanstack/react-start?style=flat-square&color=orange)](https://tanstack.com/start)
 
 [![Production](https://img.shields.io/badge/Production-brightgreen?logo=netlify&label=env&style=flat-square)](https://wattlyzer.com) [![Website Status](https://img.shields.io/website?url=https%3A%2F%2Fwattlyzer.de&up_color=lightgreen&down_color=red&style=flat-square)](https://wattlyzer.de)
 
@@ -16,6 +16,12 @@ Wattlyzer is a smart solar energy optimization tool that helps you maximize your
 - **Personalized Solar Setup**: Integrates your specific solar panel configuration from the settings page to provide tailored recommendations
 - **Cost Optimization**: Combines solar forecasts with dynamic pricing to minimize your energy costs by scheduling usage during peak solar production or low market prices
 - **Germany-Focused**: Currently optimized for the German energy market and pricing structure
+
+## Tech stack
+
+- [TanStack Start](https://tanstack.com/start) (Vite + SSR) with [TanStack Router](https://tanstack.com/router) for routing and server routes
+- [TanStack Query](https://tanstack.com/query) for data fetching with a persisted localStorage cache
+- React 19, TypeScript, Vitest
 
 ## Development
 
@@ -40,20 +46,6 @@ Run the suite once in CI or for a one-off local check:
 ```bash
 bun test:run
 ```
-
-### Debug Mode
-
-The debug link is only visible in the following scenarios:
-
-1. **Local development**: When running `bun dev` (NODE_ENV=development)
-2. **Development subdomain**: When the hostname contains "dev" (e.g., `dev.wattlyzer.com`)
-3. **Debug parameter**: When URL contains `?debug=true` parameter
-
-Examples:
-
-- `https://dev.wattlyzer.com/` - Shows debug link
-- `https://wattlyzer.com/?debug=true` - Shows debug link
-- `https://wattlyzer.com/` - No debug link
 
 ## License
 
