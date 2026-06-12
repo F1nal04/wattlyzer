@@ -451,7 +451,7 @@ function ObSetup({
       </div>
 
       <BottomCta dimmed={!consentShare}>
-        <SkyPrimaryButton t={t} onClick={onNext}>
+        <SkyPrimaryButton t={t} onClick={onNext} disabled={!consentShare}>
           Continue
         </SkyPrimaryButton>
       </BottomCta>

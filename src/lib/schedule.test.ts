@@ -258,6 +258,20 @@ describe("calculatePowerGeneration", () => {
     expect(shadedVal).toBeCloseTo(unshaded * 0.5, 5);
   });
 
+  it("credits only the actual delta for a sub-hour sunset bracket", () => {
+    // Last daylight samples: 21:00 cumulative 30000, sunset 21:43 at 30100.
+    // The 43-minute rate must not be extrapolated to a full hour.
+    const solar = solarWithResult({
+      "2025-01-15T21:00:00.000Z": 30000,
+      "2025-01-15T21:43:00.000Z": 30100,
+    });
+    const t = new Date("2025-01-15T21:00:00.000Z");
+    expect(calculatePowerGeneration(solar, baseSettings, t)).toBeCloseTo(
+      100 * 0.7,
+      5,
+    );
+  });
+
   it("does not interpolate across a UTC day boundary", () => {
     const solar = solarWithResult({
       "2025-01-15T23:00:00.000Z": 0,
@@ -267,7 +281,7 @@ describe("calculatePowerGeneration", () => {
     expect(calculatePowerGeneration(solar, baseSettings, t)).toBe(0);
   });
 
-  it("uses UTC hours for shading boundaries", () => {
+  it("uses local wall-clock hours for shading boundaries (== UTC under the pinned test TZ)", () => {
     const solar = solarWithResult({
       "2025-01-15T07:00:00.000Z": 0,
       "2025-01-15T09:00:00.000Z": 2000,
@@ -333,6 +347,28 @@ describe("calculateSchedule", () => {
     expect(
       calculateSchedule(solar, null, settings, 2, 6, now).schedulingResult,
     ).toBeNull();
+  });
+
+  it("yields exactly one slot when the window equals the run duration mid-hour", () => {
+    // Regression: the window used to count from `now`, so a 3h run in a 3h
+    // window found zero slots whenever `now` wasn't exactly on the hour.
+    const now = new Date("2025-01-15T10:22:00.000Z");
+    const solar = solarWithResult(flatSolarCurve("2025-01-15", 2000));
+    const market = marketUtcHourlyFrom(
+      new Date("2025-01-15T10:00:00.000Z"),
+      Array.from({ length: 24 }, () => 100),
+    );
+    const { schedulingResult } = calculateSchedule(
+      solar,
+      market,
+      baseSettings,
+      3,
+      3,
+      now,
+    );
+    expect(schedulingResult?.bestTime.toISOString()).toBe(
+      "2025-01-15T11:00:00.000Z",
+    );
   });
 
   it("solar-only: returns null scheduling when no slot meets minKwh but still returns top slots", () => {

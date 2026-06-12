@@ -190,13 +190,25 @@ function HomeScreen() {
               }
             />
           )}
-          {position && !invalidConfig && !isLoading && apiError && (
+          {position && !invalidConfig && !isLoading && apiError && !schedulingResult && (
             <ClockStatus
               t={t}
               title="Forecast unavailable."
               body={`A data request failed (${apiError}). Try again in a moment.`}
             />
           )}
+          {position &&
+            !invalidConfig &&
+            !isLoading &&
+            !apiError &&
+            !schedulingResult &&
+            settings.bestSlotMode !== "solar-only" && (
+              <ClockStatus
+                t={t}
+                title="No window found."
+                body="Market prices don't cover the search window yet. Widen it in Quick controls or check back later."
+              />
+            )}
           {noSuitableSolarSlot && (
             <ClockStatus
               t={t}

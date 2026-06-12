@@ -5,7 +5,7 @@ import {
   FONT_SANS,
   type SkyTheme,
 } from "@/lib/sky-theme";
-import { SkySlider, SkySwitch } from "@/components/sky/primitives";
+import { SkySlider, SkySwitch, useEscapeKey } from "@/components/sky/primitives";
 import { ObSwitchRow, azimuthLabel } from "@/components/sky/rows";
 
 export type SolarConfig = {
@@ -120,8 +120,12 @@ function ShadingItem({
   );
   const min = isMorning ? 5 : 14;
   const max = isMorning ? 12 : 22;
-  const ticks: string[] = [];
-  for (let h = min; h <= max; h += (max - min) / 4) ticks.push(`${Math.round(h)}:00`);
+  // Labels are spread evenly, so only label hours that actually divide the
+  // range evenly — otherwise the labels sit at the wrong slider positions
+  const tickStep = (max - min) / 4;
+  const ticks = Number.isInteger(tickStep)
+    ? Array.from({ length: 5 }, (_, i) => `${min + i * tickStep}:00`)
+    : [`${min}:00`, `${max}:00`];
 
   const fmt = (h: number) => `${String(Math.floor(h)).padStart(2, "0")}:00`;
 
@@ -250,8 +254,14 @@ export function SolarPanelsModal({
   const set = (patch: Partial<SolarConfig>) =>
     setV((prev) => ({ ...prev, ...patch }));
   const dim = !v.enabled;
+  useEscapeKey(onClose);
   return (
-    <div style={{ position: "absolute", inset: 0, zIndex: 30, fontFamily: FONT_SANS }}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Solar panels"
+      style={{ position: "absolute", inset: 0, zIndex: 30, fontFamily: FONT_SANS }}
+    >
       {/* scrim */}
       <div
         onClick={onClose}

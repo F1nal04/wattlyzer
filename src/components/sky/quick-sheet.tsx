@@ -6,15 +6,22 @@ import {
   SearchWindowChips,
   SkyModeSeg,
   SkySlider,
+  useEscapeKey,
 } from "@/components/sky/primitives";
 
 // Sliding-up Quick controls sheet (design "A2"): Mode → Min solar → Search window.
 export function QuickSheet({ t, onClose }: { t: SkyTheme; onClose: () => void }) {
   const { settings, updateSettings } = useSettings();
   const { prefs, updatePrefs } = usePrefs();
+  useEscapeKey(onClose);
 
   return (
-    <div style={{ position: "absolute", inset: 0, zIndex: 20, fontFamily: FONT_SANS }}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Quick controls"
+      style={{ position: "absolute", inset: 0, zIndex: 20, fontFamily: FONT_SANS }}
+    >
       {/* scrim over the dimmed home */}
       <div
         onClick={onClose}

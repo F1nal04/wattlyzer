@@ -40,14 +40,8 @@ export function checkMarketDataSufficiency(
     firstRelevantHour.setTime(firstRelevantHour.getTime() + HOUR_MS);
   }
 
-  const lastRequiredSampleMs =
-    now.getTime() + (searchTimespanHours - 1) * HOUR_MS;
-  const requiredHours =
-    firstRelevantHour.getTime() > lastRequiredSampleMs
-      ? 0
-      : Math.floor(
-          (lastRequiredSampleMs - firstRelevantHour.getTime()) / HOUR_MS
-        ) + 1;
+  // Mirror calculateSchedule: the window counts from the first full hour
+  const requiredHours = Math.max(0, searchTimespanHours);
 
   const sortedData = [...marketData.data].sort(
     (a, b) => a.start_timestamp - b.start_timestamp

@@ -1,7 +1,18 @@
-import type { CSSProperties, ReactNode } from "react";
+import { useEffect, type CSSProperties, type ReactNode } from "react";
 import { FONT_MONO, FONT_SANS, type SkyTheme } from "@/lib/sky-theme";
 import { WIcon } from "@/components/sky/icons";
 import type { BestSlotMode, SearchWindow } from "@/lib/settings";
+
+// Close sheets/modals on Escape
+export function useEscapeKey(onEscape: () => void) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onEscape();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onEscape]);
+}
 
 // Full-viewport screen wrapper. The design canvas was a 360x780 phone frame;
 // in the real app the sky fills the viewport and content is capped for desktop.

@@ -98,19 +98,26 @@ export function calculatePowerGeneration(
       timestamps[closestBeforeIndex].timestamp) /
     (1000 * 60 * 60);
 
-  let hourlyProduction = Math.max(0, (endValue - startValue) / timeDiffHours);
+  // For sub-hour brackets (sunrise/sunset samples) credit only the actual
+  // delta instead of extrapolating the short interval to a full hour
+  let hourlyProduction = Math.max(
+    0,
+    (endValue - startValue) / Math.max(timeDiffHours, 1),
+  );
   hourlyProduction *= 0.7;
 
+  // Shading settings are wall-clock hours ("until 10:00"), so compare in
+  // the user's local time, not UTC
   if (
     settings.morningShading &&
-    targetTime.getUTCHours() < settings.shadingEndTime
+    targetTime.getHours() < settings.shadingEndTime
   ) {
     hourlyProduction *= 0.5;
   }
 
   if (
     settings.eveningShading &&
-    targetTime.getUTCHours() >= settings.shadingStartTime
+    targetTime.getHours() >= settings.shadingStartTime
   ) {
     hourlyProduction *= 0.5;
   }
@@ -185,8 +192,10 @@ export function calculateSchedule(
   const results: SlotResult[] = [];
 
   // Align with hourly solar keys (…Z) and [start,end) market rows on the UTC grid.
+  // The window counts from the first schedulable hour so a window equal to the
+  // run duration always yields exactly one slot (instead of zero mid-hour).
   const firstStartMs = ceilToUtcHour(now).getTime();
-  const lastSampleMaxMs = now.getTime() + (searchTimespan - 1) * HOUR_MS;
+  const lastSampleMaxMs = firstStartMs + (searchTimespan - 1) * HOUR_MS;
 
   for (let startMs = firstStartMs; ; startMs += HOUR_MS) {
     const lastSampleMs = startMs + (consumerDuration - 1) * HOUR_MS;

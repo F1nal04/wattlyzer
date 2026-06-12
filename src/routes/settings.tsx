@@ -224,7 +224,7 @@ function SettingsScreen() {
   useEffect(() => setMounted(true), []);
 
   const t = skyTheme(mounted ? new Date().getHours() : 11);
-  const solarEnabled = settings.bestSlotMode !== "price-only" || settings.kwh > 0;
+  const solarEnabled = settings.bestSlotMode !== "price-only";
 
   const solarConfig: SolarConfig = {
     enabled: solarEnabled,
@@ -246,7 +246,13 @@ function SettingsScreen() {
       shadingEndTime: next.morningHour,
       eveningShading: next.eveningOn,
       shadingStartTime: next.eveningHour,
-      ...(next.enabled ? {} : { bestSlotMode: "price-only" as const }),
+      // Toggling panels off forces price-only; toggling back on restores a
+      // solar-aware mode (otherwise there is no way to re-enable solar here)
+      ...(next.enabled
+        ? settings.bestSlotMode === "price-only"
+          ? { bestSlotMode: "combined" as const }
+          : {}
+        : { bestSlotMode: "price-only" as const }),
     });
     setSolarOpen(false);
   };
