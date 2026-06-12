@@ -7,6 +7,7 @@ import {
   type SkyTheme,
 } from "@/lib/sky-theme";
 import { updateSettings, useSettings } from "@/lib/settings";
+import { useNow } from "@/lib/use-now";
 import {
   SkyAppBar,
   SkyIconBtn,
@@ -221,9 +222,10 @@ function SettingsScreen() {
   const { settings } = useSettings();
   const [solarOpen, setSolarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const now = useNow();
   useEffect(() => setMounted(true), []);
 
-  const t = skyTheme(mounted ? new Date().getHours() : 11);
+  const t = skyTheme(mounted ? now.getHours() : 11);
   const solarEnabled = settings.bestSlotMode !== "price-only";
 
   const solarConfig: SolarConfig = {

@@ -5,6 +5,7 @@ import { weatherQueryOptions } from "@/lib/queries";
 import { FONT_MONO, skyTheme } from "@/lib/sky-theme";
 import { usePrefs, useSettings } from "@/lib/settings";
 import { useGeolocation, useScheduling } from "@/lib/use-scheduling";
+import { useNow } from "@/lib/use-now";
 import { weatherAt } from "@/lib/weather";
 import {
   ClockCluster,
@@ -60,6 +61,7 @@ function HomeScreen() {
   const { prefs, updatePrefs } = usePrefs();
   const { position, locationError } = useGeolocation();
   const hoursTillEndOfDay = useHoursTillEndOfDay();
+  const now = useNow();
   const [quickOpen, setQuickOpen] = useState(false);
 
   const searchTimespanHours =
@@ -73,7 +75,7 @@ function HomeScreen() {
     isLoading,
     apiError,
     marketDataSufficiency,
-  } = useScheduling(position, prefs.duration, searchTimespanHours);
+  } = useScheduling(position, prefs.duration, searchTimespanHours, now);
 
   useEffect(() => {
     if (mounted && !prefs.onboarded) {
@@ -85,7 +87,6 @@ function HomeScreen() {
   // hour. Until mounted it must be a fixed hour so the server-rendered and
   // first client render agree — React never patches hydration mismatches,
   // which would freeze the background on the server's palette.
-  const now = new Date();
   const themeHour = !mounted
     ? 11
     : schedulingResult
@@ -180,6 +181,46 @@ function HomeScreen() {
 
   const clockStatus = pickClockStatus();
 
+  // Hoisted so the compiler memoizes each element on its own narrow deps
+  // (hour/weather primitives, theme) instead of recreating them — and thus
+  // re-rendering the whole subtree — whenever the schedule object changes.
+  const heroHour = schedulingResult?.bestTime.getHours();
+  const hero =
+    heroHour === undefined ? null : (
+      <SkyHero t={t} hour={heroHour} weather={weather} />
+    );
+  const hills = <Hills t={t} />;
+  const cluster =
+    position && !invalidConfig && schedulingResult ? (
+      <ClockCluster t={t} result={schedulingResult} duration={prefs.duration} />
+    ) : null;
+  const dock = (
+    <DurationDock
+      t={t}
+      duration={prefs.duration}
+      onChange={(v) => updatePrefs({ duration: v })}
+    />
+  );
+  const appBar = (
+    <SkyAppBar
+      t={t}
+      left={
+        <SkyIconBtn t={t} label="Quick controls" onClick={() => setQuickOpen(true)}>
+          <WIcon name="sliders" />
+        </SkyIconBtn>
+      }
+      right={
+        <SkyIconBtn
+          t={t}
+          label="Settings"
+          onClick={() => navigate({ to: "/settings" })}
+        >
+          <WIcon name="settings" />
+        </SkyIconBtn>
+      }
+    />
+  );
+
   return (
     <SkyScreen
       background={`linear-gradient(180deg, ${c1} 0%, ${c2} 55%, ${c3} 100%)`}
@@ -187,39 +228,14 @@ function HomeScreen() {
     >
       {mounted && (
         <div style={{ animation: "sky-fade-in 320ms ease" }}>
-          {schedulingResult && (
-            <SkyHero
-              t={t}
-              hour={schedulingResult.bestTime.getHours()}
-              weather={weather}
-            />
-          )}
-          <Hills t={t} />
-
-          <SkyAppBar
-            t={t}
-            left={
-              <SkyIconBtn t={t} label="Quick controls" onClick={() => setQuickOpen(true)}>
-                <WIcon name="sliders" />
-              </SkyIconBtn>
-            }
-            right={
-              <SkyIconBtn
-                t={t}
-                label="Settings"
-                onClick={() => navigate({ to: "/settings" })}
-              >
-                <WIcon name="settings" />
-              </SkyIconBtn>
-            }
-          />
+          {hero}
+          {hills}
+          {appBar}
 
           {clockStatus && (
             <ClockStatus t={t} title={clockStatus.title} body={clockStatus.body} />
           )}
-          {position && !invalidConfig && schedulingResult && (
-            <ClockCluster t={t} result={schedulingResult} duration={prefs.duration} />
-          )}
+          {cluster}
 
           {showMarketDataWarning && (
             <div
@@ -241,11 +257,7 @@ function HomeScreen() {
             </div>
           )}
 
-          <DurationDock
-            t={t}
-            duration={prefs.duration}
-            onChange={(v) => updatePrefs({ duration: v })}
-          />
+          {dock}
 
           {quickOpen && <QuickSheet t={t} onClose={() => setQuickOpen(false)} />}
         </div>

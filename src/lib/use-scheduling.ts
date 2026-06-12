@@ -56,6 +56,7 @@ export function useScheduling(
   position: Position | null,
   consumerDuration: number,
   searchTimespan: number,
+  now: Date,
 ) {
   const { settings } = useSettings();
   const needsMarketData = settings.bestSlotMode !== "solar-only";
@@ -85,12 +86,13 @@ export function useScheduling(
     settings,
     consumerDuration,
     searchTimespan,
-    new Date(),
+    now,
   );
 
   const marketDataSufficiency = checkMarketDataSufficiency(
     marketData,
     searchTimespan,
+    now,
   );
 
   const isLoading =
