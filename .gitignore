@@ -38,3 +38,6 @@ yarn-error.log*
 .claude
 .superpowers/
 .playwright-mcp/
+
+# Netlify build output
+.netlify/
