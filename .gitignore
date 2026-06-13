@@ -2,20 +2,15 @@
 
 # dependencies
 /node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
 
 # testing
 /coverage
 
-# next.js
-/.next/
-/out/
+# tanstack start / vite
+/dist/
+/.output/
+/.nitro/
+/.tanstack/
 
 # production
 /build
@@ -38,7 +33,11 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
 
 # intelligence
 .claude
+.superpowers/
+.playwright-mcp/
+
+# Netlify build output
+.netlify/

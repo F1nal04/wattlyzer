@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 import { checkMarketDataSufficiency } from "@/lib/utils";
 import type { MarketData } from "@/lib/types";
 
@@ -24,16 +24,17 @@ function marketUtcHourlyFrom(
 }
 
 describe("checkMarketDataSufficiency", () => {
-  it("does not warn early when the current hour is already partially elapsed", () => {
+  it("counts required hours from the next full hour, matching the scheduler window", () => {
+    // now is mid-hour; the window starts at 13:00 and needs 24 covered hours
     const now = new Date("2025-01-15T12:30:00.000Z");
     const market = marketUtcHourlyFrom(
-      new Date("2025-01-15T12:00:00.000Z"),
+      new Date("2025-01-15T13:00:00.000Z"),
       24
     );
 
     const result = checkMarketDataSufficiency(market, 24, now);
 
-    expect(result.hoursAvailable).toBe(23);
+    expect(result.hoursAvailable).toBe(24);
     expect(result.isSufficient).toBe(true);
   });
 

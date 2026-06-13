@@ -23,6 +23,14 @@ export type SolarData = {
   };
 };
 
+// BrightSky (api.brightsky.dev) hourly DWD weather — only the fields we read
+export type WeatherData = {
+  weather: Array<{
+    timestamp: string;
+    cloud_cover: number | null;
+  }>;
+};
+
 export type MarketData = {
   object: string;
   data: Array<{

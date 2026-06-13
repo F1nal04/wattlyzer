@@ -1,37 +1,6 @@
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
 import { MarketData } from "./types";
 
 const HOUR_MS = 60 * 60 * 1000;
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
-/**
- * Check if debug features should be enabled
- * @returns true if debug features should be shown
- */
-export function isDebugMode(): boolean {
-  // Server-side rendering check
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  // Check if we're on a dev/development subdomain
-  const hostname = window.location.hostname;
-  const isDevSubdomain =
-    hostname.includes("dev") || hostname.includes("development");
-
-  // Check for debug search parameter
-  const searchParams = new URLSearchParams(window.location.search);
-  const hasDebugParam = searchParams.get("debug") === "true";
-
-  // Also check NODE_ENV for local development
-  const isLocalDev = process.env.NODE_ENV === "development";
-
-  return isDevSubdomain || hasDebugParam || isLocalDev;
-}
 
 /**
  * Check if market data is sufficient for the given search timespan
@@ -71,14 +40,8 @@ export function checkMarketDataSufficiency(
     firstRelevantHour.setTime(firstRelevantHour.getTime() + HOUR_MS);
   }
 
-  const lastRequiredSampleMs =
-    now.getTime() + (searchTimespanHours - 1) * HOUR_MS;
-  const requiredHours =
-    firstRelevantHour.getTime() > lastRequiredSampleMs
-      ? 0
-      : Math.floor(
-          (lastRequiredSampleMs - firstRelevantHour.getTime()) / HOUR_MS
-        ) + 1;
+  // Mirror calculateSchedule: the window counts from the first full hour
+  const requiredHours = Math.max(0, searchTimespanHours);
 
   const sortedData = [...marketData.data].sort(
     (a, b) => a.start_timestamp - b.start_timestamp
