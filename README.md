@@ -19,9 +19,11 @@ Wattlyzer is a smart solar energy optimization tool that helps you maximize your
 
 ## Tech stack
 
-- [TanStack Start](https://tanstack.com/start) (Vite + SSR) with [TanStack Router](https://tanstack.com/router) for routing and server routes
+- [TanStack Start](https://tanstack.com/start) (Vite + SSR) with [TanStack Router](https://tanstack.com/router) for file-based routing
 - [TanStack Query](https://tanstack.com/query) for data fetching with a persisted localStorage cache
-- React 19, TypeScript, Vitest
+- React 19 (with the React Compiler), TypeScript
+- [Bun](https://bun.sh) as the package manager and test runner
+- Deployed to [Netlify](https://netlify.com)
 
 ## Development
 
@@ -34,17 +36,18 @@ bun dev
 
 ### Tests
 
-The project includes a small Vitest unit test suite for core scheduling and
-market data logic.
+The project includes a small `bun:test` unit suite for core scheduling and
+market data logic. Use `bun run` so the configured scripts apply — a bare
+`bun test` invokes Bun's raw runner and skips the `TZ=UTC` / `src` scoping.
 
 ```bash
-bun test
+bun run test
 ```
 
 Run the suite once in CI or for a one-off local check:
 
 ```bash
-bun test:run
+bun run test:run
 ```
 
 ## License
