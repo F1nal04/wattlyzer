@@ -23,11 +23,16 @@ export type SolarData = {
   };
 };
 
-// BrightSky (api.brightsky.dev) hourly DWD weather — only the fields we read
+// BrightSky (api.brightsky.dev) hourly DWD weather — only the fields we read.
+// `condition` is DWD's categorical sky state (dry/fog/rain/sleet/snow/hail/
+// thunderstorm) and `precipitation` is the hour's rainfall in mm; both drive
+// the rain/snow/fog hero visuals.
 export type WeatherData = {
   weather: Array<{
     timestamp: string;
     cloud_cover: number | null;
+    condition?: string | null;
+    precipitation?: number | null;
   }>;
 };
 

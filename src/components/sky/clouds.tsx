@@ -1,5 +1,6 @@
 import { useId } from "react";
 import type { SkyTheme } from "@/lib/sky-theme";
+import type { WeatherKind } from "@/lib/weather";
 
 // Smooth vector cloud — one continuous silhouette path (no stacked blobs),
 // vertical gradient for volume and a soft blurred highlight on top.
@@ -124,22 +125,101 @@ export function SkySunCloud({
   );
 }
 
-export function SkyClouds({ heavy, t }: { heavy: boolean; t: SkyTheme }) {
-  // Layered clouds at varied scales — heavier overcast = more clouds, dimmer
-  const tint = heavy
+// Vertical rain streaks under the cloud band. Left/top come from the index
+// (never Math.random) so SSR and hydration agree, and the fall is pure CSS so
+// the React Compiler can still memoize the component.
+function SkyRain({ t }: { t: SkyTheme }) {
+  const color =
+    t.mode === "dark" ? "rgba(206,220,245,0.55)" : "rgba(96,128,184,0.5)";
+  return (
+    <>
+      {Array.from({ length: 18 }, (_, i) => {
+        const left = 6 + (i * 88) / 17; // spread 6% → 94%
+        const top = 15 + ((i * 7) % 10); // scattered 15% → 24%
+        const dur = 0.85 + (i % 4) * 0.12;
+        const delay = -((i * 0.17) % 1.2); // negative → start mid-fall
+        return (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              left: `${left}%`,
+              top: `${top}%`,
+              width: 2,
+              height: 16,
+              borderRadius: 2,
+              background: `linear-gradient(to bottom, transparent, ${color} 35%, ${color} 65%, transparent)`,
+              transform: "rotate(8deg)",
+              animation: `sky-rain-fall ${dur}s linear ${delay}s infinite`,
+            }}
+          />
+        );
+      })}
+    </>
+  );
+}
+
+// Drifting snow flakes — slower than rain, with a gentle sideways sway baked
+// into the keyframes. Same index-derived, CSS-only approach as SkyRain.
+function SkySnow({ t }: { t: SkyTheme }) {
+  const color =
+    t.mode === "dark" ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.95)";
+  return (
+    <>
+      {Array.from({ length: 16 }, (_, i) => {
+        const left = 6 + (i * 88) / 15;
+        const top = 14 + ((i * 5) % 11);
+        const size = 5 + (i % 3);
+        const dur = 3.2 + (i % 5) * 0.5;
+        const delay = -((i * 0.4) % 3);
+        return (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              left: `${left}%`,
+              top: `${top}%`,
+              width: size,
+              height: size,
+              borderRadius: "50%",
+              background: color,
+              boxShadow: `0 0 6px ${color}`,
+              animation: `sky-snow-fall ${dur}s linear ${delay}s infinite`,
+            }}
+          />
+        );
+      })}
+    </>
+  );
+}
+
+export function SkyClouds({ kind, t }: { kind: WeatherKind; t: SkyTheme }) {
+  // rainy/snowy/foggy share a darker, moodier cloud base; overcast keeps the
+  // lighter "heavy" grey; cloudy uses the bright white clouds.
+  const dark = kind === "rainy" || kind === "snowy" || kind === "foggy";
+  const heavy = dark || kind === "overcast";
+  const tint = dark
     ? t.mode === "dark"
-      ? "rgba(210,212,225,0.85)"
-      : "#eceef3"
-    : t.mode === "dark"
-      ? "rgba(240,238,250,0.94)"
-      : "#ffffff";
-  const shade = heavy
+      ? "rgba(176,180,198,0.92)"
+      : "#c7ccd8"
+    : heavy
+      ? t.mode === "dark"
+        ? "rgba(210,212,225,0.85)"
+        : "#eceef3"
+      : t.mode === "dark"
+        ? "rgba(240,238,250,0.94)"
+        : "#ffffff";
+  const shade = dark
     ? t.mode === "dark"
-      ? "rgba(150,152,170,0.7)"
-      : "rgba(176,180,196,0.9)"
-    : t.mode === "dark"
-      ? "rgba(195,195,215,0.6)"
-      : "rgba(214,210,222,0.85)";
+      ? "rgba(120,124,144,0.85)"
+      : "rgba(128,134,152,0.95)"
+    : heavy
+      ? t.mode === "dark"
+        ? "rgba(150,152,170,0.7)"
+        : "rgba(176,180,196,0.9)"
+      : t.mode === "dark"
+        ? "rgba(195,195,215,0.6)"
+        : "rgba(214,210,222,0.85)";
   return (
     <>
       <Cloud left="4%" top="9%" scale={1.2} drift={1} opacity={heavy ? 0.96 : 0.94} tint={tint} shade={shade} />
@@ -148,6 +228,8 @@ export function SkyClouds({ heavy, t }: { heavy: boolean; t: SkyTheme }) {
       {heavy && (
         <Cloud left="64%" top="19%" scale={1.05} drift={4} flip opacity={0.9} tint={tint} shade={shade} />
       )}
+      {kind === "rainy" && <SkyRain t={t} />}
+      {kind === "snowy" && <SkySnow t={t} />}
     </>
   );
 }

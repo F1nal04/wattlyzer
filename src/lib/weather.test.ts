@@ -4,6 +4,7 @@ import type { SolarData, WeatherData } from "@/lib/types";
 import {
   cloudCoverAt,
   cloudCoverToKind,
+  conditionToKind,
   forecastWeather,
   weatherAt,
 } from "@/lib/weather";
@@ -154,6 +155,19 @@ function brightSky(records: Array<[string, number | null]>): WeatherData {
   };
 }
 
+// Full BrightSky records including the condition + precipitation fields used
+// by the rain/snow/fog classification.
+function brightSkyFull(
+  records: Array<{
+    timestamp: string;
+    cloud_cover: number | null;
+    condition: string | null;
+    precipitation: number | null;
+  }>,
+): WeatherData {
+  return { weather: records };
+}
+
 describe("cloudCoverToKind", () => {
   it("maps cloud-cover bands at the 25 / 50 / 85 boundaries", () => {
     expect(cloudCoverToKind(0)).toBe("sunny");
@@ -164,6 +178,33 @@ describe("cloudCoverToKind", () => {
     expect(cloudCoverToKind(85)).toBe("cloudy");
     expect(cloudCoverToKind(86)).toBe("overcast");
     expect(cloudCoverToKind(100)).toBe("overcast");
+  });
+});
+
+describe("conditionToKind", () => {
+  it("maps wet, falling precipitation to rainy", () => {
+    expect(conditionToKind("rain", 0)).toBe("rainy");
+    expect(conditionToKind("sleet", 0)).toBe("rainy");
+    expect(conditionToKind("hail", 0)).toBe("rainy");
+    expect(conditionToKind("thunderstorm", 0)).toBe("rainy");
+  });
+
+  it("maps snow to snowy and fog to foggy", () => {
+    expect(conditionToKind("snow", 0)).toBe("snowy");
+    expect(conditionToKind("fog", 0)).toBe("foggy");
+  });
+
+  it("returns null for dry / unknown / absent labels so cloud cover decides", () => {
+    expect(conditionToKind("dry", 0)).toBe(null);
+    expect(conditionToKind("future-dwd-code", 0)).toBe(null);
+    expect(conditionToKind(null, 0)).toBe(null);
+    expect(conditionToKind(undefined, undefined)).toBe(null);
+  });
+
+  it("treats measured precipitation as rain when the label is missing", () => {
+    expect(conditionToKind(null, 0.4)).toBe("rainy");
+    expect(conditionToKind(undefined, 2)).toBe("rainy");
+    expect(conditionToKind(null, 0)).toBe(null);
   });
 });
 
@@ -220,5 +261,69 @@ describe("weatherAt", () => {
     expect(weatherAt(nullCover, dayWithPeak(200), baseSettings, noon)).toBe(
       "overcast",
     );
+  });
+
+  it("lets the precipitation condition win over the cloud-cover band", () => {
+    // clear-ish sky (40%) but it's raining — rain must take precedence
+    const data = brightSkyFull([
+      {
+        timestamp: "2025-01-15T12:00:00+00:00",
+        cloud_cover: 40,
+        condition: "rain",
+        precipitation: 1.2,
+      },
+    ]);
+    expect(weatherAt(data, dayWithPeak(2800), baseSettings, noon)).toBe("rainy");
+  });
+
+  it("classifies snow and fog from the condition", () => {
+    const snowy = brightSkyFull([
+      {
+        timestamp: "2025-01-15T12:00:00+00:00",
+        cloud_cover: 90,
+        condition: "snow",
+        precipitation: 0.5,
+      },
+    ]);
+    const foggy = brightSkyFull([
+      {
+        timestamp: "2025-01-15T12:00:00+00:00",
+        cloud_cover: 90,
+        condition: "fog",
+        precipitation: 0,
+      },
+    ]);
+    expect(weatherAt(snowy, dayWithPeak(2800), baseSettings, noon)).toBe(
+      "snowy",
+    );
+    expect(weatherAt(foggy, dayWithPeak(2800), baseSettings, noon)).toBe(
+      "foggy",
+    );
+  });
+
+  it("falls back to the cloud-cover band when the condition is dry", () => {
+    const data = brightSkyFull([
+      {
+        timestamp: "2025-01-15T12:00:00+00:00",
+        cloud_cover: 90,
+        condition: "dry",
+        precipitation: 0,
+      },
+    ]);
+    expect(weatherAt(data, dayWithPeak(2800), baseSettings, noon)).toBe(
+      "overcast",
+    );
+  });
+
+  it("uses measured precipitation when the condition label is missing", () => {
+    const data = brightSkyFull([
+      {
+        timestamp: "2025-01-15T12:00:00+00:00",
+        cloud_cover: 10,
+        condition: null,
+        precipitation: 0.3,
+      },
+    ]);
+    expect(weatherAt(data, dayWithPeak(2800), baseSettings, noon)).toBe("rainy");
   });
 });

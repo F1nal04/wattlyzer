@@ -93,9 +93,12 @@ export function SkyHero({
           sunSize={sunSize}
         />
       )}
-      {showSun && (weather === "cloudy" || weather === "overcast") && (
-        <SkyClouds heavy={weather === "overcast"} t={t} />
-      )}
+      {showSun &&
+        (weather === "cloudy" ||
+          weather === "overcast" ||
+          weather === "rainy" ||
+          weather === "snowy" ||
+          weather === "foggy") && <SkyClouds kind={weather} t={t} />}
       {!showSun && (
         <div
           style={{
