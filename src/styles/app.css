@@ -46,6 +46,34 @@ a {
   }
 }
 
+@keyframes sky-rain-fall {
+  0% {
+    transform: translateY(-14px) rotate(8deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(64px) rotate(8deg);
+    opacity: 0;
+  }
+}
+
+@keyframes sky-snow-fall {
+  0% {
+    transform: translate(0, -14px);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(10px, 72px);
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;

@@ -2,7 +2,16 @@ import { calculatePowerGeneration } from "@/lib/schedule";
 import type { SettingsData } from "@/lib/settings";
 import type { SolarData, WeatherData } from "@/lib/types";
 
-export type WeatherKind = "sunny" | "partly" | "cloudy" | "overcast";
+export type WeatherKind =
+  | "sunny"
+  | "partly"
+  | "cloudy"
+  | "overcast"
+  | "rainy"
+  | "snowy"
+  | "foggy";
+
+type WeatherRecord = WeatherData["weather"][number];
 
 // Cloud-cover (%) bands for the sky hero
 export function cloudCoverToKind(cover: number): WeatherKind {
@@ -12,24 +21,60 @@ export function cloudCoverToKind(cover: number): WeatherKind {
   return "overcast";
 }
 
-// Cloud cover of the hourly record covering `at`, or null when missing
-export function cloudCoverAt(
+/**
+ * Precipitation/fog kind from a DWD `condition` label, or null when the sky
+ * state should instead be decided by cloud cover. Wet falling precipitation
+ * (rain/sleet/hail/thunderstorm) reads as `rainy`; snow as `snowy`; fog as
+ * `foggy`. When DWD omits the label, a positive measured precipitation falls
+ * back to `rainy` so a passing shower still shows.
+ */
+export function conditionToKind(
+  condition: string | null | undefined,
+  precipitation: number | null | undefined,
+): WeatherKind | null {
+  switch (condition) {
+    case "rain":
+    case "sleet":
+    case "hail":
+    case "thunderstorm":
+      return "rainy";
+    case "snow":
+      return "snowy";
+    case "fog":
+      return "foggy";
+  }
+  if (precipitation != null && precipitation > 0) return "rainy";
+  return null;
+}
+
+// The hourly record covering `at`, or null when missing
+function weatherRecordAt(
   data: WeatherData | null,
   at: Date,
-): number | null {
+): WeatherRecord | null {
   if (!data?.weather) return null;
   const hourStart = Math.floor(at.getTime() / 3_600_000) * 3_600_000;
   for (const record of data.weather) {
     if (Date.parse(record.timestamp) === hourStart) {
-      return record.cloud_cover;
+      return record;
     }
   }
   return null;
 }
 
+// Cloud cover of the hourly record covering `at`, or null when missing
+export function cloudCoverAt(
+  data: WeatherData | null,
+  at: Date,
+): number | null {
+  return weatherRecordAt(data, at)?.cloud_cover ?? null;
+}
+
 /**
- * Sky at the given moment: real DWD cloud cover when available, otherwise
- * the solar-forecast heuristic.
+ * Sky at the given moment. Real DWD data wins when available: a precipitation
+ * or fog condition takes precedence over cloud cover (it can rain under a
+ * not-fully-overcast sky), otherwise the cloud-cover band decides. With no
+ * record, the solar-forecast heuristic fills in.
  */
 export function weatherAt(
   weatherData: WeatherData | null,
@@ -37,9 +82,13 @@ export function weatherAt(
   settings: SettingsData,
   at: Date,
 ): WeatherKind {
-  const cover = cloudCoverAt(weatherData, at);
-  if (cover !== null) {
-    return cloudCoverToKind(cover);
+  const record = weatherRecordAt(weatherData, at);
+  if (record) {
+    const precip = conditionToKind(record.condition, record.precipitation);
+    if (precip) return precip;
+    if (record.cloud_cover !== null) {
+      return cloudCoverToKind(record.cloud_cover);
+    }
   }
   return forecastWeather(solarData, settings, at);
 }

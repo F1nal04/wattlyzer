@@ -30,7 +30,7 @@ TanStack Start's SSR function only renders a shell that immediately hydrates; al
 - `solar-only`: ignore prices; pick the sunniest qualifying slot.
 - `price-only`: ignore solar; pick the cheapest slot.
 
-`calculatePowerGeneration` interpolates cumulative-Wh samples from forecast.solar, applies the fixed `0.7` production factor, then halves output inside morning/evening shading windows. `src/lib/weather.ts` maps real cloud cover to a `WeatherKind`, falling back to a solar-peak heuristic (`forecastWeather`) when weather data is missing.
+`calculatePowerGeneration` interpolates cumulative-Wh samples from forecast.solar, applies the fixed `0.7` production factor, then halves output inside morning/evening shading windows. `src/lib/weather.ts` maps real DWD data to a `WeatherKind`: a precipitation/fog `condition` (or measured precipitation) wins as `rainy`/`snowy`/`foggy` over the cloud-cover band (`sunny`/`partly`/`cloudy`/`overcast`), falling back to a solar-peak heuristic (`forecastWeather`) when weather data is missing. The hero (`src/components/sky/clouds.tsx`) renders darker clouds for those kinds, with CSS-animated rain streaks / snow flakes overlaid.
 
 **UI — the "Sky" design system (`src/components/sky/`).** Inline styles only, no CSS framework (intentional — do not introduce one). `skyTheme(hour)` (`src/lib/sky-theme.ts`) returns the full palette for a local hour; the home gradient, sun/moon arc, and text colors all derive from it. Fraunces is the display font.
 
