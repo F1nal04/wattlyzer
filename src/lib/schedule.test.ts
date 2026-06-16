@@ -19,6 +19,7 @@ const baseSettings: SettingsData = {
   shadingStartTime: 17,
   bestSlotMode: "combined",
   ignoreSolarForBestSlot: false,
+  currentTimeSky: false,
 };
 
 function stubSolarMessage(): SolarData["message"] {

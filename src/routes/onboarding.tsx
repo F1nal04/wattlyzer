@@ -7,7 +7,7 @@ import {
   skyTheme,
   type SkyTheme,
 } from "@/lib/sky-theme";
-import { updatePrefs, updateSettings } from "@/lib/settings";
+import { updatePrefs, updateSettings, useSettings } from "@/lib/settings";
 import {
   Hills,
   SkyIconBtn,
@@ -16,6 +16,7 @@ import {
 } from "@/components/sky/primitives";
 import { WIcon } from "@/components/sky/icons";
 import { ObCard, ObCheckRow, ObSwitchRow, azimuthLabel } from "@/components/sky/rows";
+import { useSkyHour } from "@/lib/use-sky-hour";
 import { SolarPanelsModal, type SolarConfig } from "@/components/sky/solar-modal";
 
 export const Route = createFileRoute("/onboarding")({
@@ -397,6 +398,7 @@ function ObSetup({
 }) {
   const [consentShare, setConsentShare] = useState(false);
   const [solarOpen, setSolarOpen] = useState(false);
+  const { settings } = useSettings();
   const solarStatus = solar.enabled
     ? `${solar.sizeKw.toFixed(1)} kWp · ${azimuthLabel(solar.azimuth)} · ${solar.tilt}° tilt`
     : "No solar — price-only";
@@ -434,6 +436,16 @@ function ObSetup({
           subtitle="Hourly spot price (e.g. Tibber, aWATTar)"
           checked={dynamicTariff}
           onChange={() => setDynamicTariff(!dynamicTariff)}
+        />
+        <ObSwitchRow
+          t={t}
+          icon="moon"
+          title="Dark mode"
+          subtitle="Match the sky to the current time"
+          checked={settings.currentTimeSky}
+          onChange={() =>
+            updateSettings({ currentTimeSky: !settings.currentTimeSky })
+          }
         />
         <ObCheckRow
           t={t}
@@ -567,8 +579,11 @@ function ObDone({
 
 function OnboardingScreen() {
   const navigate = useNavigate();
-  const t = skyTheme(ONB_HOUR);
   const [step, setStep] = useState(0);
+  // Steps 0 (Welcome) and 1 (How) preview the current-time sky regardless of
+  // the stored setting; steps 2/3 follow the actual "Dark mode" toggle.
+  const themeHour = useSkyHour(ONB_HOUR, step <= 1);
+  const t = skyTheme(themeHour);
   const [dynamicTariff, setDynamicTariff] = useState(true);
   const [solar, setSolar] = useState<SolarConfig>({
     enabled: true,

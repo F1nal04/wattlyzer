@@ -1,13 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { FONT_DISPLAY, FONT_MONO, FONT_SANS, skyTheme } from "@/lib/sky-theme";
 import { Hills, SkyScreen } from "@/components/sky/primitives";
+import { useSkyHour } from "@/lib/use-sky-hour";
 
-// Fixed hour so server and client render the same palette (same pattern
-// as the text/install pages)
+// Default to a fixed midday hour; useSkyHour keeps SSR/first-render hydration
+// safe and follows the current time when "Dark mode" is on.
 const PAGE_HOUR = 11;
 
 export function NotFound() {
-  const t = skyTheme(PAGE_HOUR);
+  const themeHour = useSkyHour(PAGE_HOUR);
+  const t = skyTheme(themeHour);
   return (
     <SkyScreen
       background={`linear-gradient(180deg, ${t.sky[0]} 0%, ${t.sky[1]} 55%, ${t.sky[2]} 100%)`}

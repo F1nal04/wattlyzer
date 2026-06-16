@@ -96,6 +96,8 @@ export interface SettingsData {
   shadingStartTime: number; // Hour when evening shading starts (0-23)
   bestSlotMode: BestSlotMode; // UI mode for choosing how the best timeslot should be ranked
   ignoreSolarForBestSlot: boolean; // Ignore solar production when calculating best timeslot
+  currentTimeSky: boolean; // UI "Dark mode": derive the sky palette from the
+                           // current local hour instead of the recommended slot
 }
 
 const defaultSettings: SettingsData = {
@@ -109,6 +111,7 @@ const defaultSettings: SettingsData = {
   shadingStartTime: 17,
   bestSlotMode: "combined",
   ignoreSolarForBestSlot: false,
+  currentTimeSky: false,
 };
 
 const SETTINGS_STORAGE_KEY = "wattlyzer_settings";

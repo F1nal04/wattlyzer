@@ -12,6 +12,7 @@ import {
   SkyScreen,
 } from "@/components/sky/primitives";
 import { WIcon } from "@/components/sky/icons";
+import { useSkyHour } from "@/lib/use-sky-hour";
 
 const PAGE_HOUR = 11;
 
@@ -58,7 +59,8 @@ export function TextPage({
   children: (t: SkyTheme) => ReactNode;
 }) {
   const navigate = useNavigate();
-  const t = skyTheme(PAGE_HOUR);
+  const themeHour = useSkyHour(PAGE_HOUR);
+  const t = skyTheme(themeHour);
   return (
     <SkyScreen
       background={`linear-gradient(180deg, ${t.sky[0]} 0%, ${t.sky[1]} 55%, ${t.sky[2]} 100%)`}

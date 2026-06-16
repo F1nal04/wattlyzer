@@ -7,6 +7,7 @@ import {
 } from "@/lib/sky-theme";
 import { InstGlyph, type InstGlyphKind } from "@/components/sky/icons";
 import { Hills, SkyScreen } from "@/components/sky/primitives";
+import { useSkyHour } from "@/lib/use-sky-hour";
 
 const INST_HOUR = 11;
 
@@ -163,7 +164,8 @@ function InstPage({
   lede: string;
   steps: InstStep[];
 }) {
-  const t = skyTheme(INST_HOUR);
+  const themeHour = useSkyHour(INST_HOUR);
+  const t = skyTheme(themeHour);
   return (
     <SkyScreen
       background={`linear-gradient(180deg, ${t.sky[0]} 0%, ${t.sky[1]} 55%, ${t.sky[2]} 100%)`}
