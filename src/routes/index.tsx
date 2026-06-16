@@ -6,6 +6,7 @@ import { FONT_MONO, skyTheme } from "@/lib/sky-theme";
 import { usePrefs, useSettings } from "@/lib/settings";
 import { useGeolocation, useScheduling } from "@/lib/use-scheduling";
 import { useNow } from "@/lib/use-now";
+import { useMounted, useSkyHour } from "@/lib/use-sky-hour";
 import { weatherAt } from "@/lib/weather";
 import {
   ClockCluster,
@@ -48,12 +49,6 @@ function useHoursTillEndOfDay() {
   return hours;
 }
 
-function useMounted() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  return mounted;
-}
-
 function HomeScreen() {
   const mounted = useMounted();
   const navigate = useNavigate();
@@ -83,15 +78,12 @@ function HomeScreen() {
     }
   }, [mounted, prefs.onboarded, navigate]);
 
-  // Theme follows the recommended hour; before a result exists, the current
-  // hour. Until mounted it must be a fixed hour so the server-rendered and
-  // first client render agree — React never patches hydration mismatches,
-  // which would freeze the background on the server's palette.
-  const themeHour = !mounted
-    ? 11
-    : schedulingResult
-      ? schedulingResult.bestTime.getHours()
-      : now.getHours();
+  // Theme follows the recommended slot's hour, or — when "Dark mode" is on —
+  // the current hour. useSkyHour also pins the palette to a fixed hour until
+  // mounted so SSR and the first client render agree (hydration safety).
+  const themeHour = useSkyHour(
+    schedulingResult ? schedulingResult.bestTime.getHours() : now.getHours(),
+  );
   const t = skyTheme(themeHour);
   const [c1, c2, c3] = t.sky;
 

@@ -22,7 +22,7 @@ export function pickSkyHour(opts: {
   return opts.preferredHour ?? opts.currentHour;
 }
 
-function useMounted() {
+export function useMounted() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   return mounted;
