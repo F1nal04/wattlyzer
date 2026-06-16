@@ -1,7 +1,7 @@
 # "Dark mode" — sky palette follows current time
 
 **Date:** 2026-06-16
-**Status:** Approved (revised — see "Defaults" note)
+**Status:** Approved (revised)
 
 ## Problem
 
@@ -24,23 +24,27 @@ instead of the page's default hour.
 
 This is **not** a true dark theme; it only changes which hour feeds `skyTheme`.
 
-### Defaults  ⚠️
+### Defaults
 
-`currentTimeSky` defaults to **`true`** (enabled). Rationale: the onboarding
-toggle lives on step 2, but steps 0 (Welcome) and 1 (How) have no control, and
-they should already show the live current-time sky — so the feature ships on by
-default. **Consequence:** for a brand-new user the home page also follows the
-current time by default; the app only themes by the recommended slot once the
-user turns "Dark mode" off. Existing users with persisted settings keep their
-saved value and pick up `true` only if they had no prior value.
+`currentTimeSky` defaults to **`false`** (off). The app keeps its original
+behavior by default: the home page themes by the recommended slot, brand pages
+stay at their fixed midday palette. The user opts in via the "Dark mode" toggle.
+
+**Exception — onboarding steps 0 and 1 are hardwired on.** The Welcome (step 0)
+and How (step 1) screens always render with the current-time sky as a preview,
+regardless of the stored `currentTimeSky` value. This is a per-step override in
+onboarding only; it does **not** change the stored setting. Step 2 (which hosts
+the switch) and step 3 follow the actual setting.
 
 ### Scope of "every screen"
 
-| Screen | Default hour (toggle OFF) | Toggle ON (default) |
+| Screen | Toggle OFF (default) | Toggle ON |
 | --- | --- | --- |
 | Home (`index.tsx`) | recommended slot, else current | current hour |
 | Settings (`settings.tsx`) | current hour (already) | current hour (no change) |
-| Onboarding, Install, Legal/Privacy (`text-page`), 404 | fixed `11` | current hour |
+| Onboarding step 2 / step 3 | fixed `11` | current hour |
+| Onboarding step 0 / step 1 | current hour (hardwired) | current hour |
+| Install, Legal/Privacy (`text-page`), 404 | fixed `11` | current hour |
 
 ### Hero note
 
@@ -60,7 +64,7 @@ currentTimeSky: boolean; // UI "Dark mode": derive the sky palette from the
                          // current local hour instead of the recommended slot
 ```
 
-Default `true`. Existing persisted settings pick up the default via the
+Default `false`. Existing persisted settings pick up the default via the
 `...defaultSettings` spread in `loadSavedSettings`; no migration needed. No
 cross-flag `transform` logic required.
 
@@ -84,10 +88,21 @@ export function pickSkyHour(opts: {
   return opts.preferredHour ?? opts.currentHour;
 }
 
-export function useSkyHour(preferredHour?: number): number {
-  // useMounted + useNow + useSettings, then pickSkyHour(...)
+export function useSkyHour(preferredHour?: number, forceCurrentTime = false): number {
+  // const mounted = useMounted(); const now = useNow();
+  // const { settings } = useSettings();
+  // return pickSkyHour({
+  //   mounted,
+  //   currentTimeSky: forceCurrentTime || settings.currentTimeSky,
+  //   preferredHour,
+  //   currentHour: now.getHours(),
+  // });
 }
 ```
+
+`forceCurrentTime` lets a caller (onboarding steps 0/1) treat dark mode as on
+without touching the stored setting; it ORs into `currentTimeSky` before the
+pure decision. `pickSkyHour` itself stays a pure 4-input function.
 
 Precedence is deliberate: the un-mounted fixed hour wins over everything (React
 never patches hydration attribute mismatches), and `currentTimeSky` beats the
@@ -102,8 +117,8 @@ preferred hour.
 - `settings.tsx`: `const t = skyTheme(useSkyHour());` and drop the now-unused
   local `mounted`/`now`/`useEffect` boilerplate. Behavior is identical (it
   already followed the current hour).
-- `onboarding.tsx`: `const t = skyTheme(useSkyHour(ONB_HOUR));` (see §5 for the
-  step-2 switch).
+- `onboarding.tsx`: `const t = skyTheme(useSkyHour(ONB_HOUR, step <= 1));` —
+  steps 0/1 force current-time; steps 2/3 follow the setting (see §5).
 - `install.tsx`, `text-page.tsx`, `not-found.tsx`: replace the fixed
   `skyTheme(11)` with `skyTheme(useSkyHour(11))`. These now switch from the
   fixed palette to the live hour after mount when the toggle is on —
@@ -138,9 +153,11 @@ Placed before the existing "More" group.
   background **live-preview**: toggling re-runs `useSkyHour(ONB_HOUR)` and
   re-themes the screen instantly.
 - `OnboardingScreen` adds `useSettings()` to read `currentTimeSky` for the
-  switch's checked state; the theme comes from `useSkyHour(ONB_HOUR)`.
-- Steps 0 and 1 show the current-time sky by default because `currentTimeSky`
-  defaults to `true` — no per-step code needed.
+  switch's checked state; the theme comes from `useSkyHour(ONB_HOUR, step <= 1)`.
+- Steps 0 and 1 are hardwired to the current-time sky via the `step <= 1`
+  override, independent of the stored setting. When the user advances to step 2
+  with dark mode off (the default), the background switches from current-time to
+  the fixed midday palette — an expected, deliberate transition.
 
 ### 6. Tests
 
@@ -155,7 +172,7 @@ Placed before the existing "More" group.
 
 Update AGENTS.md "Critical conventions": the "pin the theme hour to 11 until
 mounted" rule now lives in `useSkyHour` (`src/lib/use-sky-hour.ts`); note the new
-`currentTimeSky` setting (default on) and that all pages derive their hour
+`currentTimeSky` setting (default off) and that all pages derive their hour
 through the hook.
 
 ## Out of scope
