@@ -59,7 +59,8 @@ export function TextPage({
   children: (t: SkyTheme) => ReactNode;
 }) {
   const navigate = useNavigate();
-  const t = skyTheme(useSkyHour(PAGE_HOUR));
+  const themeHour = useSkyHour(PAGE_HOUR);
+  const t = skyTheme(themeHour);
   return (
     <SkyScreen
       background={`linear-gradient(180deg, ${t.sky[0]} 0%, ${t.sky[1]} 55%, ${t.sky[2]} 100%)`}

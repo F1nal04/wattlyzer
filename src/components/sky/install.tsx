@@ -164,7 +164,8 @@ function InstPage({
   lede: string;
   steps: InstStep[];
 }) {
-  const t = skyTheme(useSkyHour(INST_HOUR));
+  const themeHour = useSkyHour(INST_HOUR);
+  const t = skyTheme(themeHour);
   return (
     <SkyScreen
       background={`linear-gradient(180deg, ${t.sky[0]} 0%, ${t.sky[1]} 55%, ${t.sky[2]} 100%)`}
