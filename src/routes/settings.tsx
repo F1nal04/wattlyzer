@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   FONT_DISPLAY,
@@ -7,7 +7,7 @@ import {
   type SkyTheme,
 } from "@/lib/sky-theme";
 import { updateSettings, useSettings } from "@/lib/settings";
-import { useNow } from "@/lib/use-now";
+import { useSkyHour } from "@/lib/use-sky-hour";
 import {
   SkyAppBar,
   SkyIconBtn,
@@ -221,11 +221,8 @@ function SettingsScreen() {
   const navigate = useNavigate();
   const { settings } = useSettings();
   const [solarOpen, setSolarOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const now = useNow();
-  useEffect(() => setMounted(true), []);
-
-  const t = skyTheme(mounted ? now.getHours() : 11);
+  const themeHour = useSkyHour();
+  const t = skyTheme(themeHour);
   const solarEnabled = settings.bestSlotMode !== "price-only";
 
   const solarConfig: SolarConfig = {
@@ -330,6 +327,19 @@ function SettingsScreen() {
             detail={`from ${String(settings.shadingStartTime).padStart(2, "0")}:00`}
             on={settings.eveningShading}
             onToggle={() => updateSettings({ eveningShading: !settings.eveningShading })}
+            t={t}
+            last
+          />
+        </SetGroup>
+
+        <SetGroup title="Appearance" t={t}>
+          <SetToggleRow
+            label="Dark mode"
+            detail="Match the sky to now, not the chosen slot"
+            on={settings.currentTimeSky}
+            onToggle={() =>
+              updateSettings({ currentTimeSky: !settings.currentTimeSky })
+            }
             t={t}
             last
           />
