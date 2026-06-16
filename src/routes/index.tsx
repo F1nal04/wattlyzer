@@ -50,6 +50,8 @@ function useHoursTillEndOfDay() {
 }
 
 function HomeScreen() {
+  // Gates the render tree + onboarding redirect below. `useSkyHour` keeps its
+  // own internal mount guard for the palette; both flip in the same commit.
   const mounted = useMounted();
   const navigate = useNavigate();
   const { settings } = useSettings();
