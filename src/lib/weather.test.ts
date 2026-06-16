@@ -19,6 +19,7 @@ const baseSettings: SettingsData = {
   shadingStartTime: 17,
   bestSlotMode: "combined",
   ignoreSolarForBestSlot: false,
+  currentTimeSky: false,
 };
 
 // Cumulative watthours series producing `rates[h]` Wh in hour h after the
