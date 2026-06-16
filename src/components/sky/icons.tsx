@@ -9,7 +9,8 @@ export type WIconName =
   | "back"
   | "sun"
   | "euro"
-  | "scale";
+  | "scale"
+  | "moon";
 
 export function WIcon({
   name,
@@ -111,6 +112,12 @@ export function WIcon({
         <path d="M5 6 L2.6 11 M5 6 L7.4 11 M2.2 11 a2.8 2.8 0 0 0 5.6 0" />
         <path d="M19 6 L16.6 11 M19 6 L21.4 11 M16.2 11 a2.8 2.8 0 0 0 5.6 0" />
         <line x1="8.5" y1="21" x2="15.5" y2="21" />
+      </svg>
+    );
+  if (name === "moon")
+    return (
+      <svg viewBox="0 0 24 24" style={s} fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 14.5A8 8 0 0 1 9.5 4 6.5 6.5 0 1 0 20 14.5z" />
       </svg>
     );
   return null;
