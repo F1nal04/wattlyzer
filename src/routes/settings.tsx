@@ -61,6 +61,12 @@ function SetGroup({
           border: `1px solid ${t.glassBd}`,
           overflow: "hidden",
           marginTop: subtitle ? 0 : 10,
+          // iOS Safari defers painting a backdrop-filter element that lives
+          // inside an overflow-scroll container until a scroll forces a
+          // recomposite — so over a dark sky the box and its text stay blank
+          // until you scroll. Forcing the box onto its own GPU layer makes it
+          // paint eagerly on first render.
+          transform: "translateZ(0)",
         }}
       >
         {children}

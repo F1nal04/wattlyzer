@@ -35,6 +35,10 @@ export function TextCard({
         border: `1px solid ${t.glassBd}`,
         padding: "16px 18px",
         marginBottom: 14,
+        // iOS Safari won't paint a backdrop-filter box inside an
+        // overflow-scroll container until a scroll forces a recomposite;
+        // own GPU layer makes it render on first paint. (see settings.tsx)
+        transform: "translateZ(0)",
       }}
     >
       <div style={{ fontSize: 15, fontWeight: 600, color: t.fg, marginBottom: 6 }}>
