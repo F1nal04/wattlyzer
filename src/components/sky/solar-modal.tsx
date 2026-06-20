@@ -140,6 +140,10 @@ function ShadingItem({
         border: `1px solid ${t.glassBd}`,
         backdropFilter: "blur(10px)",
         WebkitBackdropFilter: "blur(10px)",
+        // iOS Safari won't paint a backdrop-filter box inside an
+        // overflow-scroll container until a scroll forces a recomposite;
+        // own GPU layer makes it render on first paint. (see settings.tsx)
+        transform: "translateZ(0)",
       }}
     >
       <button
