@@ -162,7 +162,9 @@ function SetToggleRow({
             color: t.fgMute,
             fontFamily: FONT_MONO,
             marginTop: 2,
-            whiteSpace: "nowrap",
+            // Let long descriptions (e.g. the Dark mode hint) wrap instead of
+            // overflowing the minWidth:0 column and running under the switch.
+            overflowWrap: "anywhere",
           }}
         >
           {detail}
