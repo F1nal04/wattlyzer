@@ -64,9 +64,9 @@ export function ObSwitchRow({
               color: t.fgDim,
               fontFamily: FONT_MONO,
               letterSpacing: "0.02em",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
+              // Wrap long text instead of truncating so nothing is occluded
+              // by the trailing control (matches SetToggleRow in settings).
+              overflowWrap: "anywhere",
             }}
           >
             {subtitle}
@@ -213,9 +213,9 @@ export function ObCard({
             color: t.fgDim,
             fontFamily: FONT_MONO,
             letterSpacing: "0.02em",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
+            // Wrap long text instead of truncating so nothing is occluded
+            // by the trailing control (matches SetToggleRow in settings).
+            overflowWrap: "anywhere",
           }}
         >
           {status}
