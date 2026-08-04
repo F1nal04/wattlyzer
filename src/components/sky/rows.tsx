@@ -35,6 +35,10 @@ export function ObSwitchRow({
         textAlign: "left",
         cursor: "pointer",
         fontFamily: FONT_SANS,
+        // Safari can keep the previous glass background after a live sky-theme
+        // change until another interaction forces a repaint. Giving each
+        // frosted row its own layer keeps its backdrop in sync with the sky.
+        transform: "translateZ(0)",
       }}
     >
       <div
@@ -108,6 +112,8 @@ export function ObCheckRow({
         textAlign: "left",
         cursor: "pointer",
         fontFamily: FONT_SANS,
+        // Keep Safari's backdrop layer in sync when onboarding changes theme.
+        transform: "translateZ(0)",
       }}
     >
       <div
@@ -185,6 +191,8 @@ export function ObCard({
         borderRadius: 18,
         border: `1px solid ${t.glassBd}`,
         cursor: onClick ? "pointer" : "default",
+        // Keep Safari's backdrop layer in sync when onboarding changes theme.
+        transform: "translateZ(0)",
       }}
     >
       <div

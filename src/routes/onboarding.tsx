@@ -342,6 +342,9 @@ function ObHow({
           borderRadius: 18,
           border: `1px solid ${t.glassBd}`,
           padding: "6px 16px",
+          // Repaint the frosted panel immediately when Safari swaps the sky
+          // palette after hydration.
+          transform: "translateZ(0)",
         }}
       >
         {steps.map((s, i) => (

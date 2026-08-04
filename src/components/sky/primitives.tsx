@@ -427,6 +427,9 @@ export function SkyIconBtn({
         cursor: "pointer",
         color: t.fg,
         padding: 0,
+        // Safari can otherwise retain the old glass paint across a live
+        // light/dark sky change until the next pointer interaction.
+        transform: "translateZ(0)",
       }}
     >
       {children}
