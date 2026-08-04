@@ -3,6 +3,10 @@ import { FONT_MONO, FONT_SANS, type SkyTheme } from "@/lib/sky-theme";
 import { WIcon, type WIconName } from "@/components/sky/icons";
 import { SkySwitch } from "@/components/sky/primitives";
 
+// These onboarding rows intentionally use translucent fills without
+// backdrop-filter. macOS Safari caches the old sky inside a backdrop layer
+// when the user changes the onboarding theme and only refreshes it after a
+// later interaction or screenshot.
 export function ObSwitchRow({
   t,
   icon,
@@ -27,18 +31,12 @@ export function ObSwitchRow({
         gap: 14,
         padding: "16px 16px",
         background: t.glassBg,
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
         borderRadius: 18,
         border: `1px solid ${t.glassBd}`,
         width: "100%",
         textAlign: "left",
         cursor: "pointer",
         fontFamily: FONT_SANS,
-        // Safari can keep the previous glass background after a live sky-theme
-        // change until another interaction forces a repaint. Giving each
-        // frosted row its own layer keeps its backdrop in sync with the sky.
-        transform: "translateZ(0)",
       }}
     >
       <div
@@ -104,16 +102,12 @@ export function ObCheckRow({
         gap: 12,
         padding: "14px 14px",
         background: t.glassBg,
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
         borderRadius: 14,
         border: `1px solid ${t.glassBd}`,
         width: "100%",
         textAlign: "left",
         cursor: "pointer",
         fontFamily: FONT_SANS,
-        // Keep Safari's backdrop layer in sync when onboarding changes theme.
-        transform: "translateZ(0)",
       }}
     >
       <div
@@ -186,13 +180,9 @@ export function ObCard({
         gap: 14,
         padding: "16px 16px",
         background: t.glassBg,
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
         borderRadius: 18,
         border: `1px solid ${t.glassBd}`,
         cursor: onClick ? "pointer" : "default",
-        // Keep Safari's backdrop layer in sync when onboarding changes theme.
-        transform: "translateZ(0)",
       }}
     >
       <div
