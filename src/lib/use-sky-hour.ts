@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useNow } from "./use-now";
 import { useSettings } from "./settings";
 
@@ -22,9 +22,37 @@ export function pickSkyHour(opts: {
   return opts.preferredHour ?? opts.currentHour;
 }
 
+// The mount state belongs to the hydrated app, not to an individual route.
+// Keeping it in a shared external store means the first client render still
+// matches SSR, while routes mounted later immediately use the live palette.
+export function createMountedStore() {
+  let mounted = false;
+  const listeners = new Set<() => void>();
+
+  return {
+    getSnapshot: () => mounted,
+    getServerSnapshot: () => false,
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    markMounted: () => {
+      if (mounted) return;
+      mounted = true;
+      listeners.forEach((listener) => listener());
+    },
+  };
+}
+
+const appMountedStore = createMountedStore();
+
 export function useMounted() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useSyncExternalStore(
+    appMountedStore.subscribe,
+    appMountedStore.getSnapshot,
+    appMountedStore.getServerSnapshot,
+  );
+  useEffect(appMountedStore.markMounted, []);
   return mounted;
 }
 
