@@ -52,7 +52,7 @@
     },
     "apps/website": {
       "name": "@wattlyzer/website",
-      "version": "0.0.1",
+      "version": "1.8.0",
       "dependencies": {
         "@astrojs/sitemap": "^3.7.2",
         "@wattlyzer/theme": "workspace:*",

@@ -6,7 +6,8 @@
     ".": {
       "release-type": "node",
       "extra-files": [
-        "apps/pwa/package.json"
+        "apps/pwa/package.json",
+        "apps/website/package.json"
       ]
     }
   }

@@ -59,7 +59,7 @@ The Astro site is static, bilingual, and framework-free. English routes are unpr
 
 ## CI, releases, and Netlify
 
-GitHub Actions uses `nx affected` with full Git history. Release Please maintains one product release line and synchronizes the PWA-visible version.
+GitHub Actions uses `nx affected` with full Git history. Release Please maintains one product release line and synchronizes the root, PWA, and marketing-site package versions.
 
 Each app owns a `netlify.toml`. In Netlify, set package directories to `apps/pwa` and `apps/website` and leave the base directory unset. PWA build outputs are `apps/pwa/dist` plus `apps/pwa/.netlify`; website output is `apps/website/dist`.
 
