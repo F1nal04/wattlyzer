@@ -1,0 +1,36 @@
+  @property --sky-c1 {
+    syntax: '<color>';
+    initial-value: #bde4ff;
+    inherits: true;
+  }
+  @property --sky-c2 {
+    syntax: '<color>';
+    initial-value: #fef0c7;
+    inherits: true;
+  }
+  @property --sky-c3 {
+    syntax: '<color>';
+    initial-value: #fcd28a;
+    inherits: true;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    scroll-behavior: smooth;
+  }
+  body {
+    font-family: var(--font-dm-sans), system-ui, sans-serif;
+    color: #1a1410;
+    background: #f5f1ea;
+  }
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
