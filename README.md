@@ -1,55 +1,50 @@
-[![Version](https://img.shields.io/github/package-json/v/f1nal04/wattlyzer-app?style=flat-square&color=yellow)](https://github.com/F1nal04/wattlyzer-app/releases)
-[![License](https://img.shields.io/github/license/f1nal04/wattlyzer-app?style=flat-square&color=yellow)](LICENSE)
-[![TanStack Start](https://img.shields.io/github/package-json/dependency-version/f1nal04/wattlyzer-app/@tanstack/react-start?style=flat-square&color=orange)](https://tanstack.com/start)
-
-[![Production](https://img.shields.io/badge/Production-brightgreen?logo=netlify&label=env&style=flat-square)](https://wattlyzer.com) [![Website Status](https://img.shields.io/website?url=https%3A%2F%2Fwattlyzer.de&up_color=lightgreen&down_color=red&style=flat-square)](https://wattlyzer.de)
+[![Version](https://img.shields.io/github/package-json/v/f1nal04/wattlyzer?style=flat-square&color=yellow)](https://github.com/F1nal04/wattlyzer/releases)
+[![License](https://img.shields.io/github/license/f1nal04/wattlyzer?style=flat-square&color=yellow)](LICENSE)
 
 # Wattlyzer
 
-Wattlyzer is a smart solar energy optimization tool that helps you maximize your solar energy usage and minimize costs. The application provides intelligent scheduling recommendations based on solar production forecasts and dynamic energy market prices.
+Wattlyzer finds the best time to run energy-intensive appliances from a roof's solar forecast and German day-ahead electricity prices. This repository contains the installable PWA, its marketing website, and the platform-neutral packages shared between them.
 
-## How it works
+## Workspace
 
-- **Intelligent Time Slot Calculation**: Determines the optimal time slots to run energy-intensive appliances like dishwashers, washing machines, and EV charging
-- **Location-Based Solar Forecasting**: Uses your browser location to fetch accurate solar production forecasts from weather APIs
-- **German Energy Market Integration**: Monitors real-time German energy market prices and stock market fluctuations to find the cheapest electricity rates
-- **Personalized Solar Setup**: Integrates your specific solar panel configuration from the settings page to provide tailored recommendations
-- **Cost Optimization**: Combines solar forecasts with dynamic pricing to minimize your energy costs by scheduling usage during peak solar production or low market prices
-- **Germany-Focused**: Currently optimized for the German energy market and pricing structure
+```text
+apps/
+  pwa/          TanStack Start PWA deployed to pwa.wattlyzer.de
+  website/      Astro marketing site deployed to wattlyzer.de
+packages/
+  core/         Scheduling, market coverage, and weather domain logic
+  api-client/   forecast.solar, aWATTar, and BrightSky clients
+  theme/        Shared sky and brand tokens
+```
 
-## Tech stack
-
-- [TanStack Start](https://tanstack.com/start) (Vite + SSR) with [TanStack Router](https://tanstack.com/router) for file-based routing
-- [TanStack Query](https://tanstack.com/query) for data fetching with a persisted localStorage cache
-- React 19 (with the React Compiler), TypeScript
-- [Bun](https://bun.sh) as the package manager and test runner
-- Deployed to [Netlify](https://netlify.com)
+The workspace uses Bun for package management and tests, and Nx for the project graph, task orchestration, affected checks, and local caching. The shared packages are private source packages; they are not published to npm.
 
 ## Development
 
-### Running locally
+Requires Node 22.12 or newer and Bun 1.3.14 or newer.
 
 ```bash
 bun install
-bun dev
+bun dev                 # PWA on port 3000
+bun run dev:website     # Astro site on port 4321
+bun run check           # lint, typecheck, test, and build every project
+bun run affected        # run checks only for projects affected by Git changes
 ```
 
-### Tests
-
-The project includes a small `bun:test` unit suite for core scheduling and
-market data logic. Use `bun run` so the configured scripts apply — a bare
-`bun test` invokes Bun's raw runner and skips the `TZ=UTC` / `src` scoping.
+Run a single project or target through Nx:
 
 ```bash
-bun run test
+bunx nx test core
+bunx nx build pwa
+bunx nx build website
 ```
 
-Run the suite once in CI or for a one-off local check:
+Tests use `bun:test`, not Vitest, and domain tests run with `TZ=UTC`.
 
-```bash
-bun run test:run
-```
+## Deployment
+
+Both sites deploy independently from this repository on Netlify. Configure the Netlify package directories as `apps/pwa` and `apps/website`, leave the base directory unset so dependency installation runs at the workspace root, and use each application's committed `netlify.toml`.
 
 ## License
 
-Released under [Apache 2.0](/LICENSE) by [@F1nal04](https://github.com/F1nal04).
+Released under [Apache 2.0](LICENSE) by [@F1nal04](https://github.com/F1nal04).

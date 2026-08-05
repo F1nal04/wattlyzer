@@ -1,52 +1,66 @@
 ## Commands
 
-- `bun install` — install deps. Bun is the package manager **and** the test runner; there is no npm/pnpm lockfile.
-- `bun dev` — Vite dev server on port 3000 (with full local Netlify-platform emulation via the Netlify plugin).
-- `bun run build` — production build: static client → `dist/client`, SSR handler → a Netlify function.
-- `bun run lint` — ESLint (flat config, typescript-eslint).
-- `bunx tsc --noEmit` — typecheck. Not wired to a script; run it directly.
-- `bun run test:run` — run the unit suite once; `bun run test` watches. Both pin `TZ=UTC` and scope to `src`.
-- Single file / test: `TZ=UTC bun test src/lib/schedule.test.ts`, optionally with `-t "<name pattern>"`.
+- `bun install` — install all workspace dependencies from the single root `bun.lock`.
+- `bun dev` / `bun run dev:pwa` — PWA dev server on port 3000 with Netlify emulation.
+- `bun run dev:website` — Astro marketing site on port 4321.
+- `bun run build` — build every project through Nx.
+- `bun run lint`, `bun run typecheck`, `bun run test` — run the target across projects that define it.
+- `bun run check` — lint, typecheck, test, and build every project.
+- `bun run affected` — run those checks only for Git-affected projects.
+- Single project: `bunx nx test core`, `bunx nx build pwa`, or `bunx nx build website`.
+- Single test: `TZ=UTC bun test packages/core/src/schedule.test.ts`, optionally with `-t "<name pattern>"`.
 
-Tests use `bun:test` (Jest-compatible), **not** Vitest — the README is out of date on this.
+Bun is the package manager and test runner; tests use `bun:test`, not Vitest. Keep Nx, `@nx/devkit`, and `@nx/eslint-plugin` on matching versions.
 
-## Architecture
+## Workspace architecture
 
-**Local-first PWA, no backend of its own.** The browser calls three public APIs directly (all CORS-open); there is no application server holding data:
+This is a package-based Bun/Nx monorepo:
 
-- `forecast.solar` — solar production forecast
-- `api.awattar.de` — German day-ahead electricity prices
-- `api.brightsky.dev` — DWD cloud cover (drives the weather visuals)
+- `apps/pwa` — TanStack Start + React 19 PWA, deployed to `pwa.wattlyzer.de`.
+- `apps/website` — static Astro marketing site, deployed to `wattlyzer.de`.
+- `packages/core` — framework-independent scheduling, market coverage, weather decisions, and shared data contracts.
+- `packages/api-client` — framework-independent clients for forecast.solar, aWATTar, and BrightSky. It accepts an injected fetch implementation.
+- `packages/theme` — framework-independent sky palette and brand tokens shared by both apps.
 
-TanStack Start's SSR function only renders a shell that immediately hydrates; all real work runs in the browser.
+Workspace packages are private source packages imported through their `@wattlyzer/*` public entrypoints and declared with `workspace:*`. Do not import another project's internal files. Nx tags and ESLint enforce the intended graph: apps may consume shared packages, `api-client` may consume `core`, and platform-agnostic packages must not depend on apps, React, browser storage, DOM APIs, or UI frameworks.
 
-**Data layer (`src/lib/queries.ts`).** `queryOptions` factories per API, consumed via `useScheduling` (`src/lib/use-scheduling.ts`). Responses are cached in TanStack Query and persisted to `localStorage` (`wattlyzer_query_cache`, `maxAge`/`staleTime` = `DATA_STALE_TIME_MS` = 1h). Query keys round coordinates (`roundCoordinate`, 2dp ≈ 1km) so GPS jitter doesn't bust the cache.
+For a future Expo app, add `apps/mobile` and reuse `core`, `api-client`, and `theme`. Keep geolocation, persistence, Query integration, and UI behind platform-specific adapters. Do not attempt to share React DOM/Astro UI components with React Native.
 
-**Client state (`src/lib/settings.ts`).** Two `useSyncExternalStore` stores from a shared `createStore` factory: `settings` (`wattlyzer_settings`) and `prefs` (`wattlyzer_prefs`, holds the `onboarded` flag). `bestSlotMode` and the legacy `ignoreSolarForBestSlot` flag are kept in sync both directions inside the store's `transform`; `loadSavedSettings` migrates older shapes (e.g. `betaCalculations` → `morningShading`). Settings sync across tabs via a `storage` listener; prefs do not.
+## PWA architecture
 
-**Domain logic (`src/lib/schedule.ts`) — the heart of the app.** `calculateSchedule` enumerates hourly start slots on a **UTC grid** (`ceilToUtcHour`) within the search window and scores each by average solar production and/or market price, depending on `settings.bestSlotMode`:
+**Local-first, no application backend.** The browser calls forecast.solar, api.awattar.de, and api.brightsky.dev directly. TanStack Start's Netlify SSR function renders the shell; real data work runs in the browser.
 
-- `combined` (default): prefer a slot clearing the solar minimum (`minKwh`); fall back to cheapest.
-- `solar-only`: ignore prices; pick the sunniest qualifying slot.
-- `price-only`: ignore solar; pick the cheapest slot.
+**Data (`apps/pwa/src/lib/queries.ts`).** TanStack Query adapters wrap `@wattlyzer/api-client`. Results persist to `localStorage` under `wattlyzer_query_cache` for one hour. Query keys round coordinates to two decimals.
 
-`calculatePowerGeneration` interpolates cumulative-Wh samples from forecast.solar, applies the fixed `0.7` production factor, then halves output inside morning/evening shading windows. `src/lib/weather.ts` maps real DWD data to a `WeatherKind`: a precipitation/fog `condition` (or measured precipitation) wins as `rainy`/`snowy`/`foggy` over the cloud-cover band (`sunny`/`partly`/`cloudy`/`overcast`), falling back to a solar-peak heuristic (`forecastWeather`) when weather data is missing. The hero (`src/components/sky/clouds.tsx`) renders darker clouds for those kinds, with CSS-animated rain streaks / snow flakes overlaid.
+**Client state (`apps/pwa/src/lib/settings.ts`).** The settings and preferences stores remain browser-specific. Preserve the `wattlyzer_settings` and `wattlyzer_prefs` keys, legacy migrations, and synchronization between `bestSlotMode` and `ignoreSolarForBestSlot`. `toSchedulingSettings` is the boundary into the pure core package.
 
-**UI — the "Sky" design system (`src/components/sky/`).** Inline styles only, no CSS framework (intentional — do not introduce one). `skyTheme(hour)` (`src/lib/sky-theme.ts`) returns the full palette for a local hour; the home gradient, sun/moon arc, and text colors all derive from it. Fraunces is the display font.
+**Domain (`packages/core`).** `calculateSchedule` accepts a single request object, enumerates candidate starts on a UTC hour grid, and scores them by solar and/or market price:
 
-**Routing (`src/routes/`).** File-based routes; `src/routeTree.gen.ts` is **generated** — never hand-edit it (the dev server/build regenerates it). `src/router.tsx` builds the router + QueryClient; `src/routes/__root.tsx` wraps the app in `PersistQueryClientProvider` and mounts the unified TanStack devtools lazily, gated behind `import.meta.env.DEV` so they tree-shake out of production.
+- `combined`: choose the sunniest qualifying slot, otherwise the cheapest complete slot.
+- `solar-only`: choose the sunniest qualifying slot without market data.
+- `price-only`: choose the cheapest complete slot.
 
-## Critical conventions
+Power generation applies the fixed 0.7 factor and local wall-clock shading windows. Weather conditions from BrightSky take precedence over cloud cover, then fall back to the solar heuristic. Preserve these semantics and the `TZ=UTC` test coverage.
 
-- **Hydration safety + "Dark mode" live in `useSkyHour` (`src/lib/use-sky-hour.ts`).** Every page derives its sky-palette hour through this hook. It returns a fixed hour (`11`) during SSR and the first client render — switching to the live hour only after the app-wide mounted store flips — because React never patches hydration attribute mismatches (a live clock in render would freeze the background on the server's palette). The mounted state must remain shared across routes: a per-component `useState(false)` makes every page transition flash the light SSR palette. The hook also implements the `currentTimeSky` setting ("Dark mode" in the UI): when on, the palette follows the current local hour instead of the page's preferred hour (e.g. the home page's recommended slot). Onboarding steps 0–1 force it on as a preview via `useSkyHour(hour, true)`, independent of the stored setting. Pure decision logic and the mounted store are unit-tested in `use-sky-hour.test.ts` — preserve this structure.
-- **The React Compiler is enabled** (`babel-plugin-react-compiler` in `vite.config.ts`). Keep component/hook bodies pure so it can memoize. In particular, never call `new Date()` in a render body — use the `useNow()` hook (`src/lib/use-now.ts`), which holds the time in state and ticks every minute.
-- **Tests run under `TZ=UTC`**, so local time equals UTC in assertions. The scheduler intentionally mixes frames: the slot grid is UTC (`ceilToUtcHour`, aligning with hourly API keys and `[start,end)` price rows) while shading compares the user's **local** wall-clock hour (`getHours()`), matching the "until 10:00" labels in the UI.
-- **Treat Safari `backdrop-filter` as paint-sensitive.** Inside an `overflow`-scroll container, iOS Safari may defer a frosted layer until scrolling; `TextCard` (`text-page.tsx`) and `ShadingItem` (`solar-modal.tsx`) use `transform: translateZ(0)` to make their fixed-theme content paint eagerly. Settings and onboarding deliberately stay filter-free and use the translucent theme fill instead: settings must paint immediately inside its scroll view, while onboarding changes its sky palette with the cards still mounted and macOS Safari can cache the old sky inside those layers.
+**Sky UI (`apps/pwa/src/components/sky`).** Inline styles are intentional; do not add a CSS framework. Palette data comes from `@wattlyzer/theme`. Fraunces is the display font.
 
-## Deployment (Netlify)
+**Routing (`apps/pwa/src/routes`).** `apps/pwa/src/routeTree.gen.ts` is generated; never edit it by hand.
 
-Per Netlify's official TanStack Start guide: the `@netlify/vite-plugin-tanstack-start` plugin (in `vite.config.ts`, ordered `tanstackStart()` → `netlify()` → `viteReact()`) plus `netlify.toml` (`command = "vite build"`, `publish = "dist/client"`). The build emits a serverless function (`.netlify/v1/functions/server.mjs`) for SSR. Netlify CLI ≥ 17.31 is required for `netlify deploy`.
+## Critical PWA conventions
 
-### AGENTS.md
+- Hydration safety and the current-time sky setting live in `apps/pwa/src/lib/use-sky-hour.ts`. It returns hour 11 for SSR and the first client render, then uses a shared mounted store. Do not replace it with per-component mounted state.
+- The React Compiler is enabled. Keep components and hooks pure; use `useNow()` instead of constructing `new Date()` in render bodies.
+- Scheduler slots use UTC boundaries, while roof shading uses local `getHours()` because settings describe wall-clock times.
+- Safari `backdrop-filter` is paint-sensitive. Preserve the `translateZ(0)` workarounds in fixed-theme scroll cards and the filter-free settings/onboarding surfaces.
 
-Update this AGENTS.md together with major architectural changes etc.
+## Website conventions
+
+The Astro site is static, bilingual, and framework-free. English routes are unprefixed and German routes use `/de/`. Keep plain CSS and Astro components; do not introduce React or a CSS framework. The animated hero imports `skyTheme` from `@wattlyzer/theme` so both languages use the same palette.
+
+## CI, releases, and Netlify
+
+GitHub Actions uses `nx affected` with full Git history. Release Please maintains one product release line and synchronizes the PWA-visible version.
+
+Each app owns a `netlify.toml`. In Netlify, set package directories to `apps/pwa` and `apps/website` and leave the base directory unset. PWA build outputs are `apps/pwa/dist` plus `apps/pwa/.netlify`; website output is `apps/website/dist`.
+
+Update this AGENTS.md together with major workspace or architectural changes.

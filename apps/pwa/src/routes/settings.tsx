@@ -360,7 +360,7 @@ function SettingsScreen() {
             label="GitHub"
             t={t}
             last
-            href="https://github.com/F1nal04/wattlyzer-app"
+            href="https://github.com/F1nal04/wattlyzer"
           />
         </SetGroup>
 
