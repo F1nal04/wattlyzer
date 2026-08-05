@@ -1,4 +1,4 @@
-import { MarketData } from "./types";
+import type { MarketData } from "./types";
 
 const HOUR_MS = 60 * 60 * 1000;
 

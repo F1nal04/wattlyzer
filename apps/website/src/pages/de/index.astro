@@ -403,28 +403,10 @@ import '../../styles/index.css';
 </Layout>
 
 <script>
+  import { skyTheme } from '@wattlyzer/theme';
+
   // ── Sky theme ──
   const SKY_HOURS = [7, 10, 13, 16, 18, 20, 22];
-
-  interface SkyTheme {
-    sky: [string, string, string];
-    mode: 'light' | 'dark';
-    sunCore: string;
-    sunMid: string;
-    sunOuter: string;
-  }
-
-  function skyTheme(h: number): SkyTheme {
-    if (h < 5)
-      return { sky: ['#0f1430', '#1d2148', '#3a2c52'], mode: 'dark', sunCore: '#fff7d6', sunMid: '#ffd86b', sunOuter: '#ff9a3c' };
-    if (h < 8)
-      return { sky: ['#fcd9a7', '#f8b88a', '#e88c80'], mode: 'light', sunCore: '#fff7d6', sunMid: '#ffd86b', sunOuter: '#ff9a3c' };
-    if (h < 16)
-      return { sky: ['#bde4ff', '#fef0c7', '#fcd28a'], mode: 'light', sunCore: '#fff7d6', sunMid: '#ffd86b', sunOuter: '#ff9a3c' };
-    if (h < 19)
-      return { sky: ['#f9c180', '#e87a5e', '#7a3e6a'], mode: 'dark', sunCore: '#fff7d6', sunMid: '#ffd86b', sunOuter: '#ff9a3c' };
-    return { sky: ['#2b2649', '#5b3a6a', '#8d4a6e'], mode: 'dark', sunCore: '#fff7d6', sunMid: '#ffd86b', sunOuter: '#ff9a3c' };
-  }
 
   document.addEventListener('astro:page-load', () => {
     let hourIdx = 0;

@@ -1,17 +1,15 @@
 import { describe, expect, it } from "bun:test";
-import type { SettingsData } from "@/lib/settings";
-import type { SolarData, WeatherData } from "@/lib/types";
+import type { SchedulingSettings } from "./config";
+import type { SolarData, WeatherData } from "./types";
 import {
   cloudCoverAt,
   cloudCoverToKind,
   conditionToKind,
   forecastWeather,
   weatherAt,
-} from "@/lib/weather";
+} from "./weather";
 
-const baseSettings: SettingsData = {
-  azimut: 180,
-  angle: 45,
+const baseSettings: SchedulingSettings = {
   kwh: 5, // clear-sky peak = 5 * 1000 * 0.7 = 3500 Wh/h
   minKwh: 1200,
   morningShading: false,
@@ -19,8 +17,6 @@ const baseSettings: SettingsData = {
   eveningShading: false,
   shadingStartTime: 17,
   bestSlotMode: "combined",
-  ignoreSolarForBestSlot: false,
-  currentTimeSky: false,
 };
 
 // Cumulative watthours series producing `rates[h]` Wh in hour h after the
@@ -105,7 +101,7 @@ describe("forecastWeather", () => {
 
   it("scales the clear-sky reference with system size", () => {
     // 1400 Wh/h is "partly" on a 5 kWp system but a full-blast clear sky on 2 kWp
-    const small: SettingsData = { ...baseSettings, kwh: 2 }; // peak = 1400
+    const small: SchedulingSettings = { ...baseSettings, kwh: 2 }; // peak = 1400
     expect(forecastWeather(dayWithPeak(1400), small, noon)).toBe("sunny");
   });
 
@@ -115,7 +111,7 @@ describe("forecastWeather", () => {
       "2025-01-15",
       Array.from({ length: 24 }, (_, h) => (h === 8 ? 2800 : 100)),
     );
-    const shaded: SettingsData = {
+    const shaded: SchedulingSettings = {
       ...baseSettings,
       morningShading: true,
       shadingEndTime: 10,
@@ -142,7 +138,7 @@ describe("forecastWeather", () => {
 
   it("defaults to sunny without data or with a zero-size system", () => {
     expect(forecastWeather(null, baseSettings, noon)).toBe("sunny");
-    const zeroSystem: SettingsData = { ...baseSettings, kwh: 0 };
+    const zeroSystem: SchedulingSettings = { ...baseSettings, kwh: 0 };
     expect(forecastWeather(dayWithPeak(2800), zeroSystem, noon)).toBe("sunny");
   });
 });

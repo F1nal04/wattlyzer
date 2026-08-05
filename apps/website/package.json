@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.2",
+    "@wattlyzer/theme": "workspace:*",
     "astro": "^6.1.10"
   },
   "devDependencies": {

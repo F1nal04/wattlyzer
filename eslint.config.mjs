@@ -13,6 +13,7 @@ export default tseslint.config(
       "**/.output/**",
       "**/.nitro/**",
       "**/.tanstack/**",
+      "**/.astro/**",
       "**/routeTree.gen.ts",
     ],
   },

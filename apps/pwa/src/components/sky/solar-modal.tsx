@@ -4,7 +4,7 @@ import {
   FONT_MONO,
   FONT_SANS,
   type SkyTheme,
-} from "@/lib/sky-theme";
+} from "@wattlyzer/theme";
 import { SkySlider, SkySwitch, useEscapeKey } from "@/components/sky/primitives";
 import { ObSwitchRow, azimuthLabel } from "@/components/sky/rows";
 

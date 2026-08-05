@@ -4,7 +4,7 @@ import {
   FONT_MONO,
   skyTheme,
   type SkyTheme,
-} from "@/lib/sky-theme";
+} from "@wattlyzer/theme";
 import { InstGlyph, type InstGlyphKind } from "@/components/sky/icons";
 import { Hills, SkyScreen } from "@/components/sky/primitives";
 import { useSkyHour } from "@/lib/use-sky-hour";

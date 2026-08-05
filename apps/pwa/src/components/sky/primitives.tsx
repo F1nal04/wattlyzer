@@ -1,5 +1,5 @@
 import { useEffect, type CSSProperties, type ReactNode } from "react";
-import { FONT_MONO, FONT_SANS, type SkyTheme } from "@/lib/sky-theme";
+import { FONT_MONO, FONT_SANS, type SkyTheme } from "@wattlyzer/theme";
 import { WIcon } from "@/components/sky/icons";
 import type { BestSlotMode, SearchWindow } from "@/lib/settings";
 

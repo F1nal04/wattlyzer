@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { FONT_DISPLAY, FONT_MONO, FONT_SANS, skyTheme } from "@/lib/sky-theme";
+import { FONT_DISPLAY, FONT_MONO, FONT_SANS, skyTheme } from "@wattlyzer/theme";
 import { Hills, SkyScreen } from "@/components/sky/primitives";
 import { useSkyHour } from "@/lib/use-sky-hour";
 

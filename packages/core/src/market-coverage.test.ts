@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { checkMarketDataSufficiency } from "@/lib/utils";
-import type { MarketData } from "@/lib/types";
+import { checkMarketDataSufficiency } from "./market-coverage";
+import type { MarketData } from "./types";
 
 const HOUR_MS = 60 * 60 * 1000;
 

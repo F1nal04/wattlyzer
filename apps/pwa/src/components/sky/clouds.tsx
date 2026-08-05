@@ -1,6 +1,6 @@
 import { useId } from "react";
-import type { SkyTheme } from "@/lib/sky-theme";
-import type { WeatherKind } from "@/lib/weather";
+import type { SkyTheme } from "@wattlyzer/theme";
+import type { WeatherKind } from "@wattlyzer/core";
 
 // Smooth vector cloud — one continuous silhouette path (no stacked blobs),
 // vertical gradient for volume and a soft blurred highlight on top.

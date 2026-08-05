@@ -1,4 +1,4 @@
-import { FONT_DISPLAY, FONT_SANS, type SkyTheme } from "@/lib/sky-theme";
+import { FONT_DISPLAY, FONT_SANS, type SkyTheme } from "@wattlyzer/theme";
 import { usePrefs, useSettings } from "@/lib/settings";
 import {
   Display,

@@ -4,9 +4,9 @@ import {
   FONT_MONO,
   FONT_SANS,
   type SkyTheme,
-} from "@/lib/sky-theme";
-import type { SchedulingResult } from "@/lib/types";
-import type { WeatherKind } from "@/lib/weather";
+} from "@wattlyzer/theme";
+import type { SchedulingResult } from "@wattlyzer/core";
+import type { WeatherKind } from "@wattlyzer/core";
 import { SkyClouds, SkySunCloud } from "@/components/sky/clouds";
 import { SkySlider } from "@/components/sky/primitives";
 

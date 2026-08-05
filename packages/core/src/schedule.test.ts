@@ -1,16 +1,14 @@
 import { describe, expect, it } from "bun:test";
-import type { SettingsData } from "@/lib/settings";
-import type { MarketData, SolarData } from "@/lib/types";
+import type { SchedulingSettings } from "./config";
+import type { MarketData, SolarData } from "./types";
 import {
   calculateMarketPrice,
   calculatePowerGeneration,
-  calculateSchedule,
+  calculateSchedule as calculateScheduleRequest,
   ceilToUtcHour,
-} from "@/lib/schedule";
+} from "./schedule";
 
-const baseSettings: SettingsData = {
-  azimut: 180,
-  angle: 45,
+const baseSettings: SchedulingSettings = {
   kwh: 5,
   minKwh: 1200,
   morningShading: false,
@@ -18,9 +16,25 @@ const baseSettings: SettingsData = {
   eveningShading: false,
   shadingStartTime: 17,
   bestSlotMode: "combined",
-  ignoreSolarForBestSlot: false,
-  currentTimeSky: false,
 };
+
+function calculateSchedule(
+  solarData: SolarData | null,
+  marketData: MarketData | null,
+  settings: SchedulingSettings | undefined,
+  consumerDuration: number,
+  searchTimespan: number,
+  now: Date,
+) {
+  return calculateScheduleRequest({
+    solarData,
+    marketData,
+    settings,
+    consumerDuration,
+    searchTimespan,
+    now,
+  });
+}
 
 function stubSolarMessage(): SolarData["message"] {
   return {
@@ -135,7 +149,7 @@ function oracleCheapestUtcWindows(
 
 function oracleBestQualifyingSolarUtc(
   solar: SolarData,
-  settings: SettingsData,
+  settings: SchedulingSettings,
   now: Date,
   consumerDuration: number,
   searchTimespan: number,
@@ -245,7 +259,7 @@ describe("calculatePowerGeneration", () => {
       "2025-01-15T09:00:00.000Z": 2000,
     });
     const t = new Date("2025-01-15T08:00:00.000Z");
-    const shaded: SettingsData = {
+    const shaded: SchedulingSettings = {
       ...baseSettings,
       morningShading: true,
       shadingEndTime: 10,
@@ -289,12 +303,12 @@ describe("calculatePowerGeneration", () => {
       "2025-01-15T16:00:00.000Z": 2000,
       "2025-01-15T18:00:00.000Z": 4000,
     });
-    const morningSettings: SettingsData = {
+    const morningSettings: SchedulingSettings = {
       ...baseSettings,
       morningShading: true,
       shadingEndTime: 9,
     };
-    const eveningSettings: SettingsData = {
+    const eveningSettings: SchedulingSettings = {
       ...baseSettings,
       eveningShading: true,
       shadingStartTime: 17,
@@ -341,7 +355,7 @@ describe("calculateSchedule", () => {
   it("returns null when market data is required but missing", () => {
     const now = new Date("2025-01-15T12:00:00.000Z");
     const solar = solarWithResult(flatSolarCurve("2025-01-15", 2000));
-    const settings: SettingsData = {
+    const settings: SchedulingSettings = {
       ...baseSettings,
       bestSlotMode: "combined",
     };
@@ -375,7 +389,7 @@ describe("calculateSchedule", () => {
   it("solar-only: returns null scheduling when no slot meets minKwh but still returns top slots", () => {
     const now = new Date("2025-01-15T12:00:00.000Z");
     const solar = solarWithResult(flatSolarCurve("2025-01-15", 100));
-    const settings: SettingsData = {
+    const settings: SchedulingSettings = {
       ...baseSettings,
       bestSlotMode: "solar-only",
       minKwh: 99999,
@@ -421,7 +435,7 @@ describe("calculateSchedule", () => {
       h >= 12 && h <= 14 ? 1300 : h >= 15 && h <= 17 ? 5200 : 1200,
     );
     const solar = solarFromHourlyRates(day, rates);
-    const settings: SettingsData = {
+    const settings: SchedulingSettings = {
       ...baseSettings,
       bestSlotMode: "solar-only",
       minKwh: 1200,
@@ -456,7 +470,7 @@ describe("calculateSchedule", () => {
     const solar = solarWithResult(flatSolarCurve("2025-01-15", 500));
     const prices = [200, 100, 300, 50];
     const market = marketUtcHourlyFrom(now, prices);
-    const settings: SettingsData = {
+    const settings: SchedulingSettings = {
       ...baseSettings,
       bestSlotMode: "price-only",
       minKwh: 99999,
@@ -557,7 +571,7 @@ describe("calculateSchedule", () => {
     const now = new Date("2025-01-15T12:00:00.000Z");
     const prices = [1, 200, 200, 200, 1, 1, 50, 50];
     const market = marketUtcHourlyFrom(now, prices);
-    const settings: SettingsData = {
+    const settings: SchedulingSettings = {
       ...baseSettings,
       bestSlotMode: "price-only",
       minKwh: 99999,
@@ -595,7 +609,7 @@ describe("calculateSchedule", () => {
     const now = new Date("2025-01-15T12:00:00.000Z");
     const solar = solarWithResult(flatSolarCurve("2025-01-15", 2000));
     const market = marketUtcHourlyFrom(now, [500, 500, 500, 500, 500, 500]);
-    const settings: SettingsData = {
+    const settings: SchedulingSettings = {
       ...baseSettings,
       bestSlotMode: "combined",
       minKwh: 1000,
@@ -660,7 +674,7 @@ describe("calculateSchedule", () => {
     const now = new Date("2025-01-15T12:00:00.000Z");
     const solar = solarWithResult(flatSolarCurve("2025-01-15", 100));
     const market = marketUtcHourlyFrom(now, [80, 200, 200, 200]);
-    const settings: SettingsData = {
+    const settings: SchedulingSettings = {
       ...baseSettings,
       bestSlotMode: "combined",
       minKwh: 5000,
@@ -783,7 +797,7 @@ describe("calculateSchedule", () => {
       now,
       Array.from({ length: 12 }, () => 80),
     );
-    const settings: SettingsData = {
+    const settings: SchedulingSettings = {
       ...baseSettings,
       bestSlotMode: "combined",
       minKwh: 1200,

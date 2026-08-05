@@ -5,7 +5,7 @@ import {
   FONT_MONO,
   skyTheme,
   type SkyTheme,
-} from "@/lib/sky-theme";
+} from "@wattlyzer/theme";
 import {
   Hills,
   SkyIconBtn,

@@ -26,6 +26,9 @@
         "@tanstack/react-query-persist-client": "^5.90.0",
         "@tanstack/react-router": "^1.132.0",
         "@tanstack/react-start": "^1.132.0",
+        "@wattlyzer/api-client": "workspace:*",
+        "@wattlyzer/core": "workspace:*",
+        "@wattlyzer/theme": "workspace:*",
         "react": "^19.2.4",
         "react-dom": "^19.2.4",
       },
@@ -48,16 +51,32 @@
       },
     },
     "apps/website": {
-      "name": "wattlyzer-web",
+      "name": "@wattlyzer/website",
       "version": "0.0.1",
       "dependencies": {
         "@astrojs/sitemap": "^3.7.2",
+        "@wattlyzer/theme": "workspace:*",
         "astro": "^6.1.10",
       },
       "devDependencies": {
         "@astrojs/check": "^0.9.4",
         "typescript": "^5.9.3",
       },
+    },
+    "packages/api-client": {
+      "name": "@wattlyzer/api-client",
+      "version": "0.0.0",
+      "dependencies": {
+        "@wattlyzer/core": "workspace:*",
+      },
+    },
+    "packages/core": {
+      "name": "@wattlyzer/core",
+      "version": "0.0.0",
+    },
+    "packages/theme": {
+      "name": "@wattlyzer/theme",
+      "version": "0.0.0",
     },
   },
   "packages": {
@@ -907,7 +926,15 @@
 
     "@vue/shared": ["@vue/shared@3.5.38", "", {}, "sha512-FTW0AFZNaK5/mOqvGBwVfUlNLU38TiQn4+DQgIFUnrBBJQ1crMJ82yeGQLV5jyKFsO8yRukpbuP7x+nRbH6aug=="],
 
+    "@wattlyzer/api-client": ["@wattlyzer/api-client@workspace:packages/api-client"],
+
+    "@wattlyzer/core": ["@wattlyzer/core@workspace:packages/core"],
+
     "@wattlyzer/pwa": ["@wattlyzer/pwa@workspace:apps/pwa"],
+
+    "@wattlyzer/theme": ["@wattlyzer/theme@workspace:packages/theme"],
+
+    "@wattlyzer/website": ["@wattlyzer/website@workspace:apps/website"],
 
     "@whatwg-node/disposablestack": ["@whatwg-node/disposablestack@0.0.6", "", { "dependencies": { "@whatwg-node/promise-helpers": "^1.0.0", "tslib": "^2.6.3" } }, "sha512-LOtTn+JgJvX8WfBVJtF08TGrdjuFzGJc4mkP8EdDI8ADbvO7kiexYep1o8dwnt0okb0jYclCDXF13xU7Ge4zSw=="],
 
@@ -2430,8 +2457,6 @@
     "vscode-nls": ["vscode-nls@5.2.0", "", {}, "sha512-RAaHx7B14ZU04EU31pT+rKz2/zSl7xMsfIZuo8pd+KZO6PXtQmpevpq3vxvWNcrGbdmhM/rr5Uw5Mz+NBfhVng=="],
 
     "vscode-uri": ["vscode-uri@3.1.0", "", {}, "sha512-/BpdSx+yCQGnCvecbyXdxHDkuk55/G3xwnC0GqY4gmQ3j+A+g8kzzgB4Nk/SINjqn6+waqw3EgbVF2QKExkRxQ=="],
-
-    "wattlyzer-web": ["wattlyzer-web@workspace:apps/website"],
 
     "wcwidth": ["wcwidth@1.0.1", "", { "dependencies": { "defaults": "^1.0.3" } }, "sha512-XHPEwS0q6TaxcvG85+8EYkbiCux2XtWG2mkc47Ng2A77BQu9+DqIOJldST4HgPkuea7dvKSj5VgX3P1d4rW8Tg=="],
 

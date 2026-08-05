@@ -5,9 +5,11 @@ import {
   solarQueryOptions,
   type Position,
 } from "@/lib/queries";
-import { calculateSchedule } from "@/lib/schedule";
-import { useSettings } from "@/lib/settings";
-import { checkMarketDataSufficiency } from "@/lib/utils";
+import {
+  calculateSchedule,
+  checkMarketDataSufficiency,
+} from "@wattlyzer/core";
+import { toSchedulingSettings, useSettings } from "@/lib/settings";
 
 export function useGeolocation() {
   const [position, setPosition] = useState<Position | null>(null);
@@ -80,14 +82,14 @@ export function useScheduling(
   const solarData = solarQuery.data ?? null;
   const marketData = needsMarketData ? (marketQuery.data ?? null) : null;
 
-  const { schedulingResult, topSlotsResult } = calculateSchedule(
+  const { schedulingResult, topSlotsResult } = calculateSchedule({
     solarData,
     marketData,
-    settings,
+    settings: toSchedulingSettings(settings),
     consumerDuration,
     searchTimespan,
     now,
-  );
+  });
 
   const marketDataSufficiency = checkMarketDataSufficiency(
     marketData,

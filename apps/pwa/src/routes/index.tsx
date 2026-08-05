@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { weatherQueryOptions } from "@/lib/queries";
-import { FONT_MONO, skyTheme } from "@/lib/sky-theme";
+import { FONT_MONO, skyTheme } from "@wattlyzer/theme";
 import { usePrefs, useSettings } from "@/lib/settings";
 import { useGeolocation, useScheduling } from "@/lib/use-scheduling";
 import { useNow } from "@/lib/use-now";
 import { useMounted, useSkyHour } from "@/lib/use-sky-hour";
-import { weatherAt } from "@/lib/weather";
+import { weatherAt } from "@wattlyzer/core";
 import {
   ClockCluster,
   ClockStatus,

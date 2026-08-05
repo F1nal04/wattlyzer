@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { FONT_MONO, FONT_SANS, type SkyTheme } from "@/lib/sky-theme";
+import { FONT_MONO, FONT_SANS, type SkyTheme } from "@wattlyzer/theme";
 import { WIcon, type WIconName } from "@/components/sky/icons";
 import { SkySwitch } from "@/components/sky/primitives";
 

@@ -1,11 +1,14 @@
-import type { SettingsData } from "@/lib/settings";
+import type {
+  ScheduleEvaluation,
+  ScheduleRequest,
+  SchedulingSettings,
+} from "./config";
 import type {
   MarketData,
-  SchedulingResult,
   SlotResult,
   SolarData,
   TopSlotsResult,
-} from "@/lib/types";
+} from "./types";
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -32,7 +35,7 @@ export function ceilToUtcHour(d: Date): Date {
 
 export function calculatePowerGeneration(
   solarData: SolarData,
-  settings: SettingsData,
+  settings: SchedulingSettings,
   targetTime: Date,
 ) {
   const timestamps = Object.keys(solarData.result)
@@ -168,17 +171,14 @@ function cheapestSlot(
     );
 }
 
-export function calculateSchedule(
-  solarData: SolarData | null,
-  marketData: MarketData | null,
-  settings: SettingsData | undefined,
-  consumerDuration: number,
-  searchTimespan: number,
-  now: Date,
-): {
-  schedulingResult: SchedulingResult | null;
-  topSlotsResult: TopSlotsResult | null;
-} {
+export function calculateSchedule({
+  solarData,
+  marketData,
+  settings,
+  consumerDuration,
+  searchTimespan,
+  now,
+}: ScheduleRequest): ScheduleEvaluation {
   if (!solarData || !settings) {
     return { schedulingResult: null, topSlotsResult: null };
   }

@@ -5,7 +5,7 @@ import {
   FONT_MONO,
   skyTheme,
   type SkyTheme,
-} from "@/lib/sky-theme";
+} from "@wattlyzer/theme";
 import { updateSettings, useSettings } from "@/lib/settings";
 import { useSkyHour } from "@/lib/use-sky-hour";
 import {

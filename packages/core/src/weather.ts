@@ -1,6 +1,6 @@
-import { calculatePowerGeneration } from "@/lib/schedule";
-import type { SettingsData } from "@/lib/settings";
-import type { SolarData, WeatherData } from "@/lib/types";
+import { calculatePowerGeneration } from "./schedule";
+import type { SchedulingSettings } from "./config";
+import type { SolarData, WeatherData } from "./types";
 
 export type WeatherKind =
   | "sunny"
@@ -79,7 +79,7 @@ export function cloudCoverAt(
 export function weatherAt(
   weatherData: WeatherData | null,
   solarData: SolarData | null,
-  settings: SettingsData,
+  settings: SchedulingSettings,
   at: Date,
 ): WeatherKind {
   const record = weatherRecordAt(weatherData, at);
@@ -101,7 +101,7 @@ export function weatherAt(
  */
 export function forecastWeather(
   solarData: SolarData | null,
-  settings: SettingsData,
+  settings: SchedulingSettings,
   now: Date,
 ): WeatherKind {
   if (!solarData) {

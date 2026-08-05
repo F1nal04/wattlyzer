@@ -1,0 +1,18 @@
+{
+  "name": "@wattlyzer/theme",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "TZ=UTC bun test src"
+  },
+  "nx": {
+    "name": "theme",
+    "tags": ["type:theme", "scope:shared", "platform:agnostic"]
+  }
+}

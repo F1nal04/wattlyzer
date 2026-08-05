@@ -6,7 +6,7 @@ import {
   FONT_SANS,
   skyTheme,
   type SkyTheme,
-} from "@/lib/sky-theme";
+} from "@wattlyzer/theme";
 import { updatePrefs, updateSettings, useSettings } from "@/lib/settings";
 import {
   Hills,

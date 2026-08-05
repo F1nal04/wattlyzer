@@ -1,0 +1,21 @@
+{
+  "name": "@wattlyzer/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "TZ=UTC bun test src"
+  },
+  "dependencies": {
+    "@wattlyzer/core": "workspace:*"
+  },
+  "nx": {
+    "name": "api-client",
+    "tags": ["type:data", "scope:shared", "platform:agnostic"]
+  }
+}

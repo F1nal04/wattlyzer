@@ -1,4 +1,10 @@
 import { useSyncExternalStore } from "react";
+import type {
+  BestSlotMode,
+  SchedulingSettings,
+} from "@wattlyzer/core";
+
+export type { BestSlotMode } from "@wattlyzer/core";
 
 interface StoreOptions<T> {
   storageKey: string;
@@ -83,8 +89,6 @@ function createStore<T extends object>(options: StoreOptions<T>): Store<T> {
   };
 }
 
-export type BestSlotMode = "combined" | "solar-only" | "price-only";
-
 export interface SettingsData {
   azimut: number; // Stored in compass format (0-360)
   angle: number;
@@ -98,6 +102,20 @@ export interface SettingsData {
   ignoreSolarForBestSlot: boolean; // Ignore solar production when calculating best timeslot
   currentTimeSky: boolean; // UI "Dark mode": derive the sky palette from the
                            // current local hour instead of the recommended slot
+}
+
+export function toSchedulingSettings(
+  settings: SettingsData,
+): SchedulingSettings {
+  return {
+    kwh: settings.kwh,
+    minKwh: settings.minKwh,
+    morningShading: settings.morningShading,
+    shadingEndTime: settings.shadingEndTime,
+    eveningShading: settings.eveningShading,
+    shadingStartTime: settings.shadingStartTime,
+    bestSlotMode: settings.bestSlotMode,
+  };
 }
 
 const defaultSettings: SettingsData = {
