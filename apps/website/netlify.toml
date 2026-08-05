@@ -1,0 +1,3 @@
+[build]
+  command = "bunx nx build website"
+  publish = "apps/website/dist"
