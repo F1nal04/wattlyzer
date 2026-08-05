@@ -403,11 +403,13 @@ export function SkyIconBtn({
   onClick,
   label,
   t,
+  blurBackdrop = true,
 }: {
   children: ReactNode;
   onClick?: () => void;
   label?: string;
   t: SkyTheme;
+  blurBackdrop?: boolean;
 }) {
   return (
     <button
@@ -419,8 +421,8 @@ export function SkyIconBtn({
         borderRadius: 999,
         background: t.glassBg,
         border: `1px solid ${t.glassBd}`,
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
+        backdropFilter: blurBackdrop ? "blur(10px)" : undefined,
+        WebkitBackdropFilter: blurBackdrop ? "blur(10px)" : undefined,
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",

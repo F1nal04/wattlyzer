@@ -63,7 +63,7 @@ function ObFrame({
         >
           <div style={{ width: 44, height: 44, display: "flex", alignItems: "center" }}>
             {onBack && (
-              <SkyIconBtn t={t} label="Back" onClick={onBack}>
+              <SkyIconBtn t={t} label="Back" onClick={onBack} blurBackdrop={false}>
                 <WIcon name="back" />
               </SkyIconBtn>
             )}
@@ -336,9 +336,9 @@ function ObHow({
           top: "calc(env(safe-area-inset-top, 0px) + 216px)",
           left: 24,
           right: 24,
+          // Keep onboarding glass filter-free: Safari can cache the previous
+          // sky inside backdrop-filter when the palette changes live.
           background: t.glassBg,
-          backdropFilter: "blur(10px)",
-          WebkitBackdropFilter: "blur(10px)",
           borderRadius: 18,
           border: `1px solid ${t.glassBd}`,
           padding: "6px 16px",

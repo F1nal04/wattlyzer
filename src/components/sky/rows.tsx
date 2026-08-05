@@ -3,6 +3,10 @@ import { FONT_MONO, FONT_SANS, type SkyTheme } from "@/lib/sky-theme";
 import { WIcon, type WIconName } from "@/components/sky/icons";
 import { SkySwitch } from "@/components/sky/primitives";
 
+// These onboarding rows intentionally use translucent fills without
+// backdrop-filter. macOS Safari caches the old sky inside a backdrop layer
+// when the user changes the onboarding theme and only refreshes it after a
+// later interaction or screenshot.
 export function ObSwitchRow({
   t,
   icon,
@@ -27,8 +31,6 @@ export function ObSwitchRow({
         gap: 14,
         padding: "16px 16px",
         background: t.glassBg,
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
         borderRadius: 18,
         border: `1px solid ${t.glassBd}`,
         width: "100%",
@@ -100,8 +102,6 @@ export function ObCheckRow({
         gap: 12,
         padding: "14px 14px",
         background: t.glassBg,
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
         borderRadius: 14,
         border: `1px solid ${t.glassBd}`,
         width: "100%",
@@ -180,8 +180,6 @@ export function ObCard({
         gap: 14,
         padding: "16px 16px",
         background: t.glassBg,
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
         borderRadius: 18,
         border: `1px solid ${t.glassBd}`,
         cursor: onClick ? "pointer" : "default",
