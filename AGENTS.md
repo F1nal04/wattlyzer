@@ -1,7 +1,8 @@
 ## Commands
 
 - `bun install` — install all workspace dependencies from the single root `bun.lock`.
-- `bun dev` / `bun run dev:pwa` — PWA dev server on port 3000 with Netlify emulation.
+- `bun run dev` — start the PWA and website dev servers together through Nx.
+- `bun run dev:pwa` — PWA dev server on port 3000 with Netlify emulation.
 - `bun run dev:website` — Astro marketing site on port 4321.
 - `bun run build` — build every project through Nx.
 - `bun run lint`, `bun run typecheck`, `bun run test` — run the target across projects that define it.

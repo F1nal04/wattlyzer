@@ -13,7 +13,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "nx dev pwa",
+    "dev": "nx run-many -t dev --projects=pwa,website --parallel=2",
     "dev:pwa": "nx dev pwa",
     "dev:website": "nx dev website",
     "build": "nx run-many -t build",

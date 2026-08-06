@@ -25,7 +25,8 @@ Requires Node 22.12 or newer and Bun 1.3.14 or newer.
 
 ```bash
 bun install
-bun dev                 # PWA on port 3000
+bun run dev             # PWA on port 3000 and website on port 4321
+bun run dev:pwa         # PWA only
 bun run dev:website     # Astro site on port 4321
 bun run check           # lint, typecheck, test, and build every project
 bun run affected        # run checks only for projects affected by Git changes
