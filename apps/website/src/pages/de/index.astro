@@ -1,0 +1,502 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import '../../styles/index.css';
+---
+
+<Layout
+  title="Wattlyzer · Lass es laufen, wenn der Himmel es sagt."
+  description="Wattlyzer liest die Sonne, den Spotpreis und dein Dach — und nennt dir das eine beste Fenster heute, um Spülmaschine, Wärmepumpe oder Wallbox zu starten."
+  canonicalPath="/"
+>
+  <!-- ── NAV ── -->
+  <nav class="nav" id="nav" data-sky-mode="light">
+    <div class="nav-left">
+      <a href="#top" class="nav-logo">Wattlyzer</a>
+      <span class="nav-div"></span>
+      <a href="#how" class="nav-link">So funktioniert's</a>
+      <a href="#privacy" class="nav-link">Datenschutz</a>
+      <a href="#faq" class="nav-link">FAQ</a>
+    </div>
+    <div class="nav-right">
+      <div class="lang-toggle">
+        <a class="lang-btn" href="/">EN</a>
+        <span class="lang-sep">·</span>
+        <a class="lang-btn active" href="/de/">DE</a>
+      </div>
+      <a href="https://pwa.wattlyzer.de/install" class="nav-cta">PWA installieren</a>
+    </div>
+    <div class="nav-mob-right">
+      <div class="lang-toggle lang-toggle-mob">
+        <a class="lang-btn" href="/">EN</a>
+        <span class="lang-sep">·</span>
+        <a class="lang-btn active" href="/de/">DE</a>
+      </div>
+      <button class="mob-ham" id="mob-ham" aria-label="Menü">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <line x1="4" y1="7" x2="20" y2="7"></line>
+          <line x1="4" y1="13" x2="20" y2="13"></line>
+          <line x1="4" y1="19" x2="20" y2="19"></line>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── HERO ── -->
+  <section class="hero" id="hero" data-sky-mode="light">
+    <div id="top"></div>
+
+    <div class="hero-sky" aria-hidden="true">
+      <div id="hero-sun" class="hero-sun"></div>
+      <div id="hero-moon" class="hero-moon"></div>
+      <div class="hero-cloud cloud-1" id="hc1"></div>
+      <div class="hero-cloud cloud-2" id="hc2"></div>
+      <div class="hero-hills" id="hero-hills"></div>
+    </div>
+
+    <div class="hero-content">
+      <div class="hero-text">
+        <div class="hour-strip" id="hour-strip">
+          <div class="hour-dots">
+            {[0, 1, 2, 3, 4, 5, 6].map((i) => <span class="hour-dot" data-idx={i}></span>)}
+          </div>
+          <span class="hour-strip-time" id="hour-strip-time">07:00</span>
+        </div>
+
+        <div class="hero-eyebrow">FÜR DEUTSCHE SOLARHAUSHALTE</div>
+
+        <h1 class="hero-h1">
+          Lass es laufen,
+          <br />
+          <em class="hero-h1b">wenn der Himmel es sagt.</em>
+        </h1>
+
+        <p class="hero-sub">
+          Wattlyzer liest die Sonne, den Spotpreis und dein Dach — und nennt dir das eine beste
+          Fenster heute, um Spülmaschine, Wärmepumpe oder Wallbox zu starten.
+        </p>
+
+        <div class="hero-cta-row" id="install">
+          <a href="#" class="hero-cta-btn" id="hero-cta-btn">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 4v12m0 0l-4-4m4 4l4-4"></path>
+              <path d="M5 20h14"></path>
+            </svg>
+            PWA installieren
+          </a>
+          <span class="hero-cta-sub">Kostenlos · ohne Konto</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-scroll" aria-hidden="true">
+      SCROLL
+      <span class="hero-scroll-line"></span>
+    </div>
+  </section>
+
+  <!-- ── HOW IT WORKS ── -->
+  <section class="how" id="how">
+    <div class="how-inner">
+      <div class="how-header">
+        <div>
+          <div class="eyebrow">SO FUNKTIONIERT'S</div>
+          <h2 class="section-h2">
+            Drei Signale,
+            <span class="section-h2-italic"> ein Fenster.</span>
+          </h2>
+        </div>
+        <p class="section-sub">Kein Dashboard. Keine Diagramme. Nur die Stunde, in der du Start drückst.</p>
+      </div>
+
+      <div class="step-cards">
+        <div class="step-card">
+          <div class="step-illus">
+            <svg viewBox="0 0 240 64" width="100%" height="64" style="display:block">
+              <path
+                d="M 10 56 Q 120 -10 230 56"
+                fill="none"
+                stroke="#1a1410"
+                stroke-width="1"
+                opacity="0.25"
+                stroke-dasharray="2 4"></path>
+              {
+                [10, 60, 110, 160, 210].map((x) => (
+                  <line
+                    x1={x}
+                    y1="56"
+                    x2={x}
+                    y2="60"
+                    stroke="#1a1410"
+                    opacity="0.4"
+                    stroke-width="1"
+                  />
+                ))
+              }
+              <circle cx="120" cy="14" r="14" fill="url(#sunG)"></circle>
+              <defs>
+                <radialGradient id="sunG">
+                  <stop offset="0%" stop-color="#fff7d6"></stop>
+                  <stop offset="60%" stop-color="#ffd86b"></stop>
+                  <stop offset="100%" stop-color="#ff9a3c"></stop>
+                </radialGradient>
+              </defs>
+            </svg>
+          </div>
+          <div class="step-num">01</div>
+          <h3 class="step-h">Wir lesen den Himmel.</h3>
+          <p class="step-p">Stündliche Solarprognose für dein Dach — Neigung, Ausrichtung, kWp und Verschattung inklusive.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-illus">
+            <svg viewBox="0 0 240 64" width="100%" height="64" style="display:block">
+              <path
+                d="M 0 30 C 30 38, 50 50, 80 48 S 130 22, 160 24 S 210 50, 240 42"
+                fill="none"
+                stroke="#1a1410"
+                stroke-width="1.6"></path>
+              <path
+                d="M 0 30 C 30 38, 50 50, 80 48 S 130 22, 160 24 S 210 50, 240 42 L 240 64 L 0 64 Z"
+                fill="#1a1410"
+                opacity="0.06"></path>
+              <circle cx="160" cy="24" r="3.5" fill="#0f7a3a"></circle>
+            </svg>
+          </div>
+          <div class="step-num">02</div>
+          <h3 class="step-h">Wir lesen den Preis.</h3>
+          <p class="step-p">Dynamische Spot-Tarife (Tibber, aWATTar, Octopus) — viermal pro Stunde frisch geholt.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-illus">
+            <svg viewBox="0 0 240 64" width="100%" height="64" style="display:block">
+              {
+                Array.from({ length: 24 }, (_, i) => (
+                  <rect
+                    x={4 + i * 9.7}
+                    y={36}
+                    width={6}
+                    height={14}
+                    fill="#1a1410"
+                    opacity={i >= 11 && i <= 14 ? 0.85 : 0.12}
+                    rx={1}
+                  />
+                ))
+              }
+              <path
+                d="M 110 28 L 110 22 L 158 22 L 158 28"
+                fill="none"
+                stroke="#1a1410"
+                stroke-width="1.4"></path>
+              <text
+                x="134"
+                y="14"
+                text-anchor="middle"
+                font-family="JetBrains Mono, monospace"
+                font-size="9"
+                fill="#1a1410"
+                letter-spacing="2">11–14</text
+              >
+            </svg>
+          </div>
+          <div class="step-num">03</div>
+          <h3 class="step-h">Wir wählen die Stunde.</h3>
+          <p class="step-p">Ein Fenster. Sonnigster, günstigster oder ausgewogener Modus — du entscheidest. Laufzeit-Slider, fertig.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PRIVACY ── -->
+  <section class="privacy" id="privacy">
+    <div class="privacy-inner">
+      <div class="privacy-header">
+        <div>
+          <div class="eyebrow eyebrow-light">DATENSCHUTZ</div>
+          <h2 class="section-h2 section-h2-light">
+            Läuft auf deinem Gerät.
+            <br />
+            <span class="section-h2-italic opacity-85">Bleibt auf deinem Gerät.</span>
+          </h2>
+        </div>
+        <p class="section-sub section-sub-light">
+          Wattlyzer ist eine Progressive Web App. Wetter und Preise kommen direkt aus öffentlichen
+          APIs. Deine Dachkonfiguration verlässt das Gerät nicht. Kein Konto, kein Tracker, kein
+          Analytics-SDK.
+        </p>
+      </div>
+
+      <div class="privacy-bullets">
+        <div class="privacy-bullet">
+          <div class="bullet-num">· 01</div>
+          <h4 class="bullet-h">Kein Konto</h4>
+          <p class="bullet-p">Dach konfigurieren, fertig. Es gibt nichts, wo du dich einloggen müsstest.</p>
+        </div>
+        <div class="privacy-bullet">
+          <div class="bullet-num">· 02</div>
+          <h4 class="bullet-h">Kein Tracking</h4>
+          <p class="bullet-p">Keine Analytics, keine Pixel, keine Cookies. Network-Tab öffnen und nachsehen.</p>
+        </div>
+        <div class="privacy-bullet">
+          <div class="bullet-num">· 03</div>
+          <h4 class="bullet-h">Local first</h4>
+          <p class="bullet-p">Tarife und Prognosen lokal gecached.</p>
+        </div>
+        <div class="privacy-bullet">
+          <div class="bullet-num">· 04</div>
+          <h4 class="bullet-h">Open source</h4>
+          <p class="bullet-p">Quellcode auf <a href="https://github.com/F1nal04/wattlyzer" target="_blank" rel="noopener" class="inline-link">GitHub</a>, Apache-2.0-Lizenz. Lesen, forken, selbst hosten — alles erlaubt.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FAQ ── -->
+  <section class="faq" id="faq">
+    <div class="faq-inner">
+      <div class="faq-header">
+        <div class="eyebrow">FAQ</div>
+        <h2 class="section-h2">
+          <em class="section-h2-italic">Häufige Fragen.</em>
+        </h2>
+      </div>
+
+      <div class="faq-list">
+        <div class="faq-item" data-open="false">
+          <button class="faq-q">
+            <span class="faq-q-text">Welche Tarife werden unterstützt?</span>
+            <span class="faq-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M12 5v14M5 12h14"></path>
+              </svg>
+            </span>
+          </button>
+          <div class="faq-a">
+            <div class="faq-a-inner">Jeder dynamische Stromtarif, der stündliche Spotpreise bereitstellt. Festpreisverträge lassen sich nicht optimieren — es gibt nichts zu vergleichen.</div>
+          </div>
+        </div>
+
+        <div class="faq-item" data-open="false">
+          <button class="faq-q">
+            <span class="faq-q-text">Brauche ich ein Smart Meter?</span>
+            <span class="faq-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M12 5v14M5 12h14"></path>
+              </svg>
+            </span>
+          </button>
+          <div class="faq-a">
+            <div class="faq-a-inner">Nein. Wattlyzer empfiehlt nur ein Fenster — du startest das Gerät selbst. Wir greifen weder auf Zähler noch auf Wechselrichter zu.</div>
+          </div>
+        </div>
+
+        <div class="faq-item" data-open="false">
+          <button class="faq-q">
+            <span class="faq-q-text">Wie genau ist die Solarprognose?</span>
+            <span class="faq-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M12 5v14M5 12h14"></path>
+              </svg>
+            </span>
+          </button>
+          <div class="faq-a">
+            <div class="faq-a-inner">Wir nutzen die forecast.solar API mit Standort, Neigung, Ausrichtung und installierter kWp deines Dachs. Die Genauigkeit hängt von den lokalen Wetterbedingungen ab.</div>
+          </div>
+        </div>
+
+        <div class="faq-item" data-open="false">
+          <button class="faq-q">
+            <span class="faq-q-text">Ist es wirklich kostenlos?</span>
+            <span class="faq-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M12 5v14M5 12h14"></path>
+              </svg>
+            </span>
+          </button>
+          <div class="faq-a">
+            <div class="faq-a-inner">Ja. Keine Tarife, keine Upsells. Wenn du das Projekt unterstützen willst — Stern auf <a href="https://github.com/F1nal04/wattlyzer" target="_blank" rel="noopener" class="inline-link">GitHub</a> oder eine Postkarte.</div>
+          </div>
+        </div>
+
+        <div class="faq-item" data-open="false">
+          <button class="faq-q">
+            <span class="faq-q-text">Warum eine PWA und kein App Store?</span>
+            <span class="faq-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M12 5v14M5 12h14"></path>
+              </svg>
+            </span>
+          </button>
+          <div class="faq-a">
+            <div class="faq-a-inner">Weil der App Store das Ausliefern verlangsamt, eine Provision nimmt und einen Account-Zwang bedeutet, den wir nicht brauchen. Die PWA installiert sich in zwei Taps aus Safari oder Chrome.</div>
+          </div>
+        </div>
+
+        <div class="faq-border-bottom"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-logo">Wattlyzer</div>
+          <p class="footer-tagline">Made in Berlin, für deutsche Dächer.</p>
+        </div>
+        <div class="footer-links">
+          <a href="https://github.com/F1nal04/wattlyzer" class="footer-link" target="_blank" rel="noopener">GitHub</a>
+        </div>
+        <div class="footer-links">
+          <a href="#privacy" class="footer-link">Datenschutz</a>
+          <a href="/de/legal/" class="footer-link">Impressum</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span class="footer-copy">© 2026 Wattlyzer. Apache-2.0-Lizenz.</span>
+        <div class="footer-lang">
+          <a class="footer-lang-btn" href="/">EN</a>
+          <span>·</span>
+          <a class="footer-lang-btn active" href="/de/">DE</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ── MOBILE MENU SHEET ── -->
+  <div id="mob-sheet" class="mob-sheet" aria-hidden="true">
+    <div class="mob-sheet-overlay" id="mob-overlay"></div>
+    <div class="mob-sheet-content" id="mob-sheet-content">
+      <div class="mob-sheet-close-row">
+        <button class="mob-sheet-close" id="mob-sheet-close" aria-label="Schließen">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M6 6l12 12M18 6L6 18"></path>
+          </svg>
+        </button>
+      </div>
+      <a href="#how" class="mob-nav-link" id="mob-link-how">So funktioniert's</a>
+      <a href="#privacy" class="mob-nav-link" id="mob-link-privacy">Datenschutz</a>
+      <a href="#faq" class="mob-nav-link" id="mob-link-faq">FAQ</a>
+      <a href="/de/legal/" class="mob-nav-link" id="mob-link-imp">Impressum</a>
+      <a href="https://pwa.wattlyzer.de/install" class="mob-cta" id="mob-cta">PWA installieren</a>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { skyTheme } from '@wattlyzer/theme';
+
+  // ── Sky theme ──
+  const SKY_HOURS = [7, 10, 13, 16, 18, 20, 22];
+
+  document.addEventListener('astro:page-load', () => {
+    let hourIdx = 0;
+
+    const hero = document.getElementById('hero')!;
+    const nav = document.getElementById('nav')!;
+    const heroSun = document.getElementById('hero-sun') as HTMLElement;
+    const heroMoon = document.getElementById('hero-moon') as HTMLElement;
+    const hourStripTime = document.getElementById('hour-strip-time')!;
+    const hourDots = document.querySelectorAll<HTMLElement>('.hour-dot');
+
+    function updateSky(hour: number) {
+      const t = skyTheme(hour);
+      const [c1, c2, c3] = t.sky;
+
+      hero.style.setProperty('--sky-c1', c1);
+      hero.style.setProperty('--sky-c2', c2);
+      hero.style.setProperty('--sky-c3', c3);
+      hero.setAttribute('data-sky-mode', t.mode);
+      nav.setAttribute('data-sky-mode', t.mode);
+
+      const showSun = hour >= 6 && hour <= 19;
+      const sunX = Math.max(0.05, Math.min(0.95, (hour - 6) / 14));
+      const sunY = 1 - Math.sin(Math.PI * Math.max(0, Math.min(1, (hour - 6) / 14)));
+      if (showSun) {
+        heroSun.style.opacity = '0.96';
+        heroSun.style.left = `calc(${sunX * 100}% - 90px)`;
+        heroSun.style.top = `calc(${10 + sunY * 25}% - 90px)`;
+        heroSun.style.background = `radial-gradient(circle, ${t.sunCore} 0%, ${t.sunMid} 45%, ${t.sunOuter} 75%, rgba(255,154,60,0) 100%)`;
+        heroSun.style.boxShadow = `0 0 120px 30px ${t.sunMid}66`;
+        heroMoon.style.opacity = '0';
+      } else {
+        heroSun.style.opacity = '0';
+        heroMoon.style.opacity = '1';
+        heroMoon.style.left = `calc(${sunX * 100}% - 56px)`;
+      }
+
+      hourStripTime.textContent = String(hour).padStart(2, '0') + ':00';
+      hourDots.forEach((dot, i) => {
+        dot.classList.toggle('active', SKY_HOURS[i] === hour);
+      });
+
+      const mobContent = document.getElementById('mob-sheet-content');
+      if (mobContent) mobContent.setAttribute('data-sky-mode', t.mode);
+    }
+
+    function tick() {
+      updateSky(SKY_HOURS[hourIdx]);
+      hourIdx = (hourIdx + 1) % SKY_HOURS.length;
+    }
+    tick();
+    const skyInterval = setInterval(tick, 4400);
+    document.addEventListener('astro:before-swap', () => clearInterval(skyInterval), { once: true });
+
+    // ── FAQ Accordion ──
+    document.querySelectorAll<HTMLButtonElement>('.faq-q').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const item = btn.closest<HTMLElement>('.faq-item')!;
+        const isOpen = item.dataset.open === 'true';
+        document.querySelectorAll<HTMLElement>('.faq-item').forEach((el) => {
+          el.dataset.open = 'false';
+          el.querySelector('button')?.setAttribute('aria-expanded', 'false');
+        });
+        if (!isOpen) {
+          item.dataset.open = 'true';
+          btn.setAttribute('aria-expanded', 'true');
+        }
+      });
+    });
+
+    // ── Mobile menu ──
+    const mobSheet = document.getElementById('mob-sheet')!;
+    const mobHam = document.getElementById('mob-ham')!;
+    const mobOverlay = document.getElementById('mob-overlay')!;
+    const mobClose = document.getElementById('mob-sheet-close')!;
+
+    function openMenu() {
+      mobSheet.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeMenu() {
+      mobSheet.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    mobHam.addEventListener('click', openMenu);
+    mobClose.addEventListener('click', closeMenu);
+    mobOverlay.addEventListener('click', closeMenu);
+    document.querySelectorAll('.mob-nav-link, .mob-cta').forEach((el) => {
+      el.addEventListener('click', closeMenu);
+    });
+  });
+</script>

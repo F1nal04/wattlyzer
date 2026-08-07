@@ -1,0 +1,47 @@
+---
+import '../styles/global.css';
+import { Font } from 'astro:assets';
+import { ClientRouter } from 'astro:transitions';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+
+interface Props {
+  title?: string;
+  description?: string;
+  canonicalPath?: string;
+}
+
+const {
+  title = 'Wattlyzer · Run it when the sky says so.',
+  description = 'Wattlyzer reads the sun, the spot price, and your roof — then tells you the one best window today to start the dishwasher, the heat pump, the wall box.',
+  canonicalPath = '/',
+} = Astro.props;
+
+const locale = Astro.currentLocale ?? 'en';
+const enHref = new URL(getRelativeLocaleUrl('en', canonicalPath), Astro.site).toString();
+const deHref = new URL(getRelativeLocaleUrl('de', canonicalPath), Astro.site).toString();
+const canonicalHref = new URL(getRelativeLocaleUrl(locale, canonicalPath), Astro.site).toString();
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalHref} />
+    <link rel="alternate" hreflang="en" href={enHref} />
+    <link rel="alternate" hreflang="de" href={deHref} />
+    <link rel="alternate" hreflang="x-default" href={enHref} />
+    <Font cssVariable="--font-dm-sans" />
+    <Font cssVariable="--font-fraunces" />
+    <Font cssVariable="--font-jetbrains-mono" />
+    <ClientRouter />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

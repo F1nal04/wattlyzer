@@ -1,0 +1,3 @@
+[build]
+  command = "bunx nx build pwa"
+  publish = "apps/pwa/dist/client"
