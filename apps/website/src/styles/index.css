@@ -289,6 +289,8 @@
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
     border: 1px solid rgba(255, 255, 255, 0.18);
     font-family: var(--font-mono);
     font-size: 11px;

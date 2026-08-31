@@ -1,5 +1,6 @@
 import { useEffect, type CSSProperties, type ReactNode } from "react";
 import { FONT_MONO, FONT_SANS, type SkyTheme } from "@wattlyzer/theme";
+import { frostedGlass } from "@/components/sky/glass";
 import { WIcon } from "@/components/sky/icons";
 import type { BestSlotMode, SearchWindow } from "@/lib/settings";
 
@@ -421,8 +422,7 @@ export function SkyIconBtn({
         borderRadius: 999,
         background: t.glassBg,
         border: `1px solid ${t.glassBd}`,
-        backdropFilter: blurBackdrop ? "blur(10px)" : undefined,
-        WebkitBackdropFilter: blurBackdrop ? "blur(10px)" : undefined,
+        ...(blurBackdrop ? frostedGlass(10) : undefined),
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",

@@ -52,7 +52,7 @@ Power generation applies the fixed 0.7 factor and local wall-clock shading windo
 - Hydration safety and the current-time sky setting live in `apps/pwa/src/lib/use-sky-hour.ts`. It returns hour 11 for SSR and the first client render, then uses a shared mounted store. Do not replace it with per-component mounted state.
 - The React Compiler is enabled. Keep components and hooks pure; use `useNow()` instead of constructing `new Date()` in render bodies.
 - Scheduler slots use UTC boundaries, while roof shading uses local `getHours()` because settings describe wall-clock times.
-- Safari `backdrop-filter` is paint-sensitive. Preserve the `translateZ(0)` workarounds in fixed-theme scroll cards and the filter-free settings/onboarding surfaces.
+- Safari `backdrop-filter` is paint-sensitive. Every frosted surface must use `frostedGlass()` from `apps/pwa/src/components/sky/glass.ts` (both filter prefixes plus `translateZ(0)`). Do not wrap those surfaces in an ancestor opacity animation. Settings and onboarding stay filter-free and use the translucent theme fill instead.
 
 ## Website conventions
 

@@ -5,6 +5,7 @@ import {
   FONT_SANS,
   type SkyTheme,
 } from "@wattlyzer/theme";
+import { frostedGlass } from "@/components/sky/glass";
 import { SkySlider, SkySwitch, useEscapeKey } from "@/components/sky/primitives";
 import { ObSwitchRow, azimuthLabel } from "@/components/sky/rows";
 
@@ -138,12 +139,7 @@ function ShadingItem({
         background: t.glassBg,
         borderRadius: 16,
         border: `1px solid ${t.glassBd}`,
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
-        // iOS Safari won't paint a backdrop-filter box inside an
-        // overflow-scroll container until a scroll forces a recomposite;
-        // own GPU layer makes it render on first paint. (see settings.tsx)
-        transform: "translateZ(0)",
+        ...frostedGlass(10),
       }}
     >
       <button
@@ -274,8 +270,7 @@ export function SolarPanelsModal({
           inset: 0,
           background:
             t.mode === "dark" ? "rgba(8,6,4,0.62)" : "rgba(26,20,16,0.42)",
-          backdropFilter: "blur(2px)",
-          WebkitBackdropFilter: "blur(2px)",
+          ...frostedGlass(2),
         }}
       />
 

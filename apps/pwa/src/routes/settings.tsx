@@ -6,7 +6,9 @@ import {
   skyTheme,
   type SkyTheme,
 } from "@wattlyzer/theme";
-import { updateSettings, useSettings } from "@/lib/settings";
+import { updateSettings, usePrefs, useSettings } from "@/lib/settings";
+import { useNow } from "@/lib/use-now";
+import { useGeolocation, useScheduling } from "@/lib/use-scheduling";
 import { useSkyHour } from "@/lib/use-sky-hour";
 import {
   SkyAppBar,
@@ -223,8 +225,37 @@ function LinkRow({
 function SettingsScreen() {
   const navigate = useNavigate();
   const { settings } = useSettings();
+  const { prefs } = usePrefs();
+  const now = useNow();
+  const { position } = useGeolocation();
   const [solarOpen, setSolarOpen] = useState(false);
-  const themeHour = useSkyHour();
+  const searchTimespanHours =
+    prefs.searchWindow === "eod"
+      ? Math.ceil(
+          (new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+            23,
+            59,
+            59,
+            999,
+          ).getTime() -
+            now.getTime()) /
+            (1000 * 60 * 60),
+        )
+      : parseInt(prefs.searchWindow, 10);
+  const { schedulingResult } = useScheduling(
+    position,
+    prefs.duration,
+    searchTimespanHours,
+    now,
+  );
+  // Same hour as home: the recommended slot, or now until a slot exists.
+  // Dark mode then switches every page onto the current local hour.
+  const themeHour = useSkyHour(
+    schedulingResult ? schedulingResult.bestTime.getHours() : now.getHours(),
+  );
   const t = skyTheme(themeHour);
   const solarEnabled = settings.bestSlotMode !== "price-only";
 
@@ -261,7 +292,7 @@ function SettingsScreen() {
 
   return (
     <SkyScreen
-      background={`linear-gradient(180deg, ${t.pageBg[0]} 0%, ${t.pageBg[1]} 100%)`}
+      background={`linear-gradient(180deg, ${t.sky[0]} 0%, ${t.sky[1]} 55%, ${t.sky[2]} 100%)`}
       color={t.fg}
     >
       <SkyAppBar

@@ -8,6 +8,7 @@ import {
 import type { SchedulingResult } from "@wattlyzer/core";
 import type { WeatherKind } from "@wattlyzer/core";
 import { SkyClouds, SkySunCloud } from "@/components/sky/clouds";
+import { frostedGlass } from "@/components/sky/glass";
 import { SkySlider } from "@/components/sky/primitives";
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
@@ -255,8 +256,7 @@ export function ClockCluster({
             padding: "10px 18px",
             borderRadius: 999,
             background: t.chipBg,
-            backdropFilter: "blur(8px)",
-            WebkitBackdropFilter: "blur(8px)",
+            ...frostedGlass(8),
             fontSize: 14,
             fontWeight: 600,
             color: t.fg,
@@ -358,8 +358,7 @@ export function DurationDock({
         bottom: "calc(env(safe-area-inset-bottom, 0px) + 32px)",
         padding: "20px 22px",
         background: t.glassBg,
-        backdropFilter: "blur(14px)",
-        WebkitBackdropFilter: "blur(14px)",
+        ...frostedGlass(14),
         borderRadius: 28,
         border: `1px solid ${t.glassBd}`,
       }}

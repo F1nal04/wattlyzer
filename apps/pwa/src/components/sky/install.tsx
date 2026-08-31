@@ -5,6 +5,7 @@ import {
   skyTheme,
   type SkyTheme,
 } from "@wattlyzer/theme";
+import { frostedGlass } from "@/components/sky/glass";
 import { InstGlyph, type InstGlyphKind } from "@/components/sky/icons";
 import { Hills, SkyScreen } from "@/components/sky/primitives";
 import { useSkyHour } from "@/lib/use-sky-hour";
@@ -180,8 +181,7 @@ function InstPage({
           left: 24,
           right: 24,
           background: t.glassBg,
-          backdropFilter: "blur(10px)",
-          WebkitBackdropFilter: "blur(10px)",
+          ...frostedGlass(10),
           borderRadius: 18,
           border: `1px solid ${t.glassBd}`,
           padding: "6px 16px",
