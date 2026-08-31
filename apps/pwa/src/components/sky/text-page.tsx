@@ -6,12 +6,13 @@ import {
   skyTheme,
   type SkyTheme,
 } from "@wattlyzer/theme";
+import { frostedGlass } from "@/components/sky/glass";
+import { WIcon } from "@/components/sky/icons";
 import {
   Hills,
   SkyIconBtn,
   SkyScreen,
 } from "@/components/sky/primitives";
-import { WIcon } from "@/components/sky/icons";
 import { useSkyHour } from "@/lib/use-sky-hour";
 
 const PAGE_HOUR = 11;
@@ -29,16 +30,11 @@ export function TextCard({
     <div
       style={{
         background: t.glassBg,
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
+        ...frostedGlass(10),
         borderRadius: 18,
         border: `1px solid ${t.glassBd}`,
         padding: "16px 18px",
         marginBottom: 14,
-        // iOS Safari won't paint a backdrop-filter box inside an
-        // overflow-scroll container until a scroll forces a recomposite;
-        // own GPU layer makes it render on first paint. (see settings.tsx)
-        transform: "translateZ(0)",
       }}
     >
       <div style={{ fontSize: 15, fontWeight: 600, color: t.fg, marginBottom: 6 }}>

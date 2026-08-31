@@ -221,40 +221,41 @@ function HomeScreen() {
       color={t.fg}
     >
       {mounted && (
-        <div style={{ animation: "sky-fade-in 320ms ease" }}>
-          {hero}
-          {hills}
+        <>
+          <div style={{ animation: "sky-fade-in 320ms ease" }}>
+            {hero}
+            {hills}
+
+            {clockStatus && (
+              <ClockStatus t={t} title={clockStatus.title} body={clockStatus.body} />
+            )}
+
+            {showMarketDataWarning && (
+              <div
+                style={{
+                  position: "absolute",
+                  left: 24,
+                  right: 24,
+                  bottom: "calc(env(safe-area-inset-bottom, 0px) + 152px)",
+                  textAlign: "center",
+                  fontSize: 10.5,
+                  fontFamily: FONT_MONO,
+                  letterSpacing: "0.08em",
+                  color: t.fgMute,
+                  textTransform: "uppercase",
+                }}
+              >
+                Prices cover {marketDataSufficiency.hoursAvailable}h of the{" "}
+                {searchTimespanHours}h window
+              </div>
+            )}
+          </div>
+
           {appBar}
-
-          {clockStatus && (
-            <ClockStatus t={t} title={clockStatus.title} body={clockStatus.body} />
-          )}
           {cluster}
-
-          {showMarketDataWarning && (
-            <div
-              style={{
-                position: "absolute",
-                left: 24,
-                right: 24,
-                bottom: "calc(env(safe-area-inset-bottom, 0px) + 152px)",
-                textAlign: "center",
-                fontSize: 10.5,
-                fontFamily: FONT_MONO,
-                letterSpacing: "0.08em",
-                color: t.fgMute,
-                textTransform: "uppercase",
-              }}
-            >
-              Prices cover {marketDataSufficiency.hoursAvailable}h of the{" "}
-              {searchTimespanHours}h window
-            </div>
-          )}
-
           {dock}
-
           {quickOpen && <QuickSheet t={t} onClose={() => setQuickOpen(false)} />}
-        </div>
+        </>
       )}
     </SkyScreen>
   );
