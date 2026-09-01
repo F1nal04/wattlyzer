@@ -1,0 +1,102 @@
+export type ShadingKind = "morning" | "evening";
+
+export type ShadingWindow = {
+  enabled: boolean;
+  hour: number;
+};
+
+export type ShadingSetup = {
+  morning: ShadingWindow;
+  evening: ShadingWindow;
+};
+
+export type ShadingSettingsSlice = {
+  morningShading: boolean;
+  shadingEndTime: number;
+  eveningShading: boolean;
+  shadingStartTime: number;
+};
+
+const RANGES: Record<ShadingKind, { min: number; max: number }> = {
+  morning: { min: 5, max: 12 },
+  evening: { min: 14, max: 22 },
+};
+
+export function shadingRange(kind: ShadingKind): { min: number; max: number } {
+  return RANGES[kind];
+}
+
+export function formatShadingHour(hour: number): string {
+  return `${String(Math.floor(hour)).padStart(2, "0")}:00`;
+}
+
+export function shadingHourTicks(min: number, max: number): string[] {
+  const tickStep = (max - min) / 4;
+  if (Number.isInteger(tickStep)) {
+    return Array.from({ length: 5 }, (_, i) => `${min + i * tickStep}:00`);
+  }
+  return [`${min}:00`, `${max}:00`];
+}
+
+export function shadingRowValue(kind: ShadingKind, window: ShadingWindow): string {
+  if (!window.enabled) {
+    return "Off";
+  }
+  const hour = formatShadingHour(window.hour);
+  return kind === "morning" ? `until ${hour}` : `from ${hour}`;
+}
+
+export function shadingSettingsPatch(
+  kind: ShadingKind,
+  window: ShadingWindow,
+): Partial<ShadingSettingsSlice> {
+  if (kind === "morning") {
+    return {
+      morningShading: window.enabled,
+      shadingEndTime: window.hour,
+    };
+  }
+  return {
+    eveningShading: window.enabled,
+    shadingStartTime: window.hour,
+  };
+}
+
+export function shadingWindowFromSettings(
+  kind: ShadingKind,
+  settings: ShadingSettingsSlice,
+): ShadingWindow {
+  if (kind === "morning") {
+    return { enabled: settings.morningShading, hour: settings.shadingEndTime };
+  }
+  return { enabled: settings.eveningShading, hour: settings.shadingStartTime };
+}
+
+export function shadingSetupFromSettings(
+  settings: ShadingSettingsSlice,
+): ShadingSetup {
+  return {
+    morning: shadingWindowFromSettings("morning", settings),
+    evening: shadingWindowFromSettings("evening", settings),
+  };
+}
+
+export function shadingSettingsFromSetup(
+  setup: ShadingSetup,
+): ShadingSettingsSlice {
+  return {
+    morningShading: setup.morning.enabled,
+    shadingEndTime: setup.morning.hour,
+    eveningShading: setup.evening.enabled,
+    shadingStartTime: setup.evening.hour,
+  };
+}
+
+export function shadingSetupSummary(setup: ShadingSetup): string {
+  const morning = shadingRowValue("morning", setup.morning);
+  const evening = shadingRowValue("evening", setup.evening);
+  if (morning === "Off" && evening === "Off") {
+    return "Off";
+  }
+  return `${morning} · ${evening}`;
+}

@@ -18,6 +18,13 @@ import {
 } from "@/components/sky/primitives";
 import { WIcon } from "@/components/sky/icons";
 import { azimuthLabel } from "@/components/sky/rows";
+import { ShadingModal } from "@/components/sky/shading-modal";
+import {
+  shadingRowValue,
+  shadingSettingsFromSetup,
+  shadingSetupFromSettings,
+  shadingWindowFromSettings,
+} from "@/components/sky/shading";
 import { SolarPanelsModal, type SolarConfig } from "@/components/sky/solar-modal";
 import packageJson from "../../package.json";
 
@@ -229,6 +236,7 @@ function SettingsScreen() {
   const now = useNow();
   const { position } = useGeolocation();
   const [solarOpen, setSolarOpen] = useState(false);
+  const [shadingOpen, setShadingOpen] = useState(false);
   const searchTimespanHours =
     prefs.searchWindow === "eod"
       ? Math.ceil(
@@ -264,10 +272,6 @@ function SettingsScreen() {
     azimuth: settings.azimut,
     tilt: settings.angle,
     sizeKw: settings.kwh,
-    morningOn: settings.morningShading,
-    morningHour: settings.shadingEndTime,
-    eveningOn: settings.eveningShading,
-    eveningHour: settings.shadingStartTime,
   };
 
   const saveSolar = (next: SolarConfig) => {
@@ -275,10 +279,6 @@ function SettingsScreen() {
       azimut: next.azimuth,
       angle: next.tilt,
       kwh: next.sizeKw,
-      morningShading: next.morningOn,
-      shadingEndTime: next.morningHour,
-      eveningShading: next.eveningOn,
-      shadingStartTime: next.eveningHour,
       // Toggling panels off forces price-only; toggling back on restores a
       // solar-aware mode (otherwise there is no way to re-enable solar here)
       ...(next.enabled
@@ -354,20 +354,24 @@ function SettingsScreen() {
           subtitle="Compensate for trees, neighbours, etc."
           t={t}
         >
-          <SetToggleRow
+          <SetRow
             label="Morning shading"
-            detail={`until ${String(settings.shadingEndTime).padStart(2, "0")}:00`}
-            on={settings.morningShading}
-            onToggle={() => updateSettings({ morningShading: !settings.morningShading })}
+            value={shadingRowValue(
+              "morning",
+              shadingWindowFromSettings("morning", settings),
+            )}
             t={t}
+            onClick={() => setShadingOpen(true)}
           />
-          <SetToggleRow
+          <SetRow
             label="Evening shading"
-            detail={`from ${String(settings.shadingStartTime).padStart(2, "0")}:00`}
-            on={settings.eveningShading}
-            onToggle={() => updateSettings({ eveningShading: !settings.eveningShading })}
+            value={shadingRowValue(
+              "evening",
+              shadingWindowFromSettings("evening", settings),
+            )}
             t={t}
             last
+            onClick={() => setShadingOpen(true)}
           />
         </SetGroup>
 
@@ -416,6 +420,18 @@ function SettingsScreen() {
           eyebrow="Settings · Solar"
           onSave={saveSolar}
           onClose={() => setSolarOpen(false)}
+        />
+      )}
+      {shadingOpen && (
+        <ShadingModal
+          t={t}
+          value={shadingSetupFromSettings(settings)}
+          eyebrow="Settings · Shading"
+          onSave={(setup) => {
+            updateSettings(shadingSettingsFromSetup(setup));
+            setShadingOpen(false);
+          }}
+          onClose={() => setShadingOpen(false)}
         />
       )}
     </SkyScreen>

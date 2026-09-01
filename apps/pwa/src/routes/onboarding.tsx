@@ -17,6 +17,11 @@ import {
 import { WIcon } from "@/components/sky/icons";
 import { ObCard, ObCheckRow, ObSwitchRow, azimuthLabel } from "@/components/sky/rows";
 import { useSkyHour } from "@/lib/use-sky-hour";
+import { ShadingModal } from "@/components/sky/shading-modal";
+import {
+  shadingSetupSummary,
+  type ShadingSetup,
+} from "@/components/sky/shading";
 import { SolarPanelsModal, type SolarConfig } from "@/components/sky/solar-modal";
 
 export const Route = createFileRoute("/onboarding")({
@@ -381,6 +386,8 @@ function ObSetup({
   t,
   solar,
   setSolar,
+  shading,
+  setShading,
   dynamicTariff,
   setDynamicTariff,
   onNext,
@@ -390,6 +397,8 @@ function ObSetup({
   t: SkyTheme;
   solar: SolarConfig;
   setSolar: (next: SolarConfig) => void;
+  shading: ShadingSetup;
+  setShading: (next: ShadingSetup) => void;
   dynamicTariff: boolean;
   setDynamicTariff: (next: boolean) => void;
   onNext: () => void;
@@ -398,6 +407,7 @@ function ObSetup({
 }) {
   const [consentShare, setConsentShare] = useState(false);
   const [solarOpen, setSolarOpen] = useState(false);
+  const [shadingOpen, setShadingOpen] = useState(false);
   const { settings } = useSettings();
   const solarStatus = solar.enabled
     ? `${solar.sizeKw.toFixed(1)} kWp · ${azimuthLabel(solar.azimuth)} · ${solar.tilt}° tilt`
@@ -416,6 +426,9 @@ function ObSetup({
           top: "calc(env(safe-area-inset-top, 0px) + 214px)",
           left: 24,
           right: 24,
+          bottom: "calc(env(safe-area-inset-bottom, 0px) + 116px)",
+          overflowY: "auto",
+          WebkitOverflowScrolling: "touch",
           display: "flex",
           flexDirection: "column",
           gap: 18,
@@ -429,6 +442,16 @@ function ObSetup({
           action={solar.enabled ? "Edit" : "Add"}
           onClick={() => setSolarOpen(true)}
         />
+        {solar.enabled && (
+          <ObCard
+            t={t}
+            icon="sunCloud"
+            title="Roof shading"
+            status={shadingSetupSummary(shading)}
+            action="Edit"
+            onClick={() => setShadingOpen(true)}
+          />
+        )}
         <ObSwitchRow
           t={t}
           icon="euro"
@@ -478,6 +501,18 @@ function ObSetup({
             setSolarOpen(false);
           }}
           onClose={() => setSolarOpen(false)}
+        />
+      )}
+      {shadingOpen && (
+        <ShadingModal
+          t={t}
+          value={shading}
+          eyebrow="Step 03 · Shading"
+          onSave={(next) => {
+            setShading(next);
+            setShadingOpen(false);
+          }}
+          onClose={() => setShadingOpen(false)}
         />
       )}
     </ObFrame>
@@ -590,10 +625,10 @@ function OnboardingScreen() {
     azimuth: 180,
     tilt: 45,
     sizeKw: 5,
-    morningOn: false,
-    morningHour: 10,
-    eveningOn: false,
-    eveningHour: 17,
+  });
+  const [shading, setShading] = useState<ShadingSetup>({
+    morning: { enabled: false, hour: 10 },
+    evening: { enabled: false, hour: 17 },
   });
 
   const finish = (save: boolean) => {
@@ -602,10 +637,10 @@ function OnboardingScreen() {
         azimut: solar.azimuth,
         angle: solar.tilt,
         kwh: solar.sizeKw,
-        morningShading: solar.morningOn,
-        shadingEndTime: solar.morningHour,
-        eveningShading: solar.eveningOn,
-        shadingStartTime: solar.eveningHour,
+        morningShading: shading.morning.enabled,
+        shadingEndTime: shading.morning.hour,
+        eveningShading: shading.evening.enabled,
+        shadingStartTime: shading.evening.hour,
         bestSlotMode: !solar.enabled
           ? "price-only"
           : !dynamicTariff
@@ -633,6 +668,8 @@ function OnboardingScreen() {
           t={t}
           solar={solar}
           setSolar={setSolar}
+          shading={shading}
+          setShading={setShading}
           dynamicTariff={dynamicTariff}
           setDynamicTariff={setDynamicTariff}
           onNext={next}
