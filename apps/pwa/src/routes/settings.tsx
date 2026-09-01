@@ -25,6 +25,10 @@ import {
   shadingSetupFromSettings,
   shadingWindowFromSettings,
 } from "@/components/sky/shading";
+import {
+  solarPanelsEnabled,
+  solarSettingsSubtitle,
+} from "@/components/sky/solar";
 import { SolarPanelsModal, type SolarConfig } from "@/components/sky/solar-modal";
 import packageJson from "../../package.json";
 
@@ -265,7 +269,7 @@ function SettingsScreen() {
     schedulingResult ? schedulingResult.bestTime.getHours() : now.getHours(),
   );
   const t = skyTheme(themeHour);
-  const solarEnabled = settings.bestSlotMode !== "price-only";
+  const solarEnabled = solarPanelsEnabled(settings.bestSlotMode);
 
   const solarConfig: SolarConfig = {
     enabled: solarEnabled,
@@ -325,28 +329,40 @@ function SettingsScreen() {
       >
         <SetGroup
           title="Solar panels"
-          subtitle="Used to estimate production for your roof."
+          subtitle={solarSettingsSubtitle(solarEnabled)}
           t={t}
         >
-          <SetRow
-            label="Peak power"
-            value={`${settings.kwh.toFixed(1)} kWp`}
-            t={t}
-            onClick={() => setSolarOpen(true)}
-          />
-          <SetRow
-            label="Azimuth"
-            value={`${Math.round(settings.azimut)}° ${azimuthLabel(settings.azimut)}`}
-            t={t}
-            onClick={() => setSolarOpen(true)}
-          />
-          <SetRow
-            label="Tilt"
-            value={`${Math.round(settings.angle)}°`}
-            t={t}
-            last
-            onClick={() => setSolarOpen(true)}
-          />
+          {solarEnabled ? (
+            <>
+              <SetRow
+                label="Peak power"
+                value={`${settings.kwh.toFixed(1)} kWp`}
+                t={t}
+                onClick={() => setSolarOpen(true)}
+              />
+              <SetRow
+                label="Azimuth"
+                value={`${Math.round(settings.azimut)}° ${azimuthLabel(settings.azimut)}`}
+                t={t}
+                onClick={() => setSolarOpen(true)}
+              />
+              <SetRow
+                label="Tilt"
+                value={`${Math.round(settings.angle)}°`}
+                t={t}
+                last
+                onClick={() => setSolarOpen(true)}
+              />
+            </>
+          ) : (
+            <SetRow
+              label="Status"
+              value="Off"
+              t={t}
+              last
+              onClick={() => setSolarOpen(true)}
+            />
+          )}
         </SetGroup>
 
         <SetGroup

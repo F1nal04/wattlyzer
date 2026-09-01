@@ -1,5 +1,9 @@
-import { FONT_DISPLAY, FONT_SANS, type SkyTheme } from "@wattlyzer/theme";
+import { FONT_DISPLAY, FONT_MONO, FONT_SANS, type SkyTheme } from "@wattlyzer/theme";
 import { usePrefs, useSettings } from "@/lib/settings";
+import {
+  solarModeUnavailableHint,
+  solarPanelsEnabled,
+} from "@/components/sky/solar";
 import {
   Display,
   Field,
@@ -14,6 +18,8 @@ export function QuickSheet({ t, onClose }: { t: SkyTheme; onClose: () => void })
   const { settings, updateSettings } = useSettings();
   const { prefs, updatePrefs } = usePrefs();
   useEscapeKey(onClose);
+  const solarEnabled = solarPanelsEnabled(settings.bestSlotMode);
+  const modeHint = solarModeUnavailableHint(solarEnabled);
 
   return (
     <div
@@ -87,9 +93,23 @@ export function QuickSheet({ t, onClose }: { t: SkyTheme; onClose: () => void })
           <Field label="Mode" t={t}>
             <SkyModeSeg
               value={settings.bestSlotMode}
+              solarEnabled={solarEnabled}
               onChange={(v) => updateSettings({ bestSlotMode: v })}
               t={t}
             />
+            {modeHint && (
+              <div
+                style={{
+                  fontSize: 11.5,
+                  color: t.fgMute,
+                  fontFamily: FONT_MONO,
+                  letterSpacing: "0.04em",
+                  marginTop: 8,
+                }}
+              >
+                {modeHint}
+              </div>
+            )}
           </Field>
 
           <Field
