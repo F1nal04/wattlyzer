@@ -21,9 +21,9 @@ import { azimuthLabel } from "@/components/sky/rows";
 import { ShadingModal } from "@/components/sky/shading-modal";
 import {
   shadingRowValue,
-  shadingSettingsPatch,
+  shadingSettingsFromSetup,
+  shadingSetupFromSettings,
   shadingWindowFromSettings,
-  type ShadingKind,
 } from "@/components/sky/shading";
 import { SolarPanelsModal, type SolarConfig } from "@/components/sky/solar-modal";
 import packageJson from "../../package.json";
@@ -236,7 +236,7 @@ function SettingsScreen() {
   const now = useNow();
   const { position } = useGeolocation();
   const [solarOpen, setSolarOpen] = useState(false);
-  const [shadingKind, setShadingKind] = useState<ShadingKind | null>(null);
+  const [shadingOpen, setShadingOpen] = useState(false);
   const searchTimespanHours =
     prefs.searchWindow === "eod"
       ? Math.ceil(
@@ -361,7 +361,7 @@ function SettingsScreen() {
               shadingWindowFromSettings("morning", settings),
             )}
             t={t}
-            onClick={() => setShadingKind("morning")}
+            onClick={() => setShadingOpen(true)}
           />
           <SetRow
             label="Evening shading"
@@ -371,7 +371,7 @@ function SettingsScreen() {
             )}
             t={t}
             last
-            onClick={() => setShadingKind("evening")}
+            onClick={() => setShadingOpen(true)}
           />
         </SetGroup>
 
@@ -422,18 +422,16 @@ function SettingsScreen() {
           onClose={() => setSolarOpen(false)}
         />
       )}
-      {shadingKind && (
+      {shadingOpen && (
         <ShadingModal
-          key={shadingKind}
           t={t}
-          kind={shadingKind}
-          value={shadingWindowFromSettings(shadingKind, settings)}
+          value={shadingSetupFromSettings(settings)}
           eyebrow="Settings · Shading"
-          onSave={(window) => {
-            updateSettings(shadingSettingsPatch(shadingKind, window));
-            setShadingKind(null);
+          onSave={(setup) => {
+            updateSettings(shadingSettingsFromSetup(setup));
+            setShadingOpen(false);
           }}
-          onClose={() => setShadingKind(null)}
+          onClose={() => setShadingOpen(false)}
         />
       )}
     </SkyScreen>

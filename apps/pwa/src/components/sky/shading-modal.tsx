@@ -8,14 +8,13 @@ import {
   shadingHourTicks,
   shadingRange,
   type ShadingKind,
+  type ShadingSetup,
   type ShadingWindow,
 } from "@/components/sky/shading";
 
 function shadingCopy(kind: ShadingKind) {
   if (kind === "morning") {
     return {
-      ariaLabel: "Morning shading",
-      titleLead: "Morning",
       enableTitle: "Morning shading",
       enableSubtitle: "Until trees or buildings block the low sun",
       hourLabel: "Shade ends",
@@ -23,8 +22,6 @@ function shadingCopy(kind: ShadingKind) {
     };
   }
   return {
-    ariaLabel: "Evening shading",
-    titleLead: "Evening",
     enableTitle: "Evening shading",
     enableSubtitle: "From when trees or buildings block the low sun",
     hourLabel: "Shade starts",
@@ -32,51 +29,33 @@ function shadingCopy(kind: ShadingKind) {
   };
 }
 
-export function ShadingModal({
+function ShadingWindowEditor({
   t,
   kind,
   value,
-  eyebrow = "Shading",
-  onSave,
-  onClose,
+  onChange,
 }: {
   t: SkyTheme;
   kind: ShadingKind;
   value: ShadingWindow;
-  eyebrow?: string;
-  onSave: (next: ShadingWindow) => void;
-  onClose: () => void;
+  onChange: (next: ShadingWindow) => void;
 }) {
-  const [v, setV] = useState(value);
   const copy = shadingCopy(kind);
   const range = shadingRange(kind);
-  const dim = !v.enabled;
+  const dim = !value.enabled;
   return (
-    <SkyEditSheet
-      t={t}
-      ariaLabel={copy.ariaLabel}
-      eyebrow={eyebrow}
-      title={
-        <>
-          {copy.titleLead}{" "}
-          <span style={{ fontStyle: "italic", fontWeight: 300 }}>shade</span>.
-        </>
-      }
-      onClose={onClose}
-      onSave={() => onSave(v)}
-    >
+    <div>
       <ObSwitchRow
         t={t}
         icon={copy.icon}
         title={copy.enableTitle}
         subtitle={copy.enableSubtitle}
-        checked={v.enabled}
-        onChange={() => setV((prev) => ({ ...prev, enabled: !prev.enabled }))}
+        checked={value.enabled}
+        onChange={() => onChange({ ...value, enabled: !value.enabled })}
       />
-
       <div
         style={{
-          marginTop: 22,
+          marginTop: 16,
           opacity: dim ? 0.4 : 1,
           pointerEvents: dim ? "none" : "auto",
           transition: "opacity 180ms ease",
@@ -110,29 +89,74 @@ export function ShadingModal({
               fontVariantNumeric: "tabular-nums",
             }}
           >
-            {formatShadingHour(v.hour)}
+            {formatShadingHour(value.hour)}
           </div>
         </div>
         <SkySlider
-          value={v.hour}
+          value={value.hour}
           min={range.min}
           max={range.max}
           step={1}
           t={t}
           labels={shadingHourTicks(range.min, range.max)}
-          onChange={(hour) => setV((prev) => ({ ...prev, hour }))}
+          onChange={(hour) => onChange({ ...value, hour })}
         />
-        <div
-          style={{
-            fontSize: 11.5,
-            color: t.fgMute,
-            fontFamily: FONT_MONO,
-            letterSpacing: "0.06em",
-            marginTop: 14,
-          }}
-        >
-          WHEN TREES OR BUILDINGS BLOCK THE LOW SUN
-        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ShadingModal({
+  t,
+  value,
+  eyebrow = "Shading",
+  onSave,
+  onClose,
+}: {
+  t: SkyTheme;
+  value: ShadingSetup;
+  eyebrow?: string;
+  onSave: (next: ShadingSetup) => void;
+  onClose: () => void;
+}) {
+  const [v, setV] = useState(value);
+  return (
+    <SkyEditSheet
+      t={t}
+      ariaLabel="Roof shading"
+      eyebrow={eyebrow}
+      title={
+        <>
+          Roof <span style={{ fontStyle: "italic", fontWeight: 300 }}>shade</span>.
+        </>
+      }
+      onClose={onClose}
+      onSave={() => onSave(v)}
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
+        <ShadingWindowEditor
+          t={t}
+          kind="morning"
+          value={v.morning}
+          onChange={(morning) => setV((prev) => ({ ...prev, morning }))}
+        />
+        <ShadingWindowEditor
+          t={t}
+          kind="evening"
+          value={v.evening}
+          onChange={(evening) => setV((prev) => ({ ...prev, evening }))}
+        />
+      </div>
+      <div
+        style={{
+          fontSize: 11.5,
+          color: t.fgMute,
+          fontFamily: FONT_MONO,
+          letterSpacing: "0.06em",
+          marginTop: 14,
+        }}
+      >
+        WHEN TREES OR BUILDINGS BLOCK THE LOW SUN
       </div>
     </SkyEditSheet>
   );

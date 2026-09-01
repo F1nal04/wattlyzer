@@ -4,7 +4,10 @@ import {
   shadingHourTicks,
   shadingRange,
   shadingRowValue,
+  shadingSettingsFromSetup,
   shadingSettingsPatch,
+  shadingSetupFromSettings,
+  shadingSetupSummary,
   shadingWindowFromSettings,
 } from "@/components/sky/shading";
 
@@ -99,5 +102,63 @@ describe("shadingWindowFromSettings", () => {
       enabled: false,
       hour: 19,
     });
+  });
+});
+
+describe("shadingSetupFromSettings", () => {
+  it("reads both windows from settings", () => {
+    expect(
+      shadingSetupFromSettings({
+        morningShading: true,
+        shadingEndTime: 8,
+        eveningShading: false,
+        shadingStartTime: 19,
+      }),
+    ).toEqual({
+      morning: { enabled: true, hour: 8 },
+      evening: { enabled: false, hour: 19 },
+    });
+  });
+});
+
+describe("shadingSettingsFromSetup", () => {
+  it("writes both windows into the settings slice", () => {
+    expect(
+      shadingSettingsFromSetup({
+        morning: { enabled: true, hour: 8 },
+        evening: { enabled: false, hour: 19 },
+      }),
+    ).toEqual({
+      morningShading: true,
+      shadingEndTime: 8,
+      eveningShading: false,
+      shadingStartTime: 19,
+    });
+  });
+});
+
+describe("shadingSetupSummary", () => {
+  it("shows Off when both windows are disabled", () => {
+    expect(
+      shadingSetupSummary({
+        morning: { enabled: false, hour: 10 },
+        evening: { enabled: false, hour: 17 },
+      }),
+    ).toBe("Off");
+  });
+
+  it("joins morning and evening row values when either window is on", () => {
+    expect(
+      shadingSetupSummary({
+        morning: { enabled: true, hour: 8 },
+        evening: { enabled: false, hour: 17 },
+      }),
+    ).toBe("until 08:00 · Off");
+    expect(
+      shadingSetupSummary({
+        morning: { enabled: true, hour: 8 },
+        evening: { enabled: true, hour: 19 },
+      }),
+    ).toBe("until 08:00 · from 19:00");
   });
 });

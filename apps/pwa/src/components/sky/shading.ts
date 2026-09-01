@@ -5,6 +5,11 @@ export type ShadingWindow = {
   hour: number;
 };
 
+export type ShadingSetup = {
+  morning: ShadingWindow;
+  evening: ShadingWindow;
+};
+
 export type ShadingSettingsSlice = {
   morningShading: boolean;
   shadingEndTime: number;
@@ -65,4 +70,33 @@ export function shadingWindowFromSettings(
     return { enabled: settings.morningShading, hour: settings.shadingEndTime };
   }
   return { enabled: settings.eveningShading, hour: settings.shadingStartTime };
+}
+
+export function shadingSetupFromSettings(
+  settings: ShadingSettingsSlice,
+): ShadingSetup {
+  return {
+    morning: shadingWindowFromSettings("morning", settings),
+    evening: shadingWindowFromSettings("evening", settings),
+  };
+}
+
+export function shadingSettingsFromSetup(
+  setup: ShadingSetup,
+): ShadingSettingsSlice {
+  return {
+    morningShading: setup.morning.enabled,
+    shadingEndTime: setup.morning.hour,
+    eveningShading: setup.evening.enabled,
+    shadingStartTime: setup.evening.hour,
+  };
+}
+
+export function shadingSetupSummary(setup: ShadingSetup): string {
+  const morning = shadingRowValue("morning", setup.morning);
+  const evening = shadingRowValue("evening", setup.evening);
+  if (morning === "Off" && evening === "Off") {
+    return "Off";
+  }
+  return `${morning} · ${evening}`;
 }
