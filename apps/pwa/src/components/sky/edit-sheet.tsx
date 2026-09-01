@@ -4,7 +4,7 @@ import { frostedGlass } from "@/components/sky/glass";
 import { useEscapeKey } from "@/components/sky/primitives";
 
 // Shared bottom sheet used by solar-panel and shading editors.
-// Edits apply as they happen; close (X, scrim, Escape) only dismisses.
+// The sheet drafts locally; close (X, scrim, Escape) commits and dismisses.
 export function SkyEditSheet({
   t,
   ariaLabel,

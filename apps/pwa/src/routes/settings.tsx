@@ -241,6 +241,10 @@ function SettingsScreen() {
   const { position } = useGeolocation();
   const [solarOpen, setSolarOpen] = useState(false);
   const [shadingOpen, setShadingOpen] = useState(false);
+  // Keep the sky and any in-flight forecast on the values from when this
+  // screen opened. Live sheet edits must not refetch solar or rescore slots;
+  // home does that when you go back.
+  const [scheduleSettings] = useState(settings);
   const searchTimespanHours =
     prefs.searchWindow === "eod"
       ? Math.ceil(
@@ -262,6 +266,7 @@ function SettingsScreen() {
     prefs.duration,
     searchTimespanHours,
     now,
+    scheduleSettings,
   );
   // Same hour as home: the recommended slot, or now until a slot exists.
   // Dark mode then switches every page onto the current local hour.

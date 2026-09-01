@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { FONT_MONO, FONT_SANS, type SkyTheme } from "@wattlyzer/theme";
 import { SkyEditSheet } from "@/components/sky/edit-sheet";
 import { SkySlider } from "@/components/sky/primitives";
@@ -80,8 +80,14 @@ export function SolarPanelsModal({
   onChange: (next: SolarConfig) => void;
   onClose: () => void;
 }) {
-  const set = (patch: Partial<SolarConfig>) => onChange({ ...value, ...patch });
-  const dim = !value.enabled;
+  const [v, setV] = useState(value);
+  const set = (patch: Partial<SolarConfig>) =>
+    setV((prev) => ({ ...prev, ...patch }));
+  const dim = !v.enabled;
+  const dismiss = () => {
+    onChange(v);
+    onClose();
+  };
   return (
     <SkyEditSheet
       t={t}
@@ -92,19 +98,19 @@ export function SolarPanelsModal({
           Your <span style={{ fontStyle: "italic", fontWeight: 300 }}>panels</span>.
         </>
       }
-      onClose={onClose}
+      onClose={dismiss}
     >
       <ObSwitchRow
         t={t}
         icon="sun"
         title="I have solar panels"
         subtitle={
-          value.enabled
+          v.enabled
             ? "Forecast uses your roof setup"
             : "Skip — Wattlyzer uses spot price only"
         }
-        checked={value.enabled}
-        onChange={() => set({ enabled: !value.enabled })}
+        checked={v.enabled}
+        onChange={() => set({ enabled: !v.enabled })}
       />
 
       <div
@@ -123,12 +129,12 @@ export function SolarPanelsModal({
           label="Orientation"
           right={
             <ModalDisplay t={t}>
-              {azimuthLabel(value.azimuth)} · {Math.round(value.azimuth)}°
+              {azimuthLabel(v.azimuth)} · {Math.round(v.azimuth)}°
             </ModalDisplay>
           }
         >
           <SkySlider
-            value={value.azimuth}
+            value={v.azimuth}
             min={0}
             max={360}
             step={5}
@@ -138,9 +144,9 @@ export function SolarPanelsModal({
           />
         </ModalField>
 
-        <ModalField t={t} label="Roof tilt" right={<ModalDisplay t={t}>{value.tilt}°</ModalDisplay>}>
+        <ModalField t={t} label="Roof tilt" right={<ModalDisplay t={t}>{v.tilt}°</ModalDisplay>}>
           <SkySlider
-            value={value.tilt}
+            value={v.tilt}
             min={0}
             max={60}
             step={1}
@@ -153,10 +159,10 @@ export function SolarPanelsModal({
         <ModalField
           t={t}
           label="System size"
-          right={<ModalDisplay t={t}>{value.sizeKw.toFixed(1)} kWp</ModalDisplay>}
+          right={<ModalDisplay t={t}>{v.sizeKw.toFixed(1)} kWp</ModalDisplay>}
         >
           <SkySlider
-            value={value.sizeKw}
+            value={v.sizeKw}
             min={1}
             max={20}
             step={0.1}
