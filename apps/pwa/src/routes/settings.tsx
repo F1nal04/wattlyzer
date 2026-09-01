@@ -25,6 +25,10 @@ import {
   shadingSetupFromSettings,
   shadingWindowFromSettings,
 } from "@/components/sky/shading";
+import {
+  solarPanelsEnabled,
+  solarSettingsSubtitle,
+} from "@/components/sky/solar";
 import { SolarPanelsModal, type SolarConfig } from "@/components/sky/solar-modal";
 import packageJson from "../../package.json";
 
@@ -237,6 +241,10 @@ function SettingsScreen() {
   const { position } = useGeolocation();
   const [solarOpen, setSolarOpen] = useState(false);
   const [shadingOpen, setShadingOpen] = useState(false);
+  // Keep the sky and any in-flight forecast on the values from when this
+  // screen opened. Live sheet edits must not refetch solar or rescore slots;
+  // home does that when you go back.
+  const [scheduleSettings] = useState(settings);
   const searchTimespanHours =
     prefs.searchWindow === "eod"
       ? Math.ceil(
@@ -258,6 +266,7 @@ function SettingsScreen() {
     prefs.duration,
     searchTimespanHours,
     now,
+    scheduleSettings,
   );
   // Same hour as home: the recommended slot, or now until a slot exists.
   // Dark mode then switches every page onto the current local hour.
@@ -265,7 +274,7 @@ function SettingsScreen() {
     schedulingResult ? schedulingResult.bestTime.getHours() : now.getHours(),
   );
   const t = skyTheme(themeHour);
-  const solarEnabled = settings.bestSlotMode !== "price-only";
+  const solarEnabled = solarPanelsEnabled(settings.bestSlotMode);
 
   const solarConfig: SolarConfig = {
     enabled: solarEnabled,
@@ -274,7 +283,7 @@ function SettingsScreen() {
     sizeKw: settings.kwh,
   };
 
-  const saveSolar = (next: SolarConfig) => {
+  const applySolar = (next: SolarConfig) => {
     updateSettings({
       azimut: next.azimuth,
       angle: next.tilt,
@@ -287,7 +296,6 @@ function SettingsScreen() {
           : {}
         : { bestSlotMode: "price-only" as const }),
     });
-    setSolarOpen(false);
   };
 
   return (
@@ -325,28 +333,40 @@ function SettingsScreen() {
       >
         <SetGroup
           title="Solar panels"
-          subtitle="Used to estimate production for your roof."
+          subtitle={solarSettingsSubtitle(solarEnabled)}
           t={t}
         >
-          <SetRow
-            label="Peak power"
-            value={`${settings.kwh.toFixed(1)} kWp`}
-            t={t}
-            onClick={() => setSolarOpen(true)}
-          />
-          <SetRow
-            label="Azimuth"
-            value={`${Math.round(settings.azimut)}° ${azimuthLabel(settings.azimut)}`}
-            t={t}
-            onClick={() => setSolarOpen(true)}
-          />
-          <SetRow
-            label="Tilt"
-            value={`${Math.round(settings.angle)}°`}
-            t={t}
-            last
-            onClick={() => setSolarOpen(true)}
-          />
+          {solarEnabled ? (
+            <>
+              <SetRow
+                label="Peak power"
+                value={`${settings.kwh.toFixed(1)} kWp`}
+                t={t}
+                onClick={() => setSolarOpen(true)}
+              />
+              <SetRow
+                label="Azimuth"
+                value={`${Math.round(settings.azimut)}° ${azimuthLabel(settings.azimut)}`}
+                t={t}
+                onClick={() => setSolarOpen(true)}
+              />
+              <SetRow
+                label="Tilt"
+                value={`${Math.round(settings.angle)}°`}
+                t={t}
+                last
+                onClick={() => setSolarOpen(true)}
+              />
+            </>
+          ) : (
+            <SetRow
+              label="Status"
+              value="Off"
+              t={t}
+              last
+              onClick={() => setSolarOpen(true)}
+            />
+          )}
         </SetGroup>
 
         <SetGroup
@@ -418,7 +438,7 @@ function SettingsScreen() {
           t={t}
           value={solarConfig}
           eyebrow="Settings · Solar"
-          onSave={saveSolar}
+          onChange={applySolar}
           onClose={() => setSolarOpen(false)}
         />
       )}
@@ -427,10 +447,7 @@ function SettingsScreen() {
           t={t}
           value={shadingSetupFromSettings(settings)}
           eyebrow="Settings · Shading"
-          onSave={(setup) => {
-            updateSettings(shadingSettingsFromSetup(setup));
-            setShadingOpen(false);
-          }}
+          onChange={(setup) => updateSettings(shadingSettingsFromSetup(setup))}
           onClose={() => setShadingOpen(false)}
         />
       )}

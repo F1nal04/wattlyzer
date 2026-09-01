@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   marketQueryOptions,
@@ -9,7 +9,10 @@ import {
   calculateSchedule,
   checkMarketDataSufficiency,
 } from "@wattlyzer/core";
-import { toSchedulingSettings, useSettings } from "@/lib/settings";
+import {
+  toSchedulingSettings,
+  type SettingsData,
+} from "@/lib/settings";
 
 export function useGeolocation() {
   const [position, setPosition] = useState<Position | null>(null);
@@ -59,8 +62,8 @@ export function useScheduling(
   consumerDuration: number,
   searchTimespan: number,
   now: Date,
+  settings: SettingsData,
 ) {
-  const { settings } = useSettings();
   const needsMarketData = settings.bestSlotMode !== "solar-only";
 
   const solarQuery = useQuery({
@@ -82,14 +85,18 @@ export function useScheduling(
   const solarData = solarQuery.data ?? null;
   const marketData = needsMarketData ? (marketQuery.data ?? null) : null;
 
-  const { schedulingResult, topSlotsResult } = calculateSchedule({
-    solarData,
-    marketData,
-    settings: toSchedulingSettings(settings),
-    consumerDuration,
-    searchTimespan,
-    now,
-  });
+  const { schedulingResult, topSlotsResult } = useMemo(
+    () =>
+      calculateSchedule({
+        solarData,
+        marketData,
+        settings: toSchedulingSettings(settings),
+        consumerDuration,
+        searchTimespan,
+        now,
+      }),
+    [solarData, marketData, settings, consumerDuration, searchTimespan, now],
+  );
 
   const marketDataSufficiency = checkMarketDataSufficiency(
     marketData,

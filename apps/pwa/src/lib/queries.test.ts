@@ -89,6 +89,19 @@ describe("solarQueryOptions", () => {
     ]);
   });
 
+  it("issues a distinct cache key when azimuth, tilt, or size change", () => {
+    const base = [...solarQueryOptions(params).queryKey];
+    expect([...solarQueryOptions({ ...params, azimut: 90 }).queryKey]).not.toEqual(
+      base,
+    );
+    expect([...solarQueryOptions({ ...params, angle: 30 }).queryKey]).not.toEqual(
+      base,
+    );
+    expect([...solarQueryOptions({ ...params, kwh: 8 }).queryKey]).not.toEqual(
+      base,
+    );
+  });
+
   it("fetches forecast.solar with rounded coords and converted azimuth", async () => {
     const calls = stubFetch({ ok: true, body: { result: {} } });
     await runQueryFn(solarQueryOptions(params));

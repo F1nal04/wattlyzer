@@ -496,10 +496,7 @@ function ObSetup({
           t={t}
           value={solar}
           eyebrow="Step 03 · Solar"
-          onSave={(next) => {
-            setSolar(next);
-            setSolarOpen(false);
-          }}
+          onChange={setSolar}
           onClose={() => setSolarOpen(false)}
         />
       )}
@@ -508,10 +505,7 @@ function ObSetup({
           t={t}
           value={shading}
           eyebrow="Step 03 · Shading"
-          onSave={(next) => {
-            setShading(next);
-            setShadingOpen(false);
-          }}
+          onChange={setShading}
           onClose={() => setShadingOpen(false)}
         />
       )}

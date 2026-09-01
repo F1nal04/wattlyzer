@@ -110,16 +110,20 @@ export function ShadingModal({
   t,
   value,
   eyebrow = "Shading",
-  onSave,
+  onChange,
   onClose,
 }: {
   t: SkyTheme;
   value: ShadingSetup;
   eyebrow?: string;
-  onSave: (next: ShadingSetup) => void;
+  onChange: (next: ShadingSetup) => void;
   onClose: () => void;
 }) {
   const [v, setV] = useState(value);
+  const dismiss = () => {
+    onChange(v);
+    onClose();
+  };
   return (
     <SkyEditSheet
       t={t}
@@ -130,8 +134,7 @@ export function ShadingModal({
           Roof <span style={{ fontStyle: "italic", fontWeight: 300 }}>shade</span>.
         </>
       }
-      onClose={onClose}
-      onSave={() => onSave(v)}
+      onClose={dismiss}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
         <ShadingWindowEditor

@@ -71,19 +71,23 @@ export function SolarPanelsModal({
   t,
   value,
   eyebrow = "Solar",
-  onSave,
+  onChange,
   onClose,
 }: {
   t: SkyTheme;
   value: SolarConfig;
   eyebrow?: string;
-  onSave: (next: SolarConfig) => void;
+  onChange: (next: SolarConfig) => void;
   onClose: () => void;
 }) {
   const [v, setV] = useState(value);
   const set = (patch: Partial<SolarConfig>) =>
     setV((prev) => ({ ...prev, ...patch }));
   const dim = !v.enabled;
+  const dismiss = () => {
+    onChange(v);
+    onClose();
+  };
   return (
     <SkyEditSheet
       t={t}
@@ -94,8 +98,7 @@ export function SolarPanelsModal({
           Your <span style={{ fontStyle: "italic", fontWeight: 300 }}>panels</span>.
         </>
       }
-      onClose={onClose}
-      onSave={() => onSave(v)}
+      onClose={dismiss}
     >
       <ObSwitchRow
         t={t}

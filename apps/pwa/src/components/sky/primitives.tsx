@@ -2,6 +2,7 @@ import { useEffect, type CSSProperties, type ReactNode } from "react";
 import { FONT_MONO, FONT_SANS, type SkyTheme } from "@wattlyzer/theme";
 import { frostedGlass } from "@/components/sky/glass";
 import { WIcon } from "@/components/sky/icons";
+import { isBestSlotModeSelectable } from "@/components/sky/solar";
 import type { BestSlotMode, SearchWindow } from "@/lib/settings";
 
 // Close sheets/modals on Escape
@@ -206,10 +207,12 @@ export function SkyModeSeg({
   value,
   onChange,
   t,
+  solarEnabled = true,
 }: {
   value: BestSlotMode;
   onChange?: (value: BestSlotMode) => void;
   t: SkyTheme;
+  solarEnabled?: boolean;
 }) {
   const opts = [
     { v: "combined", label: "Both", icon: "scale" },
@@ -231,13 +234,18 @@ export function SkyModeSeg({
     >
       {opts.map((o) => {
         const active = value === o.v;
+        const selectable = isBestSlotModeSelectable(o.v, solarEnabled);
         return (
           <button
             key={o.v}
-            onClick={() => onChange && onChange(o.v)}
+            type="button"
+            disabled={!selectable}
+            aria-disabled={!selectable}
+            aria-label={selectable ? undefined : `${o.label}, unavailable`}
+            onClick={() => selectable && onChange && onChange(o.v)}
             style={{
               border: "none",
-              cursor: "pointer",
+              cursor: selectable ? "pointer" : "not-allowed",
               padding: "9px 6px",
               borderRadius: 10,
               fontFamily: FONT_SANS,
@@ -247,6 +255,7 @@ export function SkyModeSeg({
               alignItems: "center",
               justifyContent: "center",
               gap: 5,
+              opacity: selectable ? 1 : 0.4,
               background: active
                 ? t.mode === "dark"
                   ? "rgba(255,255,255,0.92)"

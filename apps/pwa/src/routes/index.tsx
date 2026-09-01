@@ -72,7 +72,13 @@ function HomeScreen() {
     isLoading,
     apiError,
     marketDataSufficiency,
-  } = useScheduling(position, prefs.duration, searchTimespanHours, now);
+  } = useScheduling(
+    position,
+    prefs.duration,
+    searchTimespanHours,
+    now,
+    settings,
+  );
 
   useEffect(() => {
     if (mounted && !prefs.onboarded) {
