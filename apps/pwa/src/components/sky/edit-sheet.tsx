@@ -4,13 +4,13 @@ import { frostedGlass } from "@/components/sky/glass";
 import { useEscapeKey } from "@/components/sky/primitives";
 
 // Shared bottom sheet used by solar-panel and shading editors.
+// Edits apply as they happen; close (X, scrim, Escape) only dismisses.
 export function SkyEditSheet({
   t,
   ariaLabel,
   eyebrow,
   title,
   onClose,
-  onSave,
   children,
 }: {
   t: SkyTheme;
@@ -18,7 +18,6 @@ export function SkyEditSheet({
   eyebrow?: string;
   title: ReactNode;
   onClose: () => void;
-  onSave: () => void;
   children: ReactNode;
 }) {
   useEscapeKey(onClose);
@@ -135,58 +134,11 @@ export function SkyEditSheet({
             flex: 1,
             minHeight: 0,
             overflowY: "auto",
-            padding: "18px 22px 8px",
+            padding: "18px 22px calc(env(safe-area-inset-bottom, 0px) + 28px)",
             WebkitOverflowScrolling: "touch",
           }}
         >
           {children}
-        </div>
-
-        <div
-          style={{
-            padding: "14px 22px calc(env(safe-area-inset-bottom, 0px) + 22px)",
-            flexShrink: 0,
-            borderTop: `1px solid ${t.glassBd}`,
-            background: t.mode === "dark" ? "#1a1410" : "#fff8e7",
-            display: "flex",
-            gap: 10,
-          }}
-        >
-          <button
-            onClick={onClose}
-            style={{
-              flex: 1,
-              padding: "15px 18px",
-              background: "transparent",
-              color: t.fg,
-              border: `1px solid ${t.glassBd}`,
-              borderRadius: 16,
-              cursor: "pointer",
-              fontFamily: FONT_SANS,
-              fontSize: 14,
-              fontWeight: 500,
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onSave}
-            style={{
-              flex: 2,
-              padding: "15px 18px",
-              border: t.mode === "dark" ? "none" : "1.5px solid #1a1410",
-              background: t.mode === "dark" ? "#fff" : "#1a1410",
-              color: t.mode === "dark" ? "#1a1410" : "#fff8e7",
-              borderRadius: 16,
-              cursor: "pointer",
-              fontFamily: FONT_SANS,
-              fontSize: 15,
-              fontWeight: 600,
-              letterSpacing: "0.01em",
-            }}
-          >
-            Save
-          </button>
         </div>
       </div>
     </div>

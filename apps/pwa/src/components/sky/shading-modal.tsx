@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { FONT_MONO, FONT_SANS, type SkyTheme } from "@wattlyzer/theme";
 import { SkyEditSheet } from "@/components/sky/edit-sheet";
 import { SkySlider } from "@/components/sky/primitives";
@@ -110,16 +109,15 @@ export function ShadingModal({
   t,
   value,
   eyebrow = "Shading",
-  onSave,
+  onChange,
   onClose,
 }: {
   t: SkyTheme;
   value: ShadingSetup;
   eyebrow?: string;
-  onSave: (next: ShadingSetup) => void;
+  onChange: (next: ShadingSetup) => void;
   onClose: () => void;
 }) {
-  const [v, setV] = useState(value);
   return (
     <SkyEditSheet
       t={t}
@@ -131,20 +129,19 @@ export function ShadingModal({
         </>
       }
       onClose={onClose}
-      onSave={() => onSave(v)}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
         <ShadingWindowEditor
           t={t}
           kind="morning"
-          value={v.morning}
-          onChange={(morning) => setV((prev) => ({ ...prev, morning }))}
+          value={value.morning}
+          onChange={(morning) => onChange({ ...value, morning })}
         />
         <ShadingWindowEditor
           t={t}
           kind="evening"
-          value={v.evening}
-          onChange={(evening) => setV((prev) => ({ ...prev, evening }))}
+          value={value.evening}
+          onChange={(evening) => onChange({ ...value, evening })}
         />
       </div>
       <div

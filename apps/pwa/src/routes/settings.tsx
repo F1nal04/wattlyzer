@@ -278,7 +278,7 @@ function SettingsScreen() {
     sizeKw: settings.kwh,
   };
 
-  const saveSolar = (next: SolarConfig) => {
+  const applySolar = (next: SolarConfig) => {
     updateSettings({
       azimut: next.azimuth,
       angle: next.tilt,
@@ -291,7 +291,6 @@ function SettingsScreen() {
           : {}
         : { bestSlotMode: "price-only" as const }),
     });
-    setSolarOpen(false);
   };
 
   return (
@@ -434,7 +433,7 @@ function SettingsScreen() {
           t={t}
           value={solarConfig}
           eyebrow="Settings · Solar"
-          onSave={saveSolar}
+          onChange={applySolar}
           onClose={() => setSolarOpen(false)}
         />
       )}
@@ -443,10 +442,7 @@ function SettingsScreen() {
           t={t}
           value={shadingSetupFromSettings(settings)}
           eyebrow="Settings · Shading"
-          onSave={(setup) => {
-            updateSettings(shadingSettingsFromSetup(setup));
-            setShadingOpen(false);
-          }}
+          onChange={(setup) => updateSettings(shadingSettingsFromSetup(setup))}
           onClose={() => setShadingOpen(false)}
         />
       )}
