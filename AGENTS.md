@@ -62,6 +62,8 @@ The Astro site is static, bilingual, and framework-free. English routes are unpr
 
 GitHub Actions uses `nx affected` with full Git history. Release Please maintains one product release line and synchronizes the root, PWA, and marketing-site package versions.
 
+PRs use merge commits, so do not put a conventional-commit subject (`feat:`, `fix(pwa):`, …) in the pull request title. GitHub copies that title into the merge commit body, and Release Please then records both the original commit and the merge body as changelog entries. Keep conventional commits on the commits themselves; use a plain-language PR title.
+
 Each app owns a `netlify.toml`. In Netlify, set package directories to `apps/pwa` and `apps/website` and leave the base directory unset. PWA build outputs are `apps/pwa/dist` plus `apps/pwa/.netlify`; website output is `apps/website/dist`.
 
 Update this AGENTS.md together with major workspace or architectural changes.
