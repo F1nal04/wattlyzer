@@ -22,6 +22,11 @@ import {
   shadingSetupSummary,
   type ShadingSetup,
 } from "@/components/sky/shading";
+import {
+  bestSlotModeFromSignals,
+  NOTHING_TO_SCHEDULE,
+  schedulingSignalsAvailable,
+} from "@/components/sky/solar";
 import { SolarPanelsModal, type SolarConfig } from "@/components/sky/solar-modal";
 
 export const Route = createFileRoute("/onboarding")({
@@ -409,9 +414,16 @@ function ObSetup({
   const [solarOpen, setSolarOpen] = useState(false);
   const [shadingOpen, setShadingOpen] = useState(false);
   const { settings } = useSettings();
+  const nothingToSchedule = !schedulingSignalsAvailable(
+    solar.enabled,
+    dynamicTariff,
+  );
+  const canContinue = consentShare && !nothingToSchedule;
   const solarStatus = solar.enabled
     ? `${solar.sizeKw.toFixed(1)} kWp · ${azimuthLabel(solar.azimuth)} · ${solar.tilt}° tilt`
-    : "No solar — price-only";
+    : dynamicTariff
+      ? "No solar — price-only"
+      : "No solar";
 
   return (
     <ObFrame step={2} t={t} onBack={onBack} onSkip={onSkip}>
@@ -426,7 +438,9 @@ function ObSetup({
           top: "calc(env(safe-area-inset-top, 0px) + 214px)",
           left: 24,
           right: 24,
-          bottom: "calc(env(safe-area-inset-bottom, 0px) + 116px)",
+          bottom: nothingToSchedule
+            ? "calc(env(safe-area-inset-bottom, 0px) + 196px)"
+            : "calc(env(safe-area-inset-bottom, 0px) + 116px)",
           overflowY: "auto",
           WebkitOverflowScrolling: "touch",
           display: "flex",
@@ -485,8 +499,42 @@ function ObSetup({
         />
       </div>
 
-      <BottomCta dimmed={!consentShare}>
-        <SkyPrimaryButton t={t} onClick={onNext} disabled={!consentShare}>
+      {nothingToSchedule && (
+        <div
+          style={{
+            position: "absolute",
+            left: 28,
+            right: 28,
+            bottom: "calc(env(safe-area-inset-bottom, 0px) + 108px)",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: FONT_DISPLAY,
+              fontSize: 22,
+              lineHeight: 1.15,
+              letterSpacing: "-0.015em",
+              color: t.fg,
+            }}
+          >
+            {NOTHING_TO_SCHEDULE.title}
+          </div>
+          <div
+            style={{
+              marginTop: 6,
+              fontSize: 13,
+              color: t.fgDim,
+              lineHeight: 1.45,
+            }}
+          >
+            {NOTHING_TO_SCHEDULE.body}
+          </div>
+        </div>
+      )}
+
+      <BottomCta dimmed={!canContinue}>
+        <SkyPrimaryButton t={t} onClick={onNext} disabled={!canContinue}>
           Continue
         </SkyPrimaryButton>
       </BottomCta>
@@ -627,20 +675,23 @@ function OnboardingScreen() {
 
   const finish = (save: boolean) => {
     if (save) {
-      updateSettings({
-        azimut: solar.azimuth,
-        angle: solar.tilt,
-        kwh: solar.sizeKw,
-        morningShading: shading.morning.enabled,
-        shadingEndTime: shading.morning.hour,
-        eveningShading: shading.evening.enabled,
-        shadingStartTime: shading.evening.hour,
-        bestSlotMode: !solar.enabled
-          ? "price-only"
-          : !dynamicTariff
-            ? "solar-only"
-            : "combined",
-      });
+      const bestSlotMode = bestSlotModeFromSignals(
+        solar.enabled,
+        dynamicTariff,
+      );
+      if (bestSlotMode) {
+        updateSettings({
+          azimut: solar.azimuth,
+          angle: solar.tilt,
+          kwh: solar.sizeKw,
+          morningShading: shading.morning.enabled,
+          shadingEndTime: shading.morning.hour,
+          eveningShading: shading.evening.enabled,
+          shadingStartTime: shading.evening.hour,
+          bestSlotMode,
+          dynamicTariff,
+        });
+      }
     }
     updatePrefs({ onboarded: true });
     navigate({ to: "/" });

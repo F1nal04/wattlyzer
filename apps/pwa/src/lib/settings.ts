@@ -100,6 +100,7 @@ export interface SettingsData {
   shadingStartTime: number; // Hour when evening shading starts (0-23)
   bestSlotMode: BestSlotMode; // UI mode for choosing how the best timeslot should be ranked
   ignoreSolarForBestSlot: boolean; // Ignore solar production when calculating best timeslot
+  dynamicTariff: boolean; // Hourly spot price is available (e.g. Tibber, aWATTar)
   currentTimeSky: boolean; // UI "Dark mode": derive the sky palette from the
                            // current local hour instead of the recommended slot
 }
@@ -129,6 +130,7 @@ const defaultSettings: SettingsData = {
   shadingStartTime: 17,
   bestSlotMode: "combined",
   ignoreSolarForBestSlot: false,
+  dynamicTariff: true,
   currentTimeSky: false,
 };
 

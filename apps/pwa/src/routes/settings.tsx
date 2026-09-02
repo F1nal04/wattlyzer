@@ -26,6 +26,10 @@ import {
   shadingWindowFromSettings,
 } from "@/components/sky/shading";
 import {
+  bestSlotModeAfterSolarToggle,
+  bestSlotModeAfterTariffToggle,
+  NOTHING_TO_SCHEDULE,
+  schedulingSignalsAvailable,
   solarPanelsEnabled,
   solarSettingsSubtitle,
 } from "@/components/sky/solar";
@@ -275,6 +279,10 @@ function SettingsScreen() {
   );
   const t = skyTheme(themeHour);
   const solarEnabled = solarPanelsEnabled(settings.bestSlotMode);
+  const canSchedule = schedulingSignalsAvailable(
+    solarEnabled,
+    settings.dynamicTariff,
+  );
 
   const solarConfig: SolarConfig = {
     enabled: solarEnabled,
@@ -288,13 +296,11 @@ function SettingsScreen() {
       azimut: next.azimuth,
       angle: next.tilt,
       kwh: next.sizeKw,
-      // Toggling panels off forces price-only; toggling back on restores a
-      // solar-aware mode (otherwise there is no way to re-enable solar here)
-      ...(next.enabled
-        ? settings.bestSlotMode === "price-only"
-          ? { bestSlotMode: "combined" as const }
-          : {}
-        : { bestSlotMode: "price-only" as const }),
+      bestSlotMode: bestSlotModeAfterSolarToggle(
+        next.enabled,
+        settings.bestSlotMode,
+        settings.dynamicTariff,
+      ),
     });
   };
 
@@ -331,9 +337,35 @@ function SettingsScreen() {
           WebkitOverflowScrolling: "touch",
         }}
       >
+        {!canSchedule && (
+          <div style={{ marginBottom: 22, textAlign: "center" }}>
+            <div
+              style={{
+                fontFamily: FONT_DISPLAY,
+                fontSize: 22,
+                lineHeight: 1.15,
+                letterSpacing: "-0.015em",
+                color: t.fg,
+              }}
+            >
+              {NOTHING_TO_SCHEDULE.title}
+            </div>
+            <div
+              style={{
+                marginTop: 6,
+                fontSize: 13,
+                color: t.fgDim,
+                lineHeight: 1.45,
+              }}
+            >
+              {NOTHING_TO_SCHEDULE.body}
+            </div>
+          </div>
+        )}
+
         <SetGroup
           title="Solar panels"
-          subtitle={solarSettingsSubtitle(solarEnabled)}
+          subtitle={solarSettingsSubtitle(solarEnabled, settings.dynamicTariff)}
           t={t}
         >
           {solarEnabled ? (
@@ -367,6 +399,23 @@ function SettingsScreen() {
               onClick={() => setSolarOpen(true)}
             />
           )}
+        </SetGroup>
+
+        <SetGroup title="Tariff" t={t}>
+          <SetToggleRow
+            label="Dynamic tariff"
+            detail="Hourly spot price (e.g. Tibber, aWATTar)"
+            on={settings.dynamicTariff}
+            onToggle={() => {
+              const next = !settings.dynamicTariff;
+              updateSettings({
+                dynamicTariff: next,
+                bestSlotMode: bestSlotModeAfterTariffToggle(next, solarEnabled),
+              });
+            }}
+            t={t}
+            last
+          />
         </SetGroup>
 
         <SetGroup

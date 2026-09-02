@@ -15,6 +15,11 @@ import {
   SkyHero,
 } from "@/components/sky/home";
 import {
+  NOTHING_TO_SCHEDULE,
+  schedulingSignalsAvailable,
+  solarPanelsEnabled,
+} from "@/components/sky/solar";
+import {
   Hills,
   SkyAppBar,
   SkyIconBtn,
@@ -110,7 +115,13 @@ function HomeScreen() {
   );
 
   const invalidConfig = searchTimespanHours < prefs.duration;
+  const solarEnabled = solarPanelsEnabled(settings.bestSlotMode);
+  const canSchedule = schedulingSignalsAvailable(
+    solarEnabled,
+    settings.dynamicTariff,
+  );
   const showMarketDataWarning =
+    canSchedule &&
     settings.bestSlotMode !== "solar-only" &&
     !!position &&
     !invalidConfig &&
@@ -122,6 +133,10 @@ function HomeScreen() {
   // success case (ClockCluster) is rendered separately below and can coexist
   // with the loading message while a stale result is still on screen.
   function pickClockStatus(): { title: string; body: string } | null {
+    if (!canSchedule) {
+      return NOTHING_TO_SCHEDULE;
+    }
+
     if (!position) {
       return locationError
         ? {
@@ -191,7 +206,7 @@ function HomeScreen() {
     );
   const hills = <Hills t={t} />;
   const cluster =
-    position && !invalidConfig && schedulingResult ? (
+    canSchedule && position && !invalidConfig && schedulingResult ? (
       <ClockCluster t={t} result={schedulingResult} duration={prefs.duration} />
     ) : null;
   const dock = (

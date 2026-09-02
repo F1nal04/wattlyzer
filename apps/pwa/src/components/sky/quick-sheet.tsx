@@ -19,7 +19,10 @@ export function QuickSheet({ t, onClose }: { t: SkyTheme; onClose: () => void })
   const { prefs, updatePrefs } = usePrefs();
   useEscapeKey(onClose);
   const solarEnabled = solarPanelsEnabled(settings.bestSlotMode);
-  const modeHint = solarModeUnavailableHint(solarEnabled);
+  const modeHint = solarModeUnavailableHint(
+    solarEnabled,
+    settings.dynamicTariff,
+  );
 
   return (
     <div
