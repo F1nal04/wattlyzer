@@ -97,6 +97,7 @@ export function QuickSheet({ t, onClose }: { t: SkyTheme; onClose: () => void })
             <SkyModeSeg
               value={settings.bestSlotMode}
               solarEnabled={solarEnabled}
+              dynamicTariff={settings.dynamicTariff}
               onChange={(v) => updateSettings({ bestSlotMode: v })}
               t={t}
             />

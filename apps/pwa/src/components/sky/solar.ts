@@ -46,9 +46,11 @@ export function bestSlotModeAfterTariffToggle(
 export function isBestSlotModeSelectable(
   option: BestSlotMode,
   solarEnabled: boolean,
+  dynamicTariff = true,
 ): boolean {
-  if (solarEnabled) return true;
-  return option === "price-only";
+  if (option === "combined") return solarEnabled && dynamicTariff;
+  if (option === "solar-only") return solarEnabled;
+  return dynamicTariff;
 }
 
 export function solarSettingsSubtitle(
@@ -67,7 +69,11 @@ export function solarModeUnavailableHint(
   if (!schedulingSignalsAvailable(solarEnabled, dynamicTariff)) {
     return "Turn on solar panels or a dynamic tariff in Settings.";
   }
-  return solarEnabled
-    ? null
-    : "Turn on solar panels in Settings to use Solar or Both.";
+  if (!solarEnabled) {
+    return "Turn on solar panels in Settings to use Solar or Both.";
+  }
+  if (!dynamicTariff) {
+    return "Turn on a dynamic tariff in Settings to use Both or Price.";
+  }
+  return null;
 }

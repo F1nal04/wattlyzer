@@ -23,16 +23,22 @@ describe("solarPanelsEnabled", () => {
 });
 
 describe("isBestSlotModeSelectable", () => {
-  it("keeps every mode available while panels are on", () => {
-    expect(isBestSlotModeSelectable("combined", true)).toBe(true);
-    expect(isBestSlotModeSelectable("solar-only", true)).toBe(true);
-    expect(isBestSlotModeSelectable("price-only", true)).toBe(true);
+  it("keeps every mode available while panels and a tariff are on", () => {
+    expect(isBestSlotModeSelectable("combined", true, true)).toBe(true);
+    expect(isBestSlotModeSelectable("solar-only", true, true)).toBe(true);
+    expect(isBestSlotModeSelectable("price-only", true, true)).toBe(true);
   });
 
   it("blocks Solar and Both while panels are off, and leaves Price available", () => {
-    expect(isBestSlotModeSelectable("combined", false)).toBe(false);
-    expect(isBestSlotModeSelectable("solar-only", false)).toBe(false);
-    expect(isBestSlotModeSelectable("price-only", false)).toBe(true);
+    expect(isBestSlotModeSelectable("combined", false, true)).toBe(false);
+    expect(isBestSlotModeSelectable("solar-only", false, true)).toBe(false);
+    expect(isBestSlotModeSelectable("price-only", false, true)).toBe(true);
+  });
+
+  it("blocks Both and Price while the tariff is off, and leaves Solar available", () => {
+    expect(isBestSlotModeSelectable("combined", true, false)).toBe(false);
+    expect(isBestSlotModeSelectable("solar-only", true, false)).toBe(true);
+    expect(isBestSlotModeSelectable("price-only", true, false)).toBe(false);
   });
 });
 
@@ -60,6 +66,12 @@ describe("solarModeUnavailableHint", () => {
   it("explains how to restore solar-aware modes while panels are off", () => {
     expect(solarModeUnavailableHint(false)).toBe(
       "Turn on solar panels in Settings to use Solar or Both.",
+    );
+  });
+
+  it("explains how to restore price-aware modes while the tariff is off", () => {
+    expect(solarModeUnavailableHint(true, false)).toBe(
+      "Turn on a dynamic tariff in Settings to use Both or Price.",
     );
   });
 
