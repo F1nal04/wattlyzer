@@ -36,6 +36,28 @@ export function bestSlotModeAfterSolarToggle(
   return dynamicTariff ? "combined" : "solar-only";
 }
 
+export function settingsPatchFromSolarConfig(
+  next: {
+    enabled: boolean;
+    azimuth: number;
+    tilt: number;
+    sizeKw: number;
+  },
+  currentMode: BestSlotMode,
+  dynamicTariff: boolean,
+) {
+  return {
+    azimut: next.azimuth,
+    angle: next.tilt,
+    kwh: next.sizeKw,
+    bestSlotMode: bestSlotModeAfterSolarToggle(
+      next.enabled,
+      currentMode,
+      dynamicTariff,
+    ),
+  };
+}
+
 export function bestSlotModeAfterTariffToggle(
   dynamicTariff: boolean,
   solarEnabled: boolean,

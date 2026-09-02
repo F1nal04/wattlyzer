@@ -6,6 +6,7 @@ import {
   isBestSlotModeSelectable,
   NOTHING_TO_SCHEDULE,
   schedulingSignalsAvailable,
+  settingsPatchFromSolarConfig,
   solarModeUnavailableHint,
   solarPanelsEnabled,
   solarSettingsSubtitle,
@@ -141,6 +142,42 @@ describe("bestSlotModeAfterSolarToggle", () => {
     expect(bestSlotModeAfterSolarToggle(true, "combined", true)).toBe(
       "combined",
     );
+  });
+});
+
+describe("settingsPatchFromSolarConfig", () => {
+  const panels = { azimuth: 180, tilt: 45, sizeKw: 5 };
+
+  it("writes price-only as soon as panels turn off from Both or Solar", () => {
+    expect(
+      settingsPatchFromSolarConfig(
+        { ...panels, enabled: false },
+        "combined",
+        true,
+      ).bestSlotMode,
+    ).toBe("price-only");
+    expect(
+      settingsPatchFromSolarConfig(
+        { ...panels, enabled: false },
+        "solar-only",
+        true,
+      ).bestSlotMode,
+    ).toBe("price-only");
+  });
+
+  it("carries roof geometry through with the mode change", () => {
+    expect(
+      settingsPatchFromSolarConfig(
+        { enabled: false, azimuth: 90, tilt: 30, sizeKw: 8.5 },
+        "combined",
+        true,
+      ),
+    ).toEqual({
+      azimut: 90,
+      angle: 30,
+      kwh: 8.5,
+      bestSlotMode: "price-only",
+    });
   });
 });
 
