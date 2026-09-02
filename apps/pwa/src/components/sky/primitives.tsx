@@ -208,11 +208,13 @@ export function SkyModeSeg({
   onChange,
   t,
   solarEnabled = true,
+  dynamicTariff = true,
 }: {
   value: BestSlotMode;
   onChange?: (value: BestSlotMode) => void;
   t: SkyTheme;
   solarEnabled?: boolean;
+  dynamicTariff?: boolean;
 }) {
   const opts = [
     { v: "combined", label: "Both", icon: "scale" },
@@ -234,7 +236,11 @@ export function SkyModeSeg({
     >
       {opts.map((o) => {
         const active = value === o.v;
-        const selectable = isBestSlotModeSelectable(o.v, solarEnabled);
+        const selectable = isBestSlotModeSelectable(
+          o.v,
+          solarEnabled,
+          dynamicTariff,
+        );
         return (
           <button
             key={o.v}

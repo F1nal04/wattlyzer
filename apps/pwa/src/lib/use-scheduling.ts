@@ -13,6 +13,10 @@ import {
   toSchedulingSettings,
   type SettingsData,
 } from "@/lib/settings";
+import {
+  schedulingSignalsAvailable,
+  solarPanelsEnabled,
+} from "@/components/sky/solar";
 
 export function useGeolocation() {
   const [position, setPosition] = useState<Position | null>(null);
@@ -65,6 +69,11 @@ export function useScheduling(
   settings: SettingsData,
 ) {
   const needsMarketData = settings.bestSlotMode !== "solar-only";
+  const canSchedule = schedulingSignalsAvailable(
+    solarPanelsEnabled(settings.bestSlotMode),
+    settings.dynamicTariff,
+  );
+  const queriesEnabled = position !== null && canSchedule;
 
   const solarQuery = useQuery({
     ...solarQueryOptions({
@@ -74,12 +83,12 @@ export function useScheduling(
       azimut: settings.azimut,
       kwh: settings.kwh,
     }),
-    enabled: position !== null,
+    enabled: queriesEnabled,
   });
 
   const marketQuery = useQuery({
     ...marketQueryOptions(),
-    enabled: position !== null && needsMarketData,
+    enabled: queriesEnabled && needsMarketData,
   });
 
   const solarData = solarQuery.data ?? null;
@@ -87,15 +96,25 @@ export function useScheduling(
 
   const { schedulingResult, topSlotsResult } = useMemo(
     () =>
-      calculateSchedule({
-        solarData,
-        marketData,
-        settings: toSchedulingSettings(settings),
-        consumerDuration,
-        searchTimespan,
-        now,
-      }),
-    [solarData, marketData, settings, consumerDuration, searchTimespan, now],
+      canSchedule
+        ? calculateSchedule({
+            solarData,
+            marketData,
+            settings: toSchedulingSettings(settings),
+            consumerDuration,
+            searchTimespan,
+            now,
+          })
+        : { schedulingResult: null, topSlotsResult: null },
+    [
+      canSchedule,
+      solarData,
+      marketData,
+      settings,
+      consumerDuration,
+      searchTimespan,
+      now,
+    ],
   );
 
   const marketDataSufficiency = checkMarketDataSufficiency(
@@ -105,12 +124,14 @@ export function useScheduling(
   );
 
   const isLoading =
-    position !== null &&
+    queriesEnabled &&
     (solarQuery.isPending || (needsMarketData && marketQuery.isPending));
   const apiError =
-    solarQuery.error?.message ??
-    (needsMarketData ? marketQuery.error?.message : undefined) ??
-    null;
+    canSchedule
+      ? (solarQuery.error?.message ??
+        (needsMarketData ? marketQuery.error?.message : undefined) ??
+        null)
+      : null;
 
   return {
     solarData,

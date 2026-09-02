@@ -33,7 +33,7 @@ For a future Expo app, add `apps/mobile` and reuse `core`, `api-client`, and `th
 
 **Data (`apps/pwa/src/lib/queries.ts`).** TanStack Query adapters wrap `@wattlyzer/api-client`. Results persist to `localStorage` under `wattlyzer_query_cache` for one hour. Query keys round coordinates to two decimals.
 
-**Client state (`apps/pwa/src/lib/settings.ts`).** The settings and preferences stores remain browser-specific. Preserve the `wattlyzer_settings` and `wattlyzer_prefs` keys, legacy migrations, and synchronization between `bestSlotMode` and `ignoreSolarForBestSlot`. `toSchedulingSettings` is the boundary into the pure core package.
+**Client state (`apps/pwa/src/lib/settings.ts`).** The settings and preferences stores remain browser-specific. Preserve the `wattlyzer_settings` and `wattlyzer_prefs` keys, legacy migrations, and synchronization between `bestSlotMode` and `ignoreSolarForBestSlot`. Persist `dynamicTariff` independently so panels-off plus no tariff can be detected as an empty product instead of a fake `price-only` schedule. `toSchedulingSettings` is the boundary into the pure core package.
 
 **Domain (`packages/core`).** `calculateSchedule` accepts a single request object, enumerates candidate starts on a UTC hour grid, and scores them by solar and/or market price:
 

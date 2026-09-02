@@ -51,6 +51,7 @@ describe("settings store", () => {
     expect(saved.azimut).toBe(90); // stored value kept
     expect(saved.angle).toBe(45); // missing fields filled from defaults
     expect(saved.kwh).toBe(5);
+    expect(saved.dynamicTariff).toBe(true); // missing field filled from defaults
     expect("betaCalculations" in saved).toBe(false); // legacy key not re-persisted
   });
 
@@ -76,6 +77,16 @@ describe("settings store", () => {
     expect(saved.kwh).toBe(9.5);
     expect(saved.azimut).toBe(90); // from the earlier migration test
     expect(saved.morningShading).toBe(true);
+  });
+
+  it("persists dynamicTariff independently of bestSlotMode", () => {
+    updateSettings({ dynamicTariff: false, bestSlotMode: "solar-only" });
+    expect(savedSettings().dynamicTariff).toBe(false);
+    expect(savedSettings().bestSlotMode).toBe("solar-only");
+
+    updateSettings({ bestSlotMode: "price-only" });
+    expect(savedSettings().dynamicTariff).toBe(false);
+    expect(savedSettings().bestSlotMode).toBe("price-only");
   });
 });
 
