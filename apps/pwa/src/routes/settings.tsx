@@ -26,10 +26,10 @@ import {
   shadingWindowFromSettings,
 } from "@/components/sky/shading";
 import {
-  bestSlotModeAfterSolarToggle,
   bestSlotModeAfterTariffToggle,
   NOTHING_TO_SCHEDULE,
   schedulingSignalsAvailable,
+  settingsPatchFromSolarConfig,
   solarPanelsEnabled,
   solarSettingsSubtitle,
 } from "@/components/sky/solar";
@@ -292,16 +292,13 @@ function SettingsScreen() {
   };
 
   const applySolar = (next: SolarConfig) => {
-    updateSettings({
-      azimut: next.azimuth,
-      angle: next.tilt,
-      kwh: next.sizeKw,
-      bestSlotMode: bestSlotModeAfterSolarToggle(
-        next.enabled,
+    updateSettings(
+      settingsPatchFromSolarConfig(
+        next,
         settings.bestSlotMode,
         settings.dynamicTariff,
       ),
-    });
+    );
   };
 
   return (
