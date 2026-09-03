@@ -31,16 +31,27 @@ export function isSameLocalDay(a: Date, b: Date) {
   );
 }
 
-// Time remaining until `target`, e.g. { hours: "3h", minutes: "38m" }.
+export interface Countdown {
+  hours: number;
+  minutes: number;
+}
+
+// Time remaining until `target`, e.g. { hours: 3, minutes: 38 }. Numbers,
+// not formatted strings: the unit suffix is localized at the render edge.
 // Minutes are rounded up so "in 1 second" still reads as 1m, not 0m.
-export function formatCountdown(target: Date, now: Date) {
+export function countdownParts(target: Date, now: Date): Countdown {
   const totalMinutes = Math.max(
     0,
     Math.ceil((target.getTime() - now.getTime()) / 60_000),
   );
-  const h = Math.floor(totalMinutes / 60);
-  const m = totalMinutes % 60;
-  return { hours: h > 0 ? `${h}h` : "", minutes: `${m}m` };
+  return {
+    hours: Math.floor(totalMinutes / 60),
+    minutes: totalMinutes % 60,
+  };
+}
+
+export function hasStarted(countdown: Countdown): boolean {
+  return countdown.hours === 0 && countdown.minutes === 0;
 }
 
 // Weather-aware hero — sun arcs over the day (apex at noon, centered),

@@ -7,10 +7,14 @@ import {
   NOTHING_TO_SCHEDULE,
   schedulingSignalsAvailable,
   settingsPatchFromSolarConfig,
-  solarModeUnavailableHint,
+  solarModeUnavailableHintKey,
   solarPanelsEnabled,
-  solarSettingsSubtitle,
+  solarSettingsSubtitleKey,
 } from "@/components/sky/solar";
+import { translatorFor } from "@/lib/i18n";
+
+const en = translatorFor("en");
+const de = translatorFor("de");
 
 describe("solarPanelsEnabled", () => {
   it("treats price-only as panels off", () => {
@@ -43,42 +47,73 @@ describe("isBestSlotModeSelectable", () => {
   });
 });
 
-describe("solarSettingsSubtitle", () => {
+describe("solarSettingsSubtitleKey", () => {
+  // Keys, not copy: the helper stays language-free and the screen
+  // translates it, so the same branch works in English and German.
   it("keeps the roof-setup copy while panels are on", () => {
-    expect(solarSettingsSubtitle(true)).toBe(
+    expect(solarSettingsSubtitleKey(true)).toBe("settings.solar.subtitle.on");
+    expect(en(solarSettingsSubtitleKey(true))).toBe(
       "Used to estimate production for your roof.",
+    );
+    expect(de(solarSettingsSubtitleKey(true))).toBe(
+      "Dient der Ertragsschätzung für dein Dach.",
     );
   });
 
   it("states the off / price-only status without opening the sheet", () => {
-    expect(solarSettingsSubtitle(false)).toBe("No solar — price-only.");
+    expect(solarSettingsSubtitleKey(false)).toBe(
+      "settings.solar.subtitle.priceOnly",
+    );
+    expect(en(solarSettingsSubtitleKey(false))).toBe("No solar — price-only.");
+    expect(de(solarSettingsSubtitleKey(false))).toBe(
+      "Keine Solaranlage — nur Preis.",
+    );
   });
 
   it("does not claim price-only when the tariff is also off", () => {
-    expect(solarSettingsSubtitle(false, false)).toBe("No solar.");
+    expect(solarSettingsSubtitleKey(false, false)).toBe(
+      "settings.solar.subtitle.off",
+    );
+    expect(en(solarSettingsSubtitleKey(false, false))).toBe("No solar.");
   });
 });
 
-describe("solarModeUnavailableHint", () => {
+describe("solarModeUnavailableHintKey", () => {
   it("is silent while panels are on", () => {
-    expect(solarModeUnavailableHint(true)).toBeNull();
+    expect(solarModeUnavailableHintKey(true)).toBeNull();
   });
 
   it("explains how to restore solar-aware modes while panels are off", () => {
-    expect(solarModeUnavailableHint(false)).toBe(
+    expect(en(solarModeUnavailableHintKey(false)!)).toBe(
       "Turn on solar panels in Settings to use Solar or Both.",
+    );
+    expect(de(solarModeUnavailableHintKey(false)!)).toBe(
+      "Aktiviere die Solaranlage in den Einstellungen, um Solar oder Beides zu nutzen.",
     );
   });
 
   it("explains how to restore price-aware modes while the tariff is off", () => {
-    expect(solarModeUnavailableHint(true, false)).toBe(
+    expect(en(solarModeUnavailableHintKey(true, false)!)).toBe(
       "Turn on a dynamic tariff in Settings to use Both or Price.",
     );
   });
 
   it("points at Settings when neither signal is on", () => {
-    expect(solarModeUnavailableHint(false, false)).toBe(
+    expect(en(solarModeUnavailableHintKey(false, false)!)).toBe(
       "Turn on solar panels or a dynamic tariff in Settings.",
+    );
+  });
+});
+
+describe("NOTHING_TO_SCHEDULE", () => {
+  it("says plainly that Wattlyzer cannot pick a window, in both languages", () => {
+    expect(en(NOTHING_TO_SCHEDULE.title)).toBe("Nothing to schedule.");
+    expect(en(NOTHING_TO_SCHEDULE.body)).toBe(
+      "Wattlyzer needs solar panels or a dynamic tariff. Without either, there is no better window to find.",
+    );
+    expect(de(NOTHING_TO_SCHEDULE.title)).toBe("Nichts zu planen.");
+    expect(de(NOTHING_TO_SCHEDULE.body)).toBe(
+      "Wattlyzer braucht eine Solaranlage oder einen dynamischen Tarif. Ohne beides gibt es kein besseres Fenster zu finden.",
     );
   });
 });
@@ -196,14 +231,5 @@ describe("bestSlotModeAfterTariffToggle", () => {
 
   it("restores combined when a tariff turns on with panels on", () => {
     expect(bestSlotModeAfterTariffToggle(true, true)).toBe("combined");
-  });
-});
-
-describe("NOTHING_TO_SCHEDULE", () => {
-  it("says plainly that Wattlyzer cannot pick a window", () => {
-    expect(NOTHING_TO_SCHEDULE.title).toBe("Nothing to schedule.");
-    expect(NOTHING_TO_SCHEDULE.body).toBe(
-      "Wattlyzer needs solar panels or a dynamic tariff. Without either, there is no better window to find.",
-    );
   });
 });

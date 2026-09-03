@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { FONT_MONO, FONT_SANS, type SkyTheme } from "@wattlyzer/theme";
 import { WIcon, type WIconName } from "@/components/sky/icons";
 import { SkySwitch } from "@/components/sky/primitives";
+import type { MessageKey } from "@/lib/i18n";
 
 // These onboarding rows intentionally use translucent fills without
 // backdrop-filter. macOS Safari caches the old sky inside a backdrop layer
@@ -239,9 +240,20 @@ export function ObCard({
   );
 }
 
-export function azimuthLabel(deg: number) {
-  // 8-pt compass
-  const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+// 8-pt compass, as catalog keys: German writes east as O, so NE/SE
+// become NO/SO and the label cannot be a shared literal.
+const COMPASS_KEYS = [
+  "compass.n",
+  "compass.ne",
+  "compass.e",
+  "compass.se",
+  "compass.s",
+  "compass.sw",
+  "compass.w",
+  "compass.nw",
+] as const satisfies readonly MessageKey[];
+
+export function azimuthKey(deg: number): MessageKey {
   const idx = Math.round((((deg % 360) + 360) % 360) / 45) % 8;
-  return dirs[idx];
+  return COMPASS_KEYS[idx];
 }
