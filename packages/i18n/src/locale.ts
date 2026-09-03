@@ -52,3 +52,28 @@ export function resolveLocale(opts: {
   if (opts.stored) return opts.stored;
   return detectLocale(opts.preferred);
 }
+
+// How each language names itself. A language picker shows "Deutsch"
+// regardless of the surrounding UI language, so this is invariant metadata
+// and deliberately not part of either app's message catalog.
+export const LOCALE_META: Record<Locale, { name: string; short: string }> = {
+  en: { name: "English", short: "EN" },
+  de: { name: "Deutsch", short: "DE" },
+};
+
+export interface LocaleOption {
+  locale: Locale;
+  name: string;
+  short: string;
+  active: boolean;
+}
+
+// The option list behind any language switcher: the PWA renders buttons
+// that write the choice, the website renders links to the localized route.
+export function localeOptions(current: Locale): LocaleOption[] {
+  return LOCALES.map((locale) => ({
+    locale,
+    ...LOCALE_META[locale],
+    active: locale === current,
+  }));
+}

@@ -1,9 +1,9 @@
 import {
+  createTranslator,
   formatDecimal,
   formatInteger,
-  interpolate,
   type Locale,
-  type MessageValues,
+  type Translate as TranslateFor,
 } from "@wattlyzer/i18n";
 import { useLocale } from "@/lib/locale";
 import { de } from "./de";
@@ -12,31 +12,15 @@ import { en, type MessageKey } from "./en";
 export type { MessageKey } from "./en";
 export type { Locale } from "@wattlyzer/i18n";
 
-export const messages = { en, de } as const;
+// The catalogs are the app's; the mechanics come from the shared package,
+// which the website uses for its own catalogs too.
+const translator = createTranslator<MessageKey>({ en, de });
 
-export type Translate = (key: MessageKey, values?: MessageValues) => string;
+export const messages = translator.messages;
+export const translate = translator.translate;
+export const translatorFor = translator.translatorFor;
 
-export function translate(
-  locale: Locale,
-  key: MessageKey,
-  values?: MessageValues,
-): string {
-  return interpolate(messages[locale][key], values);
-}
-
-// Bound translator for a locale. Created once per locale so components that
-// only take a `Translate` (and the pure helpers in `solar.ts` / `shading.ts`)
-// stay independent of React.
-const translators = new Map<Locale, Translate>();
-
-export function translatorFor(locale: Locale): Translate {
-  let translate_ = translators.get(locale);
-  if (!translate_) {
-    translate_ = (key, values) => translate(locale, key, values);
-    translators.set(locale, translate_);
-  }
-  return translate_;
-}
+export type Translate = TranslateFor<MessageKey>;
 
 export interface I18n {
   locale: Locale;

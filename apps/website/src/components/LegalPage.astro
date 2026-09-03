@@ -1,0 +1,55 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { DEFAULT_LOCALE, isLocale } from '@wattlyzer/i18n';
+import Layout from '../layouts/Layout.astro';
+import LanguageToggle from './LanguageToggle.astro';
+import { translatorFor } from '../i18n/legal';
+import '../styles/legal.css';
+
+const CANONICAL_PATH = '/legal/';
+
+const locale = isLocale(Astro.currentLocale) ? Astro.currentLocale : DEFAULT_LOCALE;
+const t = translatorFor(locale);
+const home = getRelativeLocaleUrl(locale, '/');
+---
+
+<Layout
+  title={t('meta.title')}
+  description={t('meta.description')}
+  canonicalPath={CANONICAL_PATH}
+>
+  <div class="topbar">
+    <a class="brand" href={home}>Wattlyzer</a>
+    <div class="topbar-right">
+      <a href={home} class="back-link">{t('back')}</a>
+      <LanguageToggle canonicalPath={CANONICAL_PATH} />
+    </div>
+  </div>
+
+  <main class="wrap">
+    <div class="eyebrow">{t('eyebrow')}</div>
+    <h1>
+      {t('title')} <em>{t('titleEm')}</em>
+    </h1>
+    <div class="subtitle">{t('subtitle')}</div>
+
+    <section class="imp-section">
+      <h2>{t('operator')}</h2>
+      <p>Leon Bojanowski<br />Marienstraße 3b<br />14532 Stahnsdorf<br />{t('country')}</p>
+    </section>
+
+    <section class="imp-section">
+      <h2>{t('contact')}</h2>
+      <p>leongaborbojanowski@proton.me</p>
+    </section>
+
+    <section class="imp-section">
+      <h2>{t('informational')}</h2>
+      <p>{t('informationalBody')}</p>
+    </section>
+  </main>
+
+  <div class="foot">
+    {t('foot')}
+  </div>
+</Layout>

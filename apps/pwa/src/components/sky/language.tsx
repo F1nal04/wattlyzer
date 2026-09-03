@@ -1,18 +1,8 @@
 import { useRef } from "react";
 import { FONT_SANS, type SkyTheme } from "@wattlyzer/theme";
-import { LOCALES, type Locale } from "@wattlyzer/i18n";
+import { LOCALES, localeOptions, type Locale } from "@wattlyzer/i18n";
 import { setLocale, useLocale } from "@/lib/locale";
-import { useI18n, type MessageKey } from "@/lib/i18n";
-
-const NAME_KEYS: Record<Locale, MessageKey> = {
-  en: "language.en",
-  de: "language.de",
-};
-
-const SHORT_KEYS: Record<Locale, MessageKey> = {
-  en: "language.enShort",
-  de: "language.deShort",
-};
+import { useI18n } from "@/lib/i18n";
 
 // EN · DE switch, mirroring the marketing site's nav toggle.
 // A radiogroup with roving tabindex: one tab stop, arrows move between
@@ -43,8 +33,7 @@ export function LanguageSwitch({ t }: { t: SkyTheme }) {
         border: `1px solid ${t.glassBd}`,
       }}
     >
-      {LOCALES.map((locale) => {
-        const selected = locale === active;
+      {localeOptions(active).map(({ locale, name, short, active: selected }) => {
         return (
           <button
             key={locale}
@@ -56,9 +45,7 @@ export function LanguageSwitch({ t }: { t: SkyTheme }) {
             aria-checked={selected}
             // Roving tabindex: only the selected option is in the tab order.
             tabIndex={selected ? 0 : -1}
-            aria-label={translate("language.select", {
-              language: translate(NAME_KEYS[locale]),
-            })}
+            aria-label={translate("language.select", { language: name })}
             onClick={() => setLocale(locale)}
             onKeyDown={(event) => {
               if (event.key === "ArrowRight" || event.key === "ArrowDown") {
@@ -90,7 +77,7 @@ export function LanguageSwitch({ t }: { t: SkyTheme }) {
               boxShadow: selected ? "0 1px 4px rgba(0,0,0,0.12)" : "none",
             }}
           >
-            {translate(SHORT_KEYS[locale])}
+            {short}
           </button>
         );
       })}

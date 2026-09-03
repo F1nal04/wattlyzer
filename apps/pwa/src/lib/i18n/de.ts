@@ -130,10 +130,6 @@ export const de: Record<MessageKey, string> = {
 
   // ── Language switcher ──────────────────────────────────────
   "language.label": "Sprache",
-  "language.en": "English",
-  "language.de": "Deutsch",
-  "language.enShort": "EN",
-  "language.deShort": "DE",
   "language.select": "App auf {language} umstellen",
 
   // ── Solar panels editor ────────────────────────────────────

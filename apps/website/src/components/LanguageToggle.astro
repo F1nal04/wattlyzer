@@ -1,0 +1,45 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { DEFAULT_LOCALE, isLocale, localeOptions } from '@wattlyzer/i18n';
+
+interface Props {
+  // Unprefixed path of the current page, same contract as Layout.astro.
+  canonicalPath?: string;
+  variant?: 'nav' | 'nav-mobile' | 'footer';
+}
+
+const { canonicalPath = '/', variant = 'nav' } = Astro.props;
+
+const current = isLocale(Astro.currentLocale) ? Astro.currentLocale : DEFAULT_LOCALE;
+const options = localeOptions(current);
+
+// Class names are load-bearing: index.css and legal.css style these
+// directly, and the nav variant also reacts to the hero's sky mode.
+const wrapperClass =
+  variant === 'footer'
+    ? 'footer-lang'
+    : variant === 'nav-mobile'
+      ? 'lang-toggle lang-toggle-mob'
+      : 'lang-toggle';
+const linkClass = variant === 'footer' ? 'footer-lang-btn' : 'lang-btn';
+const separatorClass = variant === 'footer' ? undefined : 'lang-sep';
+---
+
+<div class={wrapperClass}>
+  {
+    options.map((option, index) => (
+      <>
+        {index > 0 && <span class={separatorClass}>·</span>}
+        <a
+          class={option.active ? `${linkClass} active` : linkClass}
+          href={getRelativeLocaleUrl(option.locale, canonicalPath)}
+          hreflang={option.locale}
+          lang={option.locale}
+          aria-current={option.active ? 'page' : undefined}
+        >
+          {option.short}
+        </a>
+      </>
+    ))
+  }
+</div>

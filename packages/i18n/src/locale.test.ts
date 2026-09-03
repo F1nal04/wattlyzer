@@ -2,6 +2,8 @@ import { describe, expect, it } from "bun:test";
 import {
   DEFAULT_LOCALE,
   LOCALES,
+  LOCALE_META,
+  localeOptions,
   detectLocale,
   isLocale,
   normalizeLocaleTag,
@@ -117,5 +119,38 @@ describe("resolveLocale", () => {
     expect(
       resolveLocale({ mounted: true, stored: null, preferred: undefined }),
     ).toBe("en");
+  });
+});
+
+describe("LOCALE_META", () => {
+  it("names each language in that language, not in the reader's", () => {
+    // A picker shows "Deutsch" whatever the UI language is, so these are
+    // invariant metadata rather than translatable copy.
+    expect(LOCALE_META.en).toEqual({ name: "English", short: "EN" });
+    expect(LOCALE_META.de).toEqual({ name: "Deutsch", short: "DE" });
+  });
+
+  it("covers every supported locale", () => {
+    expect(Object.keys(LOCALE_META).sort()).toEqual([...LOCALES].sort());
+  });
+});
+
+describe("localeOptions", () => {
+  it("lists every locale in declaration order, marking the active one", () => {
+    expect(localeOptions("en")).toEqual([
+      { locale: "en", name: "English", short: "EN", active: true },
+      { locale: "de", name: "Deutsch", short: "DE", active: false },
+    ]);
+  });
+
+  it("moves the active flag with the current locale, keeping the order", () => {
+    expect(localeOptions("de").map((o) => o.locale)).toEqual(["en", "de"]);
+    expect(localeOptions("de").map((o) => o.active)).toEqual([false, true]);
+  });
+
+  it("marks exactly one option active", () => {
+    for (const locale of LOCALES) {
+      expect(localeOptions(locale).filter((o) => o.active)).toHaveLength(1);
+    }
   });
 });

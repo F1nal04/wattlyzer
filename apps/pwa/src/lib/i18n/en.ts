@@ -133,10 +133,6 @@ export const en = {
 
   // ── Language switcher ──────────────────────────────────────
   "language.label": "Language",
-  "language.en": "English",
-  "language.de": "Deutsch",
-  "language.enShort": "EN",
-  "language.deShort": "DE",
   "language.select": "Switch the app to {language}",
 
   // ── Solar panels editor ────────────────────────────────────
