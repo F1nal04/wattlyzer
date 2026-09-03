@@ -64,4 +64,13 @@ GitHub Actions uses `nx affected` with full Git history. Release Please maintain
 
 Each app owns a `netlify.toml`. In Netlify, set package directories to `apps/pwa` and `apps/website` and leave the base directory unset. PWA build outputs are `apps/pwa/dist` plus `apps/pwa/.netlify`; website output is `apps/website/dist`.
 
+## Crawler policy
+
+The two Netlify sites publish independent crawler policies. Do not point one app's `robots.txt` or sitemap at the other site.
+
+- **Website (`wattlyzer.de`)** — crawlable. `apps/website/public/robots.txt` allows `/` and references `https://wattlyzer.de/sitemap-index.xml`. `@astrojs/sitemap` generates that index from `site: "https://wattlyzer.de"` in `apps/website/astro.config.mjs`. Canonical and `hreflang` URLs are emitted from `Astro.site` in `apps/website/src/layouts/Layout.astro`.
+- **PWA (`pwa.wattlyzer.de`)** — not crawlable or indexable. `apps/pwa/public/robots.txt` contains `Disallow: /`. The root document head includes `noindex, nofollow`, and `apps/pwa/netlify.toml` sends `X-Robots-Tag: noindex, nofollow` on every path.
+
+`verify-seo` runs after each app's build and checks the published `dist` artifacts. `bun run check` and `bun run affected` include that target.
+
 Update this AGENTS.md together with major workspace or architectural changes.
