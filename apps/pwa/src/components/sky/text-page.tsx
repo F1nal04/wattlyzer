@@ -14,6 +14,7 @@ import {
   SkyScreen,
 } from "@/components/sky/primitives";
 import { useSkyHour } from "@/lib/use-sky-hour";
+import { useI18n } from "@/lib/i18n";
 
 const PAGE_HOUR = 11;
 
@@ -48,19 +49,20 @@ export function TextCard({
 export function TextPage({
   eyebrow,
   title,
-  italic,
   lede,
   children,
 }: {
   eyebrow: string;
-  title: string;
-  italic: string;
+  // A node, not a string + italic pair: the emphasised fragment sits
+  // wherever the translation puts it.
+  title: ReactNode;
   lede: string;
   children: (t: SkyTheme) => ReactNode;
 }) {
   const navigate = useNavigate();
   const themeHour = useSkyHour(PAGE_HOUR);
   const t = skyTheme(themeHour);
+  const { t: translate } = useI18n();
   return (
     <SkyScreen
       background={`linear-gradient(180deg, ${t.sky[0]} 0%, ${t.sky[1]} 55%, ${t.sky[2]} 100%)`}
@@ -75,7 +77,11 @@ export function TextPage({
           zIndex: 5,
         }}
       >
-        <SkyIconBtn t={t} label="Back" onClick={() => navigate({ to: "/settings" })}>
+        <SkyIconBtn
+          t={t}
+          label={translate("common.back")}
+          onClick={() => navigate({ to: "/settings" })}
+        >
           <WIcon name="back" />
         </SkyIconBtn>
       </div>
@@ -113,7 +119,7 @@ export function TextPage({
             color: t.fg,
           }}
         >
-          {title} <span style={{ fontStyle: "italic", fontWeight: 300 }}>{italic}</span>.
+          {title}
         </div>
         <div
           style={{

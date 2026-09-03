@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { FONT_DISPLAY, FONT_MONO, FONT_SANS, type SkyTheme } from "@wattlyzer/theme";
 import { frostedGlass } from "@/components/sky/glass";
 import { useEscapeKey } from "@/components/sky/primitives";
+import { useI18n } from "@/lib/i18n";
 
 // Shared bottom sheet used by solar-panel and shading editors.
 // Close (X, scrim, Escape) dismisses. Solar commits through onChange as
@@ -21,6 +22,7 @@ export function SkyEditSheet({
   onClose: () => void;
   children: ReactNode;
 }) {
+  const { t: translate } = useI18n();
   useEscapeKey(onClose);
   return (
     <div
@@ -108,7 +110,7 @@ export function SkyEditSheet({
           </div>
           <button
             onClick={onClose}
-            aria-label="Close"
+            aria-label={translate("common.close")}
             style={{
               width: 36,
               height: 36,

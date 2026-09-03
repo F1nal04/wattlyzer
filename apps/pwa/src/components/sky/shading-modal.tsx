@@ -5,29 +5,15 @@ import { SkySlider } from "@/components/sky/primitives";
 import { ObSwitchRow } from "@/components/sky/rows";
 import {
   formatShadingHour,
+  shadingCopyKeys,
   shadingHourTicks,
   shadingRange,
   type ShadingKind,
   type ShadingSetup,
   type ShadingWindow,
 } from "@/components/sky/shading";
-
-function shadingCopy(kind: ShadingKind) {
-  if (kind === "morning") {
-    return {
-      enableTitle: "Morning shading",
-      enableSubtitle: "Until trees or buildings block the low sun",
-      hourLabel: "Shade ends",
-      icon: "sun" as const,
-    };
-  }
-  return {
-    enableTitle: "Evening shading",
-    enableSubtitle: "From when trees or buildings block the low sun",
-    hourLabel: "Shade starts",
-    icon: "moon" as const,
-  };
-}
+import { useI18n } from "@/lib/i18n";
+import { richParts } from "@/lib/i18n/rich";
 
 function ShadingWindowEditor({
   t,
@@ -40,16 +26,17 @@ function ShadingWindowEditor({
   value: ShadingWindow;
   onChange: (next: ShadingWindow) => void;
 }) {
-  const copy = shadingCopy(kind);
+  const { t: translate } = useI18n();
+  const copy = shadingCopyKeys(kind);
   const range = shadingRange(kind);
   const dim = !value.enabled;
   return (
     <div>
       <ObSwitchRow
         t={t}
-        icon={copy.icon}
-        title={copy.enableTitle}
-        subtitle={copy.enableSubtitle}
+        icon={kind === "morning" ? "sun" : "moon"}
+        title={translate(copy.title)}
+        subtitle={translate(copy.subtitle)}
         checked={value.enabled}
         onChange={() => onChange({ ...value, enabled: !value.enabled })}
       />
@@ -78,7 +65,7 @@ function ShadingWindowEditor({
               textTransform: "uppercase",
             }}
           >
-            {copy.hourLabel}
+            {translate(copy.hourLabel)}
           </div>
           <div
             style={{
@@ -109,7 +96,7 @@ function ShadingWindowEditor({
 export function ShadingModal({
   t,
   value,
-  eyebrow = "Shading",
+  eyebrow,
   onChange,
   onClose,
 }: {
@@ -119,6 +106,7 @@ export function ShadingModal({
   onChange: (next: ShadingSetup) => void;
   onClose: () => void;
 }) {
+  const { t: translate } = useI18n();
   const [v, setV] = useState(value);
   const dismiss = () => {
     onChange(v);
@@ -127,13 +115,15 @@ export function ShadingModal({
   return (
     <SkyEditSheet
       t={t}
-      ariaLabel="Roof shading"
-      eyebrow={eyebrow}
-      title={
-        <>
-          Roof <span style={{ fontStyle: "italic", fontWeight: 300 }}>shade</span>.
-        </>
-      }
+      ariaLabel={translate("shading.modal.aria")}
+      eyebrow={eyebrow ?? translate("shading.modal.eyebrow")}
+      title={richParts(translate("shading.modal.title"), {
+        shade: (
+          <span style={{ fontStyle: "italic", fontWeight: 300 }}>
+            {translate("shading.modal.titleEm")}
+          </span>
+        ),
+      })}
       onClose={dismiss}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
@@ -159,7 +149,7 @@ export function ShadingModal({
           marginTop: 14,
         }}
       >
-        WHEN TREES OR BUILDINGS BLOCK THE LOW SUN
+        {translate("shading.modal.hint")}
       </div>
     </SkyEditSheet>
   );

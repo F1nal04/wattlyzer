@@ -1,38 +1,44 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { TextCard, TextPage } from "@/components/sky/text-page";
+import { useI18n } from "@/lib/i18n";
+import { richParts } from "@/lib/i18n/rich";
 
 export const Route = createFileRoute("/legal")({
   component: LegalScreen,
 });
 
 function LegalScreen() {
+  const { t } = useI18n();
   return (
     <TextPage
-      eyebrow="Legal · § 5 TMG"
-      title="Legal notice and"
-      italic="contact"
-      lede="The core company and contact information for Wattlyzer."
+      eyebrow={t("legal.eyebrow")}
+      title={richParts(t("legal.title"), {
+        contact: (
+          <span style={{ fontStyle: "italic", fontWeight: 300 }}>
+            {t("legal.titleEm")}
+          </span>
+        ),
+      })}
+      lede={t("legal.lede")}
     >
-      {(t) => (
+      {(theme) => (
         <>
-          <TextCard t={t} title="Operator">
+          <TextCard t={theme} title={t("legal.operator")}>
             Leon Bojanowski
             <br />
             Marienstraße 3b
             <br />
             14532 Stahnsdorf
             <br />
-            Germany
+            {t("legal.country")}
           </TextCard>
-          <TextCard t={t} title="Contact">
-            E-Mail: leongaborbojanowski04@gmail.com
+          <TextCard t={theme} title={t("legal.contact")}>
+            {t("legal.emailLabel")}: leongaborbojanowski04@gmail.com
             <br />
-            Phone: +49 160 3020390
+            {t("legal.phoneLabel")}: +49 160 3020390
           </TextCard>
-          <TextCard t={t} title="Disclaimer">
-            This application is provided for informational purposes only. The
-            calculations and results are estimates and should not be used for
-            critical decision making without proper verification.
+          <TextCard t={theme} title={t("legal.disclaimer")}>
+            {t("legal.disclaimerBody")}
           </TextCard>
         </>
       )}

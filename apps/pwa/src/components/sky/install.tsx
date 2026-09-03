@@ -9,6 +9,8 @@ import { frostedGlass } from "@/components/sky/glass";
 import { InstGlyph, type InstGlyphKind } from "@/components/sky/icons";
 import { Hills, SkyScreen } from "@/components/sky/primitives";
 import { useSkyHour } from "@/lib/use-sky-hour";
+import { useI18n, type MessageKey } from "@/lib/i18n";
+import { richParts } from "@/lib/i18n/rich";
 
 const INST_HOUR = 11;
 
@@ -98,13 +100,11 @@ function InstHead({
   t,
   eyebrow,
   title,
-  italic,
   lede,
 }: {
   t: SkyTheme;
   eyebrow: string;
-  title: string;
-  italic: string;
+  title: ReactNode;
   lede: string;
 }) {
   return (
@@ -137,7 +137,7 @@ function InstHead({
           color: t.fg,
         }}
       >
-        {title} <span style={{ fontStyle: "italic", fontWeight: 300 }}>{italic}</span>.
+        {title}
       </div>
       <div style={{ marginTop: 8, fontSize: 14, color: t.fgDim, lineHeight: 1.5 }}>
         {lede}
@@ -148,32 +148,40 @@ function InstHead({
 
 type InstStep = {
   glyph: InstGlyphKind;
-  title: ReactNode;
-  body: string;
+  // Base key of a step: `<base>.title` is the template, `<base>.em` the bold
+  // fragment it substitutes, `<base>.body` the supporting line.
+  key: string;
 };
 
 function InstPage({
-  eyebrow,
-  title,
-  italic,
-  lede,
+  platform,
   steps,
 }: {
-  eyebrow: string;
-  title: string;
-  italic: string;
-  lede: string;
+  platform: "ios" | "android";
   steps: InstStep[];
 }) {
   const themeHour = useSkyHour(INST_HOUR);
   const t = skyTheme(themeHour);
+  const { t: translate } = useI18n();
+  const key = (suffix: string) => `install.${platform}.${suffix}` as MessageKey;
   return (
     <SkyScreen
       background={`linear-gradient(180deg, ${t.sky[0]} 0%, ${t.sky[1]} 55%, ${t.sky[2]} 100%)`}
       color={t.fg}
     >
       <Hills t={t} height="26%" opacity={0.55} />
-      <InstHead t={t} eyebrow={eyebrow} title={title} italic={italic} lede={lede} />
+      <InstHead
+        t={t}
+        eyebrow={translate(key("eyebrow"))}
+        title={richParts(translate(key("title")), {
+          em: (
+            <span style={{ fontStyle: "italic", fontWeight: 300 }}>
+              {translate(key("titleEm"))}
+            </span>
+          ),
+        })}
+        lede={translate(key("lede"))}
+      />
       <div
         style={{
           position: "absolute",
@@ -187,8 +195,17 @@ function InstPage({
           padding: "6px 16px",
         }}
       >
-        {steps.map((s, i) => (
-          <InstRow key={i} n={i + 1} glyph={s.glyph} title={s.title} body={s.body} t={t} />
+        {steps.map((step, i) => (
+          <InstRow
+            key={i}
+            n={i + 1}
+            glyph={step.glyph}
+            title={richParts(translate(`${step.key}.title` as MessageKey), {
+              em: <b>{translate(`${step.key}.em` as MessageKey)}</b>,
+            })}
+            body={translate(`${step.key}.body` as MessageKey)}
+            t={t}
+          />
         ))}
       </div>
     </SkyScreen>
@@ -198,34 +215,11 @@ function InstPage({
 export function InstallIOS() {
   return (
     <InstPage
-      eyebrow="iOS · Safari"
-      title="Add to your"
-      italic="home screen"
-      lede="Three taps and Wattlyzer lives next to your other apps."
+      platform="ios"
       steps={[
-        {
-          glyph: "share",
-          title: (
-            <>
-              Tap the <b>Share</b> button
-            </>
-          ),
-          body: "At the bottom of Safari — the square with the up-arrow.",
-        },
-        {
-          glyph: "plus-square",
-          title: <b>Add to Home Screen</b>,
-          body: "Scroll the share sheet if you don't see it right away.",
-        },
-        {
-          glyph: "check",
-          title: (
-            <>
-              Tap <b>Add</b>
-            </>
-          ),
-          body: "Wattlyzer lands with your other apps. Open it from there for the fullscreen experience.",
-        },
+        { glyph: "share", key: "install.ios.step1" },
+        { glyph: "plus-square", key: "install.ios.step2" },
+        { glyph: "check", key: "install.ios.step3" },
       ]}
     />
   );
@@ -234,38 +228,11 @@ export function InstallIOS() {
 export function InstallAndroid() {
   return (
     <InstPage
-      eyebrow="Android · Chrome"
-      title="Send it to your"
-      italic="launcher"
-      lede="Three taps and Wattlyzer sits in your app drawer."
+      platform="android"
       steps={[
-        {
-          glyph: "dots-vert",
-          title: (
-            <>
-              Tap the <b>menu</b>
-            </>
-          ),
-          body: "Three dots in the top-right corner of the address bar.",
-        },
-        {
-          glyph: "plus-square",
-          title: (
-            <>
-              Pick <b>Install app</b>
-            </>
-          ),
-          body: "Sometimes labelled “Add to Home screen” depending on the version.",
-        },
-        {
-          glyph: "home",
-          title: (
-            <>
-              Confirm <b>Install</b>
-            </>
-          ),
-          body: "Wattlyzer lands in your app drawer and on the home screen.",
-        },
+        { glyph: "dots-vert", key: "install.android.step1" },
+        { glyph: "plus-square", key: "install.android.step2" },
+        { glyph: "home", key: "install.android.step3" },
       ]}
     />
   );

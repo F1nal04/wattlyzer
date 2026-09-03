@@ -10,6 +10,7 @@ import type { WeatherKind } from "@wattlyzer/core";
 import { SkyClouds, SkySunCloud } from "@/components/sky/clouds";
 import { frostedGlass } from "@/components/sky/glass";
 import { SkySlider } from "@/components/sky/primitives";
+import { useI18n } from "@/lib/i18n";
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
@@ -150,12 +151,20 @@ export function ClockCluster({
     return () => clearInterval(timer);
   }, []);
 
+  const { t: translate } = useI18n();
   const clock = formatClock(result.bestTime);
-  const countdown = formatCountdown(result.bestTime, now);
-  const started = showCountdown && countdown.hours === "" && countdown.minutes === "0m";
+  const countdown = countdownParts(result.bestTime, now);
+  const started = showCountdown && hasStarted(countdown);
+  const countdownHours =
+    countdown.hours > 0
+      ? translate("unit.hours", { value: countdown.hours })
+      : "";
+  const countdownMinutes = translate("unit.minutes", {
+    value: countdown.minutes,
+  });
   const dayLabel = isSameLocalDay(result.bestTime, now)
-    ? "Best time today"
-    : "Best time tomorrow";
+    ? translate("home.bestTimeToday")
+    : translate("home.bestTimeTomorrow");
 
   // Shrink-to-fit guard: the font size never changes between clock and
   // countdown — only if the text physically can't fit (e.g. "23h 59m" on a
@@ -173,7 +182,7 @@ export function ClockCluster({
     measure();
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
-  }, [showCountdown, countdown.hours, countdown.minutes]);
+  }, [showCountdown, countdownHours, countdownMinutes]);
 
   return (
     <div
@@ -196,15 +205,15 @@ export function ClockCluster({
           marginBottom: 14,
         }}
       >
-        {showCountdown ? (started ? dayLabel : "Starts in") : dayLabel}
+        {showCountdown ? (started ? dayLabel : translate("home.startsIn")) : dayLabel}
       </div>
       <button
         type="button"
         onClick={() => setShowCountdown((v) => !v)}
         aria-label={
           showCountdown
-            ? "Show start time"
-            : "Show time remaining until start"
+            ? translate("home.showStartTime")
+            : translate("home.showTimeRemaining")
         }
         style={{
           display: "block",
@@ -236,12 +245,14 @@ export function ClockCluster({
         >
         {showCountdown ? (
           started ? (
-            <span style={{ fontStyle: "italic", fontWeight: 300 }}>now</span>
+            <span style={{ fontStyle: "italic", fontWeight: 300 }}>
+              {translate("home.now")}
+            </span>
           ) : (
             <>
-              {countdown.hours && <>{countdown.hours}{"\u2009"}</>}
+              {countdownHours && <>{countdownHours}{"\u2009"}</>}
               <span style={{ fontStyle: "italic", fontWeight: 300, opacity: 0.7 }}>
-                {countdown.minutes}
+                {countdownMinutes}
               </span>
             </>
           )
@@ -256,7 +267,10 @@ export function ClockCluster({
         </span>
       </button>
       <div style={{ marginTop: 14, fontSize: 16, color: t.fgDim, fontWeight: 500 }}>
-        {formatRange(result.bestTime, duration)} · {duration}h run
+        {translate("home.runSummary", {
+          range: formatRange(result.bestTime, duration),
+          hours: duration,
+        })}
       </div>
       <div style={{ marginTop: 18, display: "flex", justifyContent: "center" }}>
         <div
@@ -282,7 +296,9 @@ export function ClockCluster({
               background: result.reason === "solar" ? t.sunMid : t.saves,
             }}
           />
-          {result.reason === "solar" ? "Catches the most sun" : "Cheapest window"}
+          {result.reason === "solar"
+            ? translate("home.reason.solar")
+            : translate("home.reason.price")}
         </div>
       </div>
     </div>
@@ -299,6 +315,7 @@ export function ClockStatus({
   title: string;
   body?: string;
 }) {
+  const { t: translate } = useI18n();
   return (
     <div
       style={{
@@ -321,7 +338,7 @@ export function ClockStatus({
           marginBottom: 16,
         }}
       >
-        Best time today
+        {translate("home.bestTimeToday")}
       </div>
       <div
         style={{
@@ -360,6 +377,8 @@ export function DurationDock({
   duration: number;
   onChange: (value: number) => void;
 }) {
+  const { t: translate } = useI18n();
+  const hourLabel = (value: number) => translate("unit.hours", { value });
   return (
     <div
       style={{
@@ -390,7 +409,7 @@ export function DurationDock({
             whiteSpace: "nowrap",
           }}
         >
-          Run for
+          {translate("home.runFor")}
         </div>
         <div
           style={{
@@ -402,7 +421,7 @@ export function DurationDock({
             fontVariantNumeric: "tabular-nums",
           }}
         >
-          {duration}h
+          {hourLabel(duration)}
         </div>
       </div>
       <SkySlider
@@ -410,7 +429,7 @@ export function DurationDock({
         min={1}
         max={5}
         t={t}
-        labels={["1h", "2h", "3h", "4h", "5h"]}
+        labels={[1, 2, 3, 4, 5].map(hourLabel)}
         onChange={onChange}
       />
     </div>

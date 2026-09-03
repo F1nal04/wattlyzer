@@ -1,37 +1,39 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { TextCard, TextPage } from "@/components/sky/text-page";
+import { useI18n } from "@/lib/i18n";
+import { richParts } from "@/lib/i18n/rich";
 
 export const Route = createFileRoute("/privacy")({
   component: PrivacyScreen,
 });
 
 function PrivacyScreen() {
+  const { t } = useI18n();
   return (
     <TextPage
-      eyebrow="Privacy"
-      title="How Wattlyzer handles your"
-      italic="data"
-      lede="The app is built around local processing and local caching. This page explains what is used and why."
+      eyebrow={t("privacy.eyebrow")}
+      title={richParts(t("privacy.title"), {
+        data: (
+          <span style={{ fontStyle: "italic", fontWeight: 300 }}>
+            {t("privacy.titleEm")}
+          </span>
+        ),
+      })}
+      lede={t("privacy.lede")}
     >
-      {(t) => (
+      {(theme) => (
         <>
-          <TextCard t={t} title="Location data usage">
-            Your location is used only to provide solar energy estimates for your
-            area. This information is sent to the solar estimation API so the
-            forecast can reflect local conditions.
+          <TextCard t={theme} title={t("privacy.location.title")}>
+            {t("privacy.location.body")}
           </TextCard>
-          <TextCard t={t} title="Local storage">
-            Your settings and cached API responses are stored locally in the
-            browser to improve performance and reduce unnecessary API calls.
+          <TextCard t={theme} title={t("privacy.storage.title")}>
+            {t("privacy.storage.body")}
           </TextCard>
-          <TextCard t={t} title="Data sharing">
-            We do not sell or distribute your personal data. External
-            communication is limited to the solar and market APIs required to
-            generate recommendations.
+          <TextCard t={theme} title={t("privacy.sharing.title")}>
+            {t("privacy.sharing.body")}
           </TextCard>
-          <TextCard t={t} title="Retention">
-            Cached data remains on your device and can be cleared manually. No
-            personal data is retained on Wattlyzer servers.
+          <TextCard t={theme} title={t("privacy.retention.title")}>
+            {t("privacy.retention.body")}
           </TextCard>
         </>
       )}

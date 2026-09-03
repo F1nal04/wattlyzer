@@ -209,35 +209,35 @@ export const en = {
 
   // ── Install guidance ───────────────────────────────────────
   "install.ios.eyebrow": "iOS · Safari",
-  "install.ios.title": "Add to your {homeScreen}.",
+  "install.ios.title": "Add to your {em}.",
   "install.ios.titleEm": "home screen",
   "install.ios.lede":
     "Three taps and Wattlyzer lives next to your other apps.",
-  "install.ios.step1.title": "Tap the {share} button",
+  "install.ios.step1.title": "Tap the {em} button",
   "install.ios.step1.em": "Share",
   "install.ios.step1.body":
     "At the bottom of Safari — the square with the up-arrow.",
-  "install.ios.step2.title": "{addToHomeScreen}",
+  "install.ios.step2.title": "{em}",
   "install.ios.step2.em": "Add to Home Screen",
   "install.ios.step2.body":
     "Scroll the share sheet if you don't see it right away.",
-  "install.ios.step3.title": "Tap {add}",
+  "install.ios.step3.title": "Tap {em}",
   "install.ios.step3.em": "Add",
   "install.ios.step3.body":
     "Wattlyzer lands with your other apps. Open it from there for the fullscreen experience.",
   "install.android.eyebrow": "Android · Chrome",
-  "install.android.title": "Send it to your {launcher}.",
+  "install.android.title": "Send it to your {em}.",
   "install.android.titleEm": "launcher",
   "install.android.lede": "Three taps and Wattlyzer sits in your app drawer.",
-  "install.android.step1.title": "Tap the {menu}",
+  "install.android.step1.title": "Tap the {em}",
   "install.android.step1.em": "menu",
   "install.android.step1.body":
     "Three dots in the top-right corner of the address bar.",
-  "install.android.step2.title": "Pick {installApp}",
+  "install.android.step2.title": "Pick {em}",
   "install.android.step2.em": "Install app",
   "install.android.step2.body":
     "Sometimes labelled “Add to Home screen” depending on the version.",
-  "install.android.step3.title": "Confirm {install}",
+  "install.android.step3.title": "Confirm {em}",
   "install.android.step3.em": "Install",
   "install.android.step3.body":
     "Wattlyzer lands in your app drawer and on the home screen.",

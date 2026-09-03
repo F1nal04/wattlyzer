@@ -209,36 +209,36 @@ export const de: Record<MessageKey, string> = {
 
   // ── Install guidance ───────────────────────────────────────
   "install.ios.eyebrow": "iOS · Safari",
-  "install.ios.title": "Aufs {homeScreen} legen.",
+  "install.ios.title": "Aufs {em} legen.",
   "install.ios.titleEm": "Home-Bildschirm",
   "install.ios.lede":
     "Drei Taps und Wattlyzer liegt neben deinen anderen Apps.",
-  "install.ios.step1.title": "Tippe auf {share}",
+  "install.ios.step1.title": "Tippe auf {em}",
   "install.ios.step1.em": "Teilen",
   "install.ios.step1.body":
     "Unten in Safari — das Quadrat mit dem Pfeil nach oben.",
-  "install.ios.step2.title": "{addToHomeScreen}",
+  "install.ios.step2.title": "{em}",
   "install.ios.step2.em": "Zum Home-Bildschirm",
   "install.ios.step2.body":
     "Scrolle im Teilen-Menü, falls du es nicht sofort siehst.",
-  "install.ios.step3.title": "Tippe auf {add}",
+  "install.ios.step3.title": "Tippe auf {em}",
   "install.ios.step3.em": "Hinzufügen",
   "install.ios.step3.body":
     "Wattlyzer landet bei deinen anderen Apps. Öffne es von dort für die Vollbild-Ansicht.",
   "install.android.eyebrow": "Android · Chrome",
-  "install.android.title": "Ab in deinen {launcher}.",
+  "install.android.title": "Ab in deinen {em}.",
   "install.android.titleEm": "Launcher",
   "install.android.lede":
     "Drei Taps und Wattlyzer sitzt in deiner App-Übersicht.",
-  "install.android.step1.title": "Öffne das {menu}",
+  "install.android.step1.title": "Öffne das {em}",
   "install.android.step1.em": "Menü",
   "install.android.step1.body":
     "Drei Punkte oben rechts neben der Adressleiste.",
-  "install.android.step2.title": "Wähle {installApp}",
+  "install.android.step2.title": "Wähle {em}",
   "install.android.step2.em": "App installieren",
   "install.android.step2.body":
     "Je nach Version manchmal „Zum Startbildschirm zufügen“ genannt.",
-  "install.android.step3.title": "Bestätige {install}",
+  "install.android.step3.title": "Bestätige {em}",
   "install.android.step3.em": "Installieren",
   "install.android.step3.body":
     "Wattlyzer landet in deiner App-Übersicht und auf dem Startbildschirm.",
