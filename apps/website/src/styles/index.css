@@ -173,6 +173,12 @@
       --sky-c3 1600ms ease;
     display: flex;
     align-items: center;
+    --cloud-tint: #ffffff;
+    --cloud-shade: rgba(214, 210, 222, 0.85);
+  }
+  .hero[data-sky-mode='dark'] {
+    --cloud-tint: rgba(240, 238, 250, 0.94);
+    --cloud-shade: rgba(195, 195, 215, 0.6);
   }
 
   .hero-sky {
@@ -212,37 +218,64 @@
       opacity 1600ms ease;
     opacity: 0;
   }
+  @keyframes hero-cloud-drift {
+    from {
+      transform: translateX(-10px);
+    }
+    to {
+      transform: translateX(14px);
+    }
+  }
   .hero-cloud {
     position: absolute;
     pointer-events: none;
-    filter: drop-shadow(0 6px 14px rgba(20, 16, 30, 0.18));
-    background:
-      radial-gradient(ellipse 30% 70% at 18% 70%, rgba(220, 215, 225, 0.7) 0%, #fff 55%, transparent 60%),
-      radial-gradient(ellipse 28% 90% at 38% 45%, #fff 0%, #fff 55%, transparent 60%),
-      radial-gradient(ellipse 22% 80% at 58% 35%, #fff 0%, #fff 55%, transparent 60%),
-      radial-gradient(ellipse 26% 80% at 76% 50%, #fff 0%, #fff 55%, transparent 60%),
-      radial-gradient(ellipse 20% 65% at 88% 70%, rgba(220, 215, 225, 0.7) 0%, #fff 55%, transparent 60%);
     transition: opacity 1600ms ease;
   }
+  .hero-cloud svg {
+    display: block;
+    overflow: visible;
+    filter: drop-shadow(0 8px 16px rgba(20, 16, 30, 0.16));
+  }
   .cloud-1 {
-    left: 6%;
-    top: 14%;
-    width: 216px;
-    height: 108px;
-    opacity: 0.55;
+    left: 4%;
+    top: 9%;
+    width: 228px;
+    height: 114px;
+    opacity: 0.94;
+    animation: hero-cloud-drift 16s ease-in-out -9s infinite alternate;
   }
   .cloud-2 {
-    left: 68%;
-    top: 22%;
-    width: 162px;
-    height: 81px;
-    opacity: 0.45;
+    left: 52%;
+    top: 4%;
+    width: 152px;
+    height: 76px;
+    opacity: 0.8;
+    animation: hero-cloud-drift 20s ease-in-out -18s infinite alternate;
+  }
+  .cloud-2 svg {
+    transform: scaleX(-1);
+  }
+  .cloud-3 {
+    left: 30%;
+    top: 21%;
+    width: 190px;
+    height: 95px;
+    opacity: 0.85;
+    animation: hero-cloud-drift 24s ease-in-out -27s infinite alternate;
   }
   .hero[data-sky-mode='dark'] .cloud-1 {
-    opacity: 0.35;
+    opacity: 0.9;
   }
   .hero[data-sky-mode='dark'] .cloud-2 {
-    opacity: 0.28;
+    opacity: 0.72;
+  }
+  .hero[data-sky-mode='dark'] .cloud-3 {
+    opacity: 0.78;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero-cloud {
+      animation: none;
+    }
   }
 
   .hero-hills {
@@ -841,6 +874,19 @@
     }
     .hero-content {
       padding: 80px 22px 60px;
+    }
+    .cloud-1 {
+      width: 168px;
+      height: 84px;
+    }
+    .cloud-2 {
+      width: 120px;
+      height: 60px;
+    }
+    .cloud-3 {
+      width: 148px;
+      height: 74px;
+      top: 12%;
     }
     .hero-h1 {
       font-size: clamp(44px, 13vw, 64px);

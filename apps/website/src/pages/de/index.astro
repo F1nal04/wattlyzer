@@ -1,5 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import HeroClouds from '../../components/HeroClouds.astro';
 import '../../styles/index.css';
 ---
 
@@ -56,8 +57,7 @@ import '../../styles/index.css';
     <div class="hero-sky" aria-hidden="true">
       <div id="hero-sun" class="hero-sun"></div>
       <div id="hero-moon" class="hero-moon"></div>
-      <div class="hero-cloud cloud-1" id="hc1"></div>
-      <div class="hero-cloud cloud-2" id="hc2"></div>
+      <HeroClouds />
       <div class="hero-hills" id="hero-hills"></div>
     </div>
 
@@ -457,9 +457,14 @@ import '../../styles/index.css';
       updateSky(SKY_HOURS[hourIdx]);
       hourIdx = (hourIdx + 1) % SKY_HOURS.length;
     }
-    tick();
-    const skyInterval = setInterval(tick, 4400);
-    document.addEventListener('astro:before-swap', () => clearInterval(skyInterval), { once: true });
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) {
+      updateSky(10);
+    } else {
+      tick();
+      const skyInterval = setInterval(tick, 4400);
+      document.addEventListener('astro:before-swap', () => clearInterval(skyInterval), { once: true });
+    }
 
     // ── FAQ Accordion ──
     document.querySelectorAll<HTMLButtonElement>('.faq-q').forEach((btn) => {
