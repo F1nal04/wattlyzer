@@ -61,7 +61,7 @@ Power generation applies the fixed 0.7 factor and local wall-clock shading windo
 
 ## Website conventions
 
-The Astro site is static, bilingual, and framework-free. English routes are unprefixed and German routes use `/de/`. Keep plain CSS and Astro components; do not introduce React or a CSS framework. The animated hero imports `skyTheme` from `@wattlyzer/theme` so both languages use the same palette, and `Layout.astro` takes its locale set from `@wattlyzer/i18n`. `astro.config.mjs` cannot import the package (Astro reads the config before workspace resolution), so `apps/website/i18n.test.ts` guards the two against drifting apart.
+The Astro site is static, bilingual, and framework-free. English routes are unprefixed and German routes use `/de/`; add and update both language routes together. Keep plain CSS and Astro components; do not introduce React or a CSS framework. Fonts are fetched at build time through Astro and exposed as CSS variables. The animated hero imports `skyTheme` from `@wattlyzer/theme` so both languages use the same palette, and `Layout.astro` takes its locale set from `@wattlyzer/i18n`. Do not duplicate palette logic in pages. The hero hour strip uses both `backdrop-filter` prefixes plus `translateZ(0)` for Safari. `astro.config.mjs` cannot import the package (Astro reads the config before workspace resolution), so `apps/website/i18n.test.ts` guards the two against drifting apart.
 
 The language switcher is `src/components/LanguageToggle.astro` — one component with `nav` / `nav-mobile` / `footer` variants, driven by `localeOptions`. Never hand-write a `lang-btn` in a page; it was copy-pasted into eight places before, each with its own hard-coded active locale. Its class names are load-bearing for `index.css` and `legal.css`.
 
