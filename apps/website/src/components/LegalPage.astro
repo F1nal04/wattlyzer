@@ -3,6 +3,11 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 import { DEFAULT_LOCALE, isLocale } from '@wattlyzer/i18n';
 import Layout from '../layouts/Layout.astro';
 import LanguageToggle from './LanguageToggle.astro';
+import {
+  IMPRESSUM,
+  impressumAddressLines,
+  translatorFor as impressumFor,
+} from '@wattlyzer/legal';
 import { translatorFor } from '../i18n/legal';
 import '../styles/legal.css';
 
@@ -10,6 +15,9 @@ const CANONICAL_PATH = '/legal/';
 
 const locale = isLocale(Astro.currentLocale) ? Astro.currentLocale : DEFAULT_LOCALE;
 const t = translatorFor(locale);
+// Shared with the PWA so both impressums cannot drift apart.
+const impressum = impressumFor(locale);
+const addressLines = impressumAddressLines(locale);
 const home = getRelativeLocaleUrl(locale, '/');
 ---
 
@@ -34,18 +42,25 @@ const home = getRelativeLocaleUrl(locale, '/');
     <div class="subtitle">{t('subtitle')}</div>
 
     <section class="imp-section">
-      <h2>{t('operator')}</h2>
-      <p>Leon Bojanowski<br />Marienstraße 3b<br />14532 Stahnsdorf<br />{t('country')}</p>
+      <h2>{impressum('operator')}</h2>
+      <p>
+        {addressLines.map((line, index) => (
+          <>
+            {index > 0 && <br />}
+            {line}
+          </>
+        ))}
+      </p>
     </section>
 
     <section class="imp-section">
-      <h2>{t('contact')}</h2>
-      <p>leongaborbojanowski@proton.me</p>
+      <h2>{impressum('contact')}</h2>
+      <p><a href={`mailto:${IMPRESSUM.email}`}>{IMPRESSUM.email}</a></p>
     </section>
 
     <section class="imp-section">
-      <h2>{t('informational')}</h2>
-      <p>{t('informationalBody')}</p>
+      <h2>{impressum('informational')}</h2>
+      <p>{impressum('informationalBody')}</p>
     </section>
   </main>
 

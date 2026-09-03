@@ -17,6 +17,7 @@
     "@wattlyzer/api-client": "workspace:*",
     "@wattlyzer/core": "workspace:*",
     "@wattlyzer/i18n": "workspace:*",
+    "@wattlyzer/legal": "workspace:*",
     "@wattlyzer/theme": "workspace:*",
     "@tanstack/query-sync-storage-persister": "^5.90.0",
     "@tanstack/react-query": "^5.90.0",

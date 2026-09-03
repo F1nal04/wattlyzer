@@ -22,11 +22,12 @@ This is a package-based Bun/Nx monorepo:
 - `packages/core` — framework-independent scheduling, market coverage, weather decisions, and shared data contracts.
 - `packages/api-client` — framework-independent clients for forecast.solar, aWATTar, and BrightSky. It accepts an injected fetch implementation.
 - `packages/theme` — framework-independent sky palette and brand tokens shared by both apps.
+- `packages/legal` — the § 5 TMG impressum (operator, contact address, informational-use statement) in English and German. Both apps render it, so the two legal notices cannot state different things.
 - `packages/i18n` — framework-independent locale model (`en` default, `de`), Accept-Language style detection, the pure `resolveLocale` decision, `LOCALE_META`/`localeOptions` behind both apps' language switchers, the `createTranslator` catalog factory, `Intl` number formatting, and `{name}` message interpolation. Shared by both apps.
 
-Workspace packages are private source packages imported through their `@wattlyzer/*` public entrypoints and declared with `workspace:*`. Do not import another project's internal files. Nx tags and ESLint enforce the intended graph: apps may consume shared packages, `api-client` may consume `core`, the website may consume `theme` and `i18n` only, and platform-agnostic packages must not depend on apps, React, browser storage, DOM APIs, or UI frameworks.
+Workspace packages are private source packages imported through their `@wattlyzer/*` public entrypoints and declared with `workspace:*`. Do not import another project's internal files. Nx tags and ESLint enforce the intended graph: apps may consume shared packages, `api-client` may consume `core`, the website may consume `theme`, `i18n`, and `legal` only, and platform-agnostic packages must not depend on apps, React, browser storage, DOM APIs, or UI frameworks.
 
-For a future Expo app, add `apps/mobile` and reuse `core`, `api-client`, `theme`, and `i18n`. Keep geolocation, persistence, Query integration, and UI behind platform-specific adapters. Do not attempt to share React DOM/Astro UI components with React Native.
+For a future Expo app, add `apps/mobile` and reuse `core`, `api-client`, `theme`, `i18n`, and `legal`. Keep geolocation, persistence, Query integration, and UI behind platform-specific adapters. Do not attempt to share React DOM/Astro UI components with React Native.
 
 ## PWA architecture
 
@@ -64,7 +65,7 @@ The Astro site is static, bilingual, and framework-free. English routes are unpr
 
 The language switcher is `src/components/LanguageToggle.astro` — one component with `nav` / `nav-mobile` / `footer` variants, driven by `localeOptions`. Never hand-write a `lang-btn` in a page; it was copy-pasted into eight places before, each with its own hard-coded active locale. Its class names are load-bearing for `index.css` and `legal.css`.
 
-`/legal/` and `/de/legal/` are thin routes over `src/components/LegalPage.astro` with copy in `src/i18n/legal.ts`, built on the same `createTranslator` the PWA uses. The landing pages are still hand-duplicated: `index.astro` and `de/index.astro` have identical markup and only differ in copy, and `hero.test.ts` reads their markup directly, so converting them is a separate change.
+`/legal/` and `/de/legal/` are thin routes over `src/components/LegalPage.astro`. Only page chrome lives in `src/i18n/legal.ts`; the impressum itself comes from `@wattlyzer/legal`, shared with the PWA. The landing pages are still hand-duplicated: `index.astro` and `de/index.astro` have identical markup and only differ in copy, and `hero.test.ts` reads their markup directly, so converting them is a separate change.
 
 ## CI, releases, and Netlify
 

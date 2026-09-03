@@ -251,14 +251,6 @@ export const de: Record<MessageKey, string> = {
   "legal.title": "Impressum und {contact}.",
   "legal.titleEm": "Kontakt",
   "legal.lede": "Die Anbieter- und Kontaktangaben zu Wattlyzer.",
-  "legal.operator": "Betreiber",
-  "legal.contact": "Kontakt",
-  "legal.emailLabel": "E-Mail",
-  "legal.phoneLabel": "Telefon",
-  "legal.country": "Deutschland",
-  "legal.disclaimer": "Haftungsausschluss",
-  "legal.disclaimerBody":
-    "Diese Anwendung dient ausschließlich zu Informationszwecken. Die Berechnungen und Ergebnisse sind Schätzungen und sollten ohne eigene Prüfung nicht für kritische Entscheidungen genutzt werden.",
 
   // ── Privacy ────────────────────────────────────────────────
   "privacy.eyebrow": "Datenschutz",

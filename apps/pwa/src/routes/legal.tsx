@@ -1,4 +1,10 @@
+import { Fragment } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import {
+  IMPRESSUM,
+  impressumAddressLines,
+  translatorFor as impressumFor,
+} from "@wattlyzer/legal";
 import { TextCard, TextPage } from "@/components/sky/text-page";
 import { useI18n } from "@/lib/i18n";
 import { richParts } from "@/lib/i18n/rich";
@@ -8,7 +14,11 @@ export const Route = createFileRoute("/legal")({
 });
 
 function LegalScreen() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  // Operator, contact and disclaimer come from the shared package, so this
+  // page and wattlyzer.de/legal/ cannot state different things.
+  const impressum = impressumFor(locale);
+
   return (
     <TextPage
       eyebrow={t("legal.eyebrow")}
@@ -23,22 +33,24 @@ function LegalScreen() {
     >
       {(theme) => (
         <>
-          <TextCard t={theme} title={t("legal.operator")}>
-            Leon Bojanowski
-            <br />
-            Marienstraße 3b
-            <br />
-            14532 Stahnsdorf
-            <br />
-            {t("legal.country")}
+          <TextCard t={theme} title={impressum("operator")}>
+            {impressumAddressLines(locale).map((line, index) => (
+              <Fragment key={line}>
+                {index > 0 && <br />}
+                {line}
+              </Fragment>
+            ))}
           </TextCard>
-          <TextCard t={theme} title={t("legal.contact")}>
-            {t("legal.emailLabel")}: leongaborbojanowski04@gmail.com
-            <br />
-            {t("legal.phoneLabel")}: +49 160 3020390
+          <TextCard t={theme} title={impressum("contact")}>
+            <a
+              href={`mailto:${IMPRESSUM.email}`}
+              style={{ color: "inherit" }}
+            >
+              {IMPRESSUM.email}
+            </a>
           </TextCard>
-          <TextCard t={theme} title={t("legal.disclaimer")}>
-            {t("legal.disclaimerBody")}
+          <TextCard t={theme} title={impressum("informational")}>
+            {impressum("informationalBody")}
           </TextCard>
         </>
       )}

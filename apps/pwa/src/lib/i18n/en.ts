@@ -250,14 +250,6 @@ export const en = {
   "legal.title": "Legal notice and {contact}.",
   "legal.titleEm": "contact",
   "legal.lede": "The core company and contact information for Wattlyzer.",
-  "legal.operator": "Operator",
-  "legal.contact": "Contact",
-  "legal.emailLabel": "E-mail",
-  "legal.phoneLabel": "Phone",
-  "legal.country": "Germany",
-  "legal.disclaimer": "Disclaimer",
-  "legal.disclaimerBody":
-    "This application is provided for informational purposes only. The calculations and results are estimates and should not be used for critical decision making without proper verification.",
 
   // ── Privacy ────────────────────────────────────────────────
   "privacy.eyebrow": "Privacy",
