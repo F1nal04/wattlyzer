@@ -94,7 +94,7 @@ export const de: Record<MessageKey, string> = {
   "quick.mode": "Modus",
   "quick.minSolar": "Min. Solar",
   "quick.searchWindow": "Suchfenster",
-  "quick.window.endOfDay": "TE",
+  "quick.window.endOfDay": "Heute",
 
   // ── Settings ───────────────────────────────────────────────
   "settings.title": "Einstellungen",

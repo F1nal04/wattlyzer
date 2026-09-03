@@ -127,15 +127,4 @@ export function useLocale(): Locale {
   });
 }
 
-// The persisted choice, or `null` while detection is in charge. Drives the
-// switcher's selected state without collapsing "auto" into the resolved value.
-export function useChosenLocale(): Locale | null {
-  const snapshot = useSyncExternalStore(
-    subscribe,
-    getLocaleSnapshot,
-    getLocaleServerSnapshot,
-  );
-  return snapshot.chosen;
-}
-
 export { DEFAULT_LOCALE };
