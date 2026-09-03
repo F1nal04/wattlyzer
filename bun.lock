@@ -28,6 +28,7 @@
         "@tanstack/react-start": "^1.132.0",
         "@wattlyzer/api-client": "workspace:*",
         "@wattlyzer/core": "workspace:*",
+        "@wattlyzer/i18n": "workspace:*",
         "@wattlyzer/theme": "workspace:*",
         "react": "^19.2.4",
         "react-dom": "^19.2.4",
@@ -55,6 +56,7 @@
       "version": "1.8.0",
       "dependencies": {
         "@astrojs/sitemap": "^3.7.2",
+        "@wattlyzer/i18n": "workspace:*",
         "@wattlyzer/theme": "workspace:*",
         "astro": "^6.1.10",
       },
@@ -72,6 +74,10 @@
     },
     "packages/core": {
       "name": "@wattlyzer/core",
+      "version": "0.0.0",
+    },
+    "packages/i18n": {
+      "name": "@wattlyzer/i18n",
       "version": "0.0.0",
     },
     "packages/theme": {
@@ -929,6 +935,8 @@
     "@wattlyzer/api-client": ["@wattlyzer/api-client@workspace:packages/api-client"],
 
     "@wattlyzer/core": ["@wattlyzer/core@workspace:packages/core"],
+
+    "@wattlyzer/i18n": ["@wattlyzer/i18n@workspace:packages/i18n"],
 
     "@wattlyzer/pwa": ["@wattlyzer/pwa@workspace:apps/pwa"],
 

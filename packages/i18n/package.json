@@ -1,0 +1,18 @@
+{
+  "name": "@wattlyzer/i18n",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "TZ=UTC bun test src"
+  },
+  "nx": {
+    "name": "i18n",
+    "tags": ["type:i18n", "scope:shared", "platform:agnostic"]
+  }
+}

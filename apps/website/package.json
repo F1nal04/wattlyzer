@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.2",
+    "@wattlyzer/i18n": "workspace:*",
     "@wattlyzer/theme": "workspace:*",
     "astro": "^6.1.10"
   },

@@ -35,6 +35,7 @@ export default tseslint.config(
               onlyDependOnLibsWithTags: [
                 "type:core",
                 "type:data",
+                "type:i18n",
                 "type:theme"
               ]
             },
@@ -51,8 +52,12 @@ export default tseslint.config(
               onlyDependOnLibsWithTags: ["type:theme"]
             },
             {
+              sourceTag: "type:i18n",
+              onlyDependOnLibsWithTags: ["type:i18n"]
+            },
+            {
               sourceTag: "scope:marketing",
-              onlyDependOnLibsWithTags: ["type:theme"]
+              onlyDependOnLibsWithTags: ["type:i18n", "type:theme"]
             }
           ]
         }
