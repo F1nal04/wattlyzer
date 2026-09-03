@@ -209,7 +209,7 @@ export const de: Record<MessageKey, string> = {
 
   // ── Install guidance ───────────────────────────────────────
   "install.ios.eyebrow": "iOS · Safari",
-  "install.ios.title": "Aufs {em} legen.",
+  "install.ios.title": "Auf den {em} legen.",
   "install.ios.titleEm": "Home-Bildschirm",
   "install.ios.lede":
     "Drei Taps und Wattlyzer liegt neben deinen anderen Apps.",
