@@ -1,3 +1,8 @@
 [build]
   command = "bunx nx build pwa"
   publish = "apps/pwa/dist/client"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"

@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "TZ=UTC bun test src",
     "test:watch": "TZ=UTC bun test --watch src",
-    "test:run": "TZ=UTC bun test src"
+    "test:run": "TZ=UTC bun test src",
+    "verify-seo": "TZ=UTC bun test seo.dist.test.ts"
   },
   "dependencies": {
     "@wattlyzer/api-client": "workspace:*",
@@ -50,6 +51,9 @@
     "targets": {
       "build": {
         "outputs": ["{projectRoot}/dist", "{projectRoot}/.netlify"]
+      },
+      "verify-seo": {
+        "dependsOn": ["build"]
       }
     }
   }

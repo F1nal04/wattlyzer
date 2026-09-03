@@ -12,6 +12,8 @@
     "preview": "astro preview",
     "lint": "eslint .",
     "typecheck": "astro check",
+    "test": "TZ=UTC bun test seo.test.ts",
+    "verify-seo": "TZ=UTC bun test seo.dist.test.ts",
     "astro": "astro"
   },
   "dependencies": {
@@ -29,6 +31,9 @@
     "targets": {
       "build": {
         "outputs": ["{projectRoot}/dist"]
+      },
+      "verify-seo": {
+        "dependsOn": ["build"]
       }
     }
   }

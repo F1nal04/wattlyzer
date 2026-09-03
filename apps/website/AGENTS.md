@@ -7,3 +7,4 @@
 - Reuse `skyTheme` and brand tokens from `@wattlyzer/theme`; do not duplicate palette logic in pages.
 - The hero hour-strip uses the same Safari glass layer as the PWA: both `backdrop-filter` prefixes plus `translateZ(0)`.
 - Deployment configuration lives in `apps/website/netlify.toml`; Netlify's package directory must be `apps/website` with the repository root as the base.
+- Search engines should index this site only. Keep `public/robots.txt` allowing `/` and pointing at `https://wattlyzer.de/sitemap-index.xml`. Canonical URLs come from `site` in `astro.config.mjs`; do not reference `pwa.wattlyzer.de` from the website crawler policy.

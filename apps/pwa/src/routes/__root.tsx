@@ -40,6 +40,7 @@ export const Route = createRootRouteWithContext<{
         content: "black-translucent",
       },
       { name: "apple-mobile-web-app-title", content: "wattlyzer" },
+      { name: "robots", content: "noindex, nofollow" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

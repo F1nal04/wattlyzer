@@ -21,8 +21,8 @@
     "typecheck": "nx run-many -t typecheck",
     "test": "nx run-many -t test",
     "test:run": "nx run-many -t test",
-    "check": "nx run-many -t lint,typecheck,test,build",
-    "affected": "nx affected -t lint,typecheck,test,build"
+    "check": "nx run-many -t lint,typecheck,test,build,verify-seo",
+    "affected": "nx affected -t lint,typecheck,test,build,verify-seo"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
