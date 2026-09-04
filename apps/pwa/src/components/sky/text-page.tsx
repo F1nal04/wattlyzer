@@ -1,16 +1,12 @@
 import type { ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import {
-  FONT_DISPLAY,
-  FONT_MONO,
-  skyTheme,
-  type SkyTheme,
-} from "@wattlyzer/theme";
+import { skyTheme, type SkyTheme } from "@wattlyzer/theme";
 import { frostedGlass } from "@/components/sky/glass";
 import { WIcon } from "@/components/sky/icons";
 import {
   Hills,
   SkyIconBtn,
+  SkyPageHead,
   SkyScreen,
 } from "@/components/sky/primitives";
 import { useSkyHour } from "@/lib/use-sky-hour";
@@ -98,41 +94,8 @@ export function TextPage({
           WebkitOverflowScrolling: "touch",
         }}
       >
-        <div
-          style={{
-            fontFamily: FONT_MONO,
-            fontSize: 11,
-            letterSpacing: "0.22em",
-            color: t.fgMute,
-            textTransform: "uppercase",
-            marginBottom: 10,
-          }}
-        >
-          {eyebrow}
-        </div>
-        <div
-          style={{
-            fontFamily: FONT_DISPLAY,
-            fontSize: 32,
-            lineHeight: 1.05,
-            letterSpacing: "-0.015em",
-            color: t.fg,
-          }}
-        >
-          {title}
-        </div>
-        <div
-          style={{
-            marginTop: 8,
-            marginBottom: 22,
-            fontSize: 14,
-            color: t.fgDim,
-            lineHeight: 1.5,
-          }}
-        >
-          {lede}
-        </div>
-        {children(t)}
+        <SkyPageHead t={t} eyebrow={eyebrow} title={title} lede={lede} />
+        <div style={{ marginTop: 22 }}>{children(t)}</div>
       </div>
     </SkyScreen>
   );

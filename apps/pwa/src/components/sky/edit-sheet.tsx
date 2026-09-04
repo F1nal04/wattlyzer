@@ -4,6 +4,61 @@ import { frostedGlass } from "@/components/sky/glass";
 import { useEscapeKey } from "@/components/sky/primitives";
 import { useI18n } from "@/lib/i18n";
 
+export function ModalField({
+  t,
+  label,
+  right,
+  children,
+}: {
+  t: SkyTheme;
+  label: string;
+  right?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+          marginBottom: 12,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: FONT_MONO,
+            fontSize: 11.5,
+            letterSpacing: "0.16em",
+            color: t.fgMute,
+            textTransform: "uppercase",
+          }}
+        >
+          {label}
+        </div>
+        {right}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+export function ModalDisplay({ t, children }: { t: SkyTheme; children: ReactNode }) {
+  return (
+    <div
+      style={{
+        fontFamily: FONT_SANS,
+        fontSize: 16,
+        fontWeight: 600,
+        color: t.fg,
+        fontVariantNumeric: "tabular-nums",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 // Shared bottom sheet used by solar-panel and shading editors.
 // Close (X, scrim, Escape) dismisses. Solar commits through onChange as
 // edits happen; shading still drafts locally and commits on close.

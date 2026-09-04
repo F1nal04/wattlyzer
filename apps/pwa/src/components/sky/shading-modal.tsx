@@ -1,6 +1,10 @@
 import { useState } from "react";
-import { FONT_MONO, FONT_SANS, type SkyTheme } from "@wattlyzer/theme";
-import { SkyEditSheet } from "@/components/sky/edit-sheet";
+import { FONT_MONO, type SkyTheme } from "@wattlyzer/theme";
+import {
+  ModalDisplay,
+  ModalField,
+  SkyEditSheet,
+} from "@/components/sky/edit-sheet";
 import { SkySlider } from "@/components/sky/primitives";
 import { ObSwitchRow } from "@/components/sky/rows";
 import {
@@ -13,7 +17,7 @@ import {
   type ShadingWindow,
 } from "@/components/sky/shading";
 import { useI18n } from "@/lib/i18n";
-import { richParts } from "@/lib/i18n/rich";
+import { Em, richParts } from "@/lib/i18n/rich";
 
 function ShadingWindowEditor({
   t,
@@ -48,46 +52,23 @@ function ShadingWindowEditor({
           transition: "opacity 180ms ease",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "baseline",
-            marginBottom: 12,
-          }}
-        >
-          <div
-            style={{
-              fontFamily: FONT_MONO,
-              fontSize: 11.5,
-              letterSpacing: "0.16em",
-              color: t.fgMute,
-              textTransform: "uppercase",
-            }}
-          >
-            {translate(copy.hourLabel)}
-          </div>
-          <div
-            style={{
-              fontFamily: FONT_SANS,
-              fontSize: 16,
-              fontWeight: 600,
-              color: t.fg,
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {formatShadingHour(value.hour)}
-          </div>
-        </div>
-        <SkySlider
-          value={value.hour}
-          min={range.min}
-          max={range.max}
-          step={1}
+        <ModalField
           t={t}
-          labels={shadingHourTicks(range.min, range.max)}
-          onChange={(hour) => onChange({ ...value, hour })}
-        />
+          label={translate(copy.hourLabel)}
+          right={
+            <ModalDisplay t={t}>{formatShadingHour(value.hour)}</ModalDisplay>
+          }
+        >
+          <SkySlider
+            value={value.hour}
+            min={range.min}
+            max={range.max}
+            step={1}
+            t={t}
+            labels={shadingHourTicks(range.min, range.max)}
+            onChange={(hour) => onChange({ ...value, hour })}
+          />
+        </ModalField>
       </div>
     </div>
   );
@@ -119,9 +100,9 @@ export function ShadingModal({
       eyebrow={eyebrow ?? translate("shading.modal.eyebrow")}
       title={richParts(translate("shading.modal.title"), {
         shade: (
-          <span style={{ fontStyle: "italic", fontWeight: 300 }}>
+          <Em>
             {translate("shading.modal.titleEm")}
-          </span>
+          </Em>
         ),
       })}
       onClose={dismiss}

@@ -52,22 +52,6 @@ export function shadingRowValue(
   return t(kind === "morning" ? "shading.until" : "shading.from", { hour });
 }
 
-export function shadingSettingsPatch(
-  kind: ShadingKind,
-  window: ShadingWindow,
-): Partial<ShadingSettingsSlice> {
-  if (kind === "morning") {
-    return {
-      morningShading: window.enabled,
-      shadingEndTime: window.hour,
-    };
-  }
-  return {
-    eveningShading: window.enabled,
-    shadingStartTime: window.hour,
-  };
-}
-
 export function shadingWindowFromSettings(
   kind: ShadingKind,
   settings: ShadingSettingsSlice,

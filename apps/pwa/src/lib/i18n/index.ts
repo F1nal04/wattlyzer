@@ -30,10 +30,6 @@ export interface I18n {
   integer: (value: number) => string;
 }
 
-export function useT(): Translate {
-  return translatorFor(useLocale());
-}
-
 export function useI18n(): I18n {
   const locale = useLocale();
   return {

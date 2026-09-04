@@ -1,10 +1,13 @@
-import type { ReactNode } from "react";
-import { FONT_MONO, FONT_SANS, type SkyTheme } from "@wattlyzer/theme";
-import { SkyEditSheet } from "@/components/sky/edit-sheet";
+import { FONT_MONO, type SkyTheme } from "@wattlyzer/theme";
+import {
+  ModalDisplay,
+  ModalField,
+  SkyEditSheet,
+} from "@/components/sky/edit-sheet";
 import { SkySlider } from "@/components/sky/primitives";
 import { ObSwitchRow, azimuthKey } from "@/components/sky/rows";
 import { useI18n } from "@/lib/i18n";
-import { richParts } from "@/lib/i18n/rich";
+import { Em, richParts } from "@/lib/i18n/rich";
 
 export type SolarConfig = {
   enabled: boolean;
@@ -12,61 +15,6 @@ export type SolarConfig = {
   tilt: number; // degrees from horizontal
   sizeKw: number; // kWp
 };
-
-function ModalField({
-  t,
-  label,
-  right,
-  children,
-}: {
-  t: SkyTheme;
-  label: string;
-  right?: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-          marginBottom: 12,
-        }}
-      >
-        <div
-          style={{
-            fontFamily: FONT_MONO,
-            fontSize: 11.5,
-            letterSpacing: "0.16em",
-            color: t.fgMute,
-            textTransform: "uppercase",
-          }}
-        >
-          {label}
-        </div>
-        {right}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function ModalDisplay({ t, children }: { t: SkyTheme; children: ReactNode }) {
-  return (
-    <div
-      style={{
-        fontFamily: FONT_SANS,
-        fontSize: 16,
-        fontWeight: 600,
-        color: t.fg,
-        fontVariantNumeric: "tabular-nums",
-      }}
-    >
-      {children}
-    </div>
-  );
-}
 
 // Solar panels modal — panel geometry only. Shading has its own editor.
 export function SolarPanelsModal({
@@ -92,9 +40,9 @@ export function SolarPanelsModal({
       eyebrow={eyebrow ?? translate("solar.modal.eyebrow")}
       title={richParts(translate("solar.modal.title"), {
         panels: (
-          <span style={{ fontStyle: "italic", fontWeight: 300 }}>
+          <Em>
             {translate("solar.modal.titleEm")}
-          </span>
+          </Em>
         ),
       })}
       onClose={onClose}

@@ -20,11 +20,13 @@ import {
 
 export function useGeolocation() {
   const [position, setPosition] = useState<Position | null>(null);
-  const [locationError, setLocationError] = useState<string | null>(null);
+  // Only whether locating failed is surfaced; the copy is a translated
+  // message, so the browser's reason is not kept.
+  const [locationError, setLocationError] = useState(false);
 
   useEffect(() => {
     if (!navigator.geolocation) {
-      setLocationError("Geolocation not supported by browser");
+      setLocationError(true);
       return;
     }
 
@@ -35,21 +37,7 @@ export function useGeolocation() {
           longitude: nextPosition.coords.longitude,
         });
       },
-      (error) => {
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            setLocationError("Location access denied by user");
-            break;
-          case error.POSITION_UNAVAILABLE:
-            setLocationError("Location information unavailable");
-            break;
-          case error.TIMEOUT:
-            setLocationError("Location request timed out");
-            break;
-          default:
-            setLocationError("Unknown location error");
-        }
-      },
+      () => setLocationError(true),
       {
         enableHighAccuracy: true,
         timeout: 10000,

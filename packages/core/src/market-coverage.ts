@@ -1,3 +1,4 @@
+import { ceilToUtcHour } from "./schedule";
 import type { MarketData } from "./types";
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -15,33 +16,13 @@ export function checkMarketDataSufficiency(
 ): {
   isSufficient: boolean;
   hoursAvailable: number;
-  searchTimespanHours: number;
 } {
-  if (!marketData || !marketData.data || marketData.data.length === 0) {
-    return {
-      isSufficient: false,
-      hoursAvailable: 0,
-      searchTimespanHours,
-    };
-  }
-
-  const firstRelevantHour = new Date(
-    Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate(),
-      now.getUTCHours(),
-      0,
-      0,
-      0
-    )
-  );
-  if (now.getTime() > firstRelevantHour.getTime()) {
-    firstRelevantHour.setTime(firstRelevantHour.getTime() + HOUR_MS);
+  if (!marketData?.data?.length) {
+    return { isSufficient: false, hoursAvailable: 0 };
   }
 
   // Mirror calculateSchedule: the window counts from the first full hour
-  const requiredHours = Math.max(0, searchTimespanHours);
+  const firstRelevantHour = ceilToUtcHour(now);
 
   const sortedData = [...marketData.data].sort(
     (a, b) => a.start_timestamp - b.start_timestamp
@@ -61,11 +42,9 @@ export function checkMarketDataSufficiency(
     0,
     Math.floor((coverageEndMs - firstRelevantHour.getTime()) / HOUR_MS)
   );
-  const isSufficient = hoursAvailable >= requiredHours;
 
   return {
-    isSufficient,
+    isSufficient: hoursAvailable >= Math.max(0, searchTimespanHours),
     hoursAvailable,
-    searchTimespanHours,
   };
 }

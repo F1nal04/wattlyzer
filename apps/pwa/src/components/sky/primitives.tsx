@@ -1,5 +1,10 @@
 import { useEffect, type CSSProperties, type ReactNode } from "react";
-import { FONT_MONO, FONT_SANS, type SkyTheme } from "@wattlyzer/theme";
+import {
+  FONT_DISPLAY,
+  FONT_MONO,
+  FONT_SANS,
+  type SkyTheme,
+} from "@wattlyzer/theme";
 import { frostedGlass } from "@/components/sky/glass";
 import { WIcon } from "@/components/sky/icons";
 import { isBestSlotModeSelectable } from "@/components/sky/solar";
@@ -15,6 +20,54 @@ export function useEscapeKey(onEscape: () => void) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onEscape]);
+}
+
+// Eyebrow / display headline / lede, the standing head of every text screen.
+export function SkyPageHead({
+  t,
+  eyebrow,
+  title,
+  lede,
+}: {
+  t: SkyTheme;
+  eyebrow: string;
+  // A node, not a string + italic pair: the emphasised fragment sits
+  // wherever the translation puts it.
+  title: ReactNode;
+  lede: string;
+}) {
+  return (
+    <>
+      <div
+        style={{
+          fontFamily: FONT_MONO,
+          fontSize: 11,
+          letterSpacing: "0.22em",
+          color: t.fgMute,
+          textTransform: "uppercase",
+          marginBottom: 10,
+        }}
+      >
+        {eyebrow}
+      </div>
+      <div
+        style={{
+          fontFamily: FONT_DISPLAY,
+          fontSize: 32,
+          lineHeight: 1.05,
+          letterSpacing: "-0.015em",
+          color: t.fg,
+        }}
+      >
+        {title}
+      </div>
+      <div
+        style={{ marginTop: 8, fontSize: 14, color: t.fgDim, lineHeight: 1.5 }}
+      >
+        {lede}
+      </div>
+    </>
+  );
 }
 
 // Full-viewport screen wrapper. The design canvas was a 360x780 phone frame;

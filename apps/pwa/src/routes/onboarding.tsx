@@ -18,7 +18,7 @@ import { WIcon } from "@/components/sky/icons";
 import { ObCard, ObCheckRow, ObSwitchRow, azimuthKey } from "@/components/sky/rows";
 import { LanguageSwitch } from "@/components/sky/language";
 import { useI18n, type Translate } from "@/lib/i18n";
-import { richParts } from "@/lib/i18n/rich";
+import { Em, richParts } from "@/lib/i18n/rich";
 import { useSkyHour } from "@/lib/use-sky-hour";
 import { ShadingModal } from "@/components/sky/shading-modal";
 import {
@@ -39,13 +39,6 @@ export const Route = createFileRoute("/onboarding")({
 // Onboarding is themed for a friendly midday sky
 const ONB_HOUR = 11;
 const TOTAL_STEPS = 4;
-
-// The display italic used inside translated headlines.
-function Em({ children }: { children: ReactNode }) {
-  return (
-    <span style={{ fontStyle: "italic", fontWeight: 300 }}>{children}</span>
-  );
-}
 
 function headline(t: Translate, key: Parameters<Translate>[0], slot: string, emKey: Parameters<Translate>[0]) {
   return richParts(t(key), { [slot]: <Em>{t(emKey)}</Em> });

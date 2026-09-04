@@ -17,3 +17,19 @@ export function richParts(
     ),
   );
 }
+
+// The display italic used inside translated headlines, normally as the node
+// filling a `{slot}` above.
+export function Em({
+  children,
+  opacity,
+}: {
+  children: ReactNode;
+  opacity?: number;
+}) {
+  return (
+    <span style={{ fontStyle: "italic", fontWeight: 300, opacity }}>
+      {children}
+    </span>
+  );
+}

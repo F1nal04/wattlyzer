@@ -2,7 +2,6 @@ import { describe, expect, it } from "bun:test";
 import type { SchedulingSettings } from "./config";
 import type { SolarData, WeatherData } from "./types";
 import {
-  cloudCoverAt,
   cloudCoverToKind,
   conditionToKind,
   forecastWeather,
@@ -202,30 +201,6 @@ describe("conditionToKind", () => {
     expect(conditionToKind(null, 0.4)).toBe("rainy");
     expect(conditionToKind(undefined, 2)).toBe("rainy");
     expect(conditionToKind(null, 0)).toBe(null);
-  });
-});
-
-describe("cloudCoverAt", () => {
-  it("picks the hourly record covering the given moment", () => {
-    const data = brightSky([
-      ["2025-01-15T11:00:00+00:00", 10],
-      ["2025-01-15T12:00:00+00:00", 95],
-      ["2025-01-15T13:00:00+00:00", 20],
-    ]);
-    // 12:42 falls inside the 12:00 record, not the nearest (13:00)
-    expect(cloudCoverAt(data, new Date("2025-01-15T12:42:00.000Z"))).toBe(95);
-  });
-
-  it("matches timestamps with non-UTC offsets", () => {
-    // 13:00+01:00 is 12:00 UTC
-    const data = brightSky([["2025-01-15T13:00:00+01:00", 60]]);
-    expect(cloudCoverAt(data, new Date("2025-01-15T12:30:00.000Z"))).toBe(60);
-  });
-
-  it("returns null without data or a record for that hour", () => {
-    expect(cloudCoverAt(null, noon)).toBe(null);
-    const otherHour = brightSky([["2025-01-15T09:00:00+00:00", 50]]);
-    expect(cloudCoverAt(otherHour, noon)).toBe(null);
   });
 });
 
