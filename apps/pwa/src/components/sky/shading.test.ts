@@ -5,7 +5,6 @@ import {
   shadingRange,
   shadingRowValue,
   shadingSettingsFromSetup,
-  shadingSettingsPatch,
   shadingSetupFromSettings,
   shadingSetupSummary,
   shadingWindowFromSettings,
@@ -78,24 +77,6 @@ describe("shadingRowValue", () => {
     expect(shadingRowValue("evening", { enabled: true, hour: 18 }, de)).toContain(
       "18:00",
     );
-  });
-});
-
-describe("shadingSettingsPatch", () => {
-  it("maps a morning window onto morningShading and shadingEndTime", () => {
-    expect(shadingSettingsPatch("morning", { enabled: true, hour: 9 })).toEqual({
-      morningShading: true,
-      shadingEndTime: 9,
-    });
-  });
-
-  it("maps an evening window onto eveningShading and shadingStartTime", () => {
-    expect(
-      shadingSettingsPatch("evening", { enabled: false, hour: 18 }),
-    ).toEqual({
-      eveningShading: false,
-      shadingStartTime: 18,
-    });
   });
 });
 

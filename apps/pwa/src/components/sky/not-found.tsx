@@ -3,7 +3,7 @@ import { FONT_DISPLAY, FONT_MONO, FONT_SANS, skyTheme } from "@wattlyzer/theme";
 import { Hills, SkyScreen } from "@/components/sky/primitives";
 import { useSkyHour } from "@/lib/use-sky-hour";
 import { useI18n } from "@/lib/i18n";
-import { richParts } from "@/lib/i18n/rich";
+import { Em, richParts } from "@/lib/i18n/rich";
 
 // Default to a fixed midday hour; useSkyHour keeps SSR/first-render hydration
 // safe and follows the current time when "Dark mode" is on.
@@ -52,9 +52,9 @@ export function NotFound() {
         >
           {richParts(translate("notFound.title"), {
             thisSky: (
-              <span style={{ fontStyle: "italic", fontWeight: 300 }}>
+              <Em>
                 {translate("notFound.titleEm")}
-              </span>
+              </Em>
             ),
           })}
         </div>

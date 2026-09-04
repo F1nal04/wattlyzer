@@ -7,7 +7,7 @@ import {
 } from "@wattlyzer/legal";
 import { TextCard, TextPage } from "@/components/sky/text-page";
 import { useI18n } from "@/lib/i18n";
-import { richParts } from "@/lib/i18n/rich";
+import { Em, richParts } from "@/lib/i18n/rich";
 
 export const Route = createFileRoute("/legal")({
   component: LegalScreen,
@@ -24,9 +24,9 @@ function LegalScreen() {
       eyebrow={t("legal.eyebrow")}
       title={richParts(t("legal.title"), {
         contact: (
-          <span style={{ fontStyle: "italic", fontWeight: 300 }}>
+          <Em>
             {t("legal.titleEm")}
-          </span>
+          </Em>
         ),
       })}
       lede={t("legal.lede")}

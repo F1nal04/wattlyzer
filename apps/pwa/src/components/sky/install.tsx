@@ -1,16 +1,15 @@
 import type { ReactNode } from "react";
-import {
-  FONT_DISPLAY,
-  FONT_MONO,
-  skyTheme,
-  type SkyTheme,
-} from "@wattlyzer/theme";
+import { FONT_DISPLAY, skyTheme, type SkyTheme } from "@wattlyzer/theme";
 import { frostedGlass } from "@/components/sky/glass";
 import { InstGlyph, type InstGlyphKind } from "@/components/sky/icons";
-import { Hills, SkyScreen } from "@/components/sky/primitives";
+import {
+  Hills,
+  SkyPageHead,
+  SkyScreen,
+} from "@/components/sky/primitives";
 import { useSkyHour } from "@/lib/use-sky-hour";
 import { useI18n, type MessageKey } from "@/lib/i18n";
-import { richParts } from "@/lib/i18n/rich";
+import { Em, richParts } from "@/lib/i18n/rich";
 
 const INST_HOUR = 11;
 
@@ -96,12 +95,7 @@ function InstRow({
   );
 }
 
-function InstHead({
-  t,
-  eyebrow,
-  title,
-  lede,
-}: {
+function InstHead(props: {
   t: SkyTheme;
   eyebrow: string;
   title: ReactNode;
@@ -116,32 +110,7 @@ function InstHead({
         right: 28,
       }}
     >
-      <div
-        style={{
-          fontFamily: FONT_MONO,
-          fontSize: 11,
-          letterSpacing: "0.22em",
-          color: t.fgMute,
-          textTransform: "uppercase",
-          marginBottom: 10,
-        }}
-      >
-        {eyebrow}
-      </div>
-      <div
-        style={{
-          fontFamily: FONT_DISPLAY,
-          fontSize: 32,
-          lineHeight: 1.05,
-          letterSpacing: "-0.015em",
-          color: t.fg,
-        }}
-      >
-        {title}
-      </div>
-      <div style={{ marginTop: 8, fontSize: 14, color: t.fgDim, lineHeight: 1.5 }}>
-        {lede}
-      </div>
+      <SkyPageHead {...props} />
     </div>
   );
 }
@@ -175,9 +144,9 @@ function InstPage({
         eyebrow={translate(key("eyebrow"))}
         title={richParts(translate(key("title")), {
           em: (
-            <span style={{ fontStyle: "italic", fontWeight: 300 }}>
+            <Em>
               {translate(key("titleEm"))}
-            </span>
+            </Em>
           ),
         })}
         lede={translate(key("lede"))}

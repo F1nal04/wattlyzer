@@ -62,14 +62,6 @@ function weatherRecordAt(
   return null;
 }
 
-// Cloud cover of the hourly record covering `at`, or null when missing
-export function cloudCoverAt(
-  data: WeatherData | null,
-  at: Date,
-): number | null {
-  return weatherRecordAt(data, at)?.cloud_cover ?? null;
-}
-
 /**
  * Sky at the given moment. Real DWD data wins when available: a precipitation
  * or fog condition takes precedence over cloud cover (it can rain under a

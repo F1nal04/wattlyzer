@@ -11,6 +11,7 @@ import { SkyClouds, SkySunCloud } from "@/components/sky/clouds";
 import { frostedGlass } from "@/components/sky/glass";
 import { SkySlider } from "@/components/sky/primitives";
 import { useI18n } from "@/lib/i18n";
+import { Em } from "@/lib/i18n/rich";
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
@@ -257,23 +258,23 @@ export function ClockCluster({
         >
         {showCountdown ? (
           started ? (
-            <span style={{ fontStyle: "italic", fontWeight: 300 }}>
+            <Em>
               {translate("home.now")}
-            </span>
+            </Em>
           ) : (
             <>
               {countdownHours && <>{countdownHours}{"\u2009"}</>}
-              <span style={{ fontStyle: "italic", fontWeight: 300, opacity: 0.7 }}>
+              <Em opacity={0.7}>
                 {countdownMinutes}
-              </span>
+              </Em>
             </>
           )
         ) : (
           <>
             {clock.hours}
-            <span style={{ fontStyle: "italic", fontWeight: 300, opacity: 0.7 }}>
+            <Em opacity={0.7}>
               :{clock.minutes}
-            </span>
+            </Em>
           </>
         )}
         </span>
