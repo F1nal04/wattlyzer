@@ -45,6 +45,10 @@ For a future Expo app, add `apps/mobile` and reuse `core`, `api-client`, `theme`
 - `solar-only`: choose the sunniest qualifying slot without market data.
 - `price-only`: choose the cheapest complete slot.
 
+Each mode requires only the signal it cannot score without: `price-only` needs market rows and never blocks on forecast.solar, and `combined` needs only the solar half, degrading to the sunniest qualifying slot when aWATTar is down.
+
+forecast.solar keys its result with **naive wall-clock stamps in the roof's timezone**, not UTC — `new Date(key)` would resolve them against the device's zone and shift the whole curve. `calculatePowerGeneration` recovers the offset from `message.info.time` vs `.time_utc` and the cumulative-Wh daily reset keys off the stamp's own date. `hoursUntilEndOfLocalDay` is the only correct source for the "end of day" window; it counts from `ceilToUtcHour(now)`, the same anchor `calculateSchedule` enumerates from, so do not measure it from `now` in a route.
+
 Power generation applies the fixed 0.7 factor and local wall-clock shading windows. Weather conditions from BrightSky take precedence over cloud cover, then fall back to the solar heuristic. Preserve these semantics and the `TZ=UTC` test coverage.
 
 **Sky UI (`apps/pwa/src/components/sky`).** Inline styles are intentional; do not add a CSS framework. Palette data comes from `@wattlyzer/theme`. Fraunces is the display font.
