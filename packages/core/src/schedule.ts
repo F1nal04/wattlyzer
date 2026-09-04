@@ -34,10 +34,14 @@ export function ceilToUtcHour(d: Date): Date {
 }
 
 export function calculatePowerGeneration(
-  solarData: SolarData,
+  solarData: SolarData | null,
   settings: SchedulingSettings,
   targetTime: Date,
 ) {
+  if (!solarData) {
+    return 0;
+  }
+
   const timestamps = Object.keys(solarData.result)
     .map((ts) => ({
       timestamp: new Date(ts).getTime(),
@@ -179,13 +183,20 @@ export function calculateSchedule({
   searchTimespan,
   now,
 }: ScheduleRequest): ScheduleEvaluation {
-  if (!solarData || !settings) {
+  if (!settings) {
     return { schedulingResult: null, topSlotsResult: null };
   }
 
+  // price-only scores purely on market rows, so it must not be held hostage
+  // by forecast.solar (which the user has no panels for, and whose free tier
+  // is 12 requests/hour/IP).
+  const needsSolarData = settings.bestSlotMode !== "price-only";
   const needsMarketData = settings.bestSlotMode !== "solar-only";
 
-  if (needsMarketData && !marketData) {
+  if (
+    (needsSolarData && !solarData) ||
+    (needsMarketData && !marketData)
+  ) {
     return { schedulingResult: null, topSlotsResult: null };
   }
 

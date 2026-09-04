@@ -488,6 +488,24 @@ describe("calculateSchedule", () => {
     expect(schedulingResult?.avgPrice).toBeCloseTo(150, 5);
   });
 
+  it("price-only: schedules without solar data at all (no panels, or forecast.solar down)", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const market = marketUtcHourlyFrom(now, [200, 100, 300, 50]);
+    const { schedulingResult } = calculateSchedule(
+      null,
+      market,
+      { ...baseSettings, bestSlotMode: "price-only" },
+      1,
+      4,
+      now,
+    );
+    expect(schedulingResult?.reason).toBe("price");
+    expect(schedulingResult?.bestTime.getTime()).toBe(
+      now.getTime() + 3 * 60 * 60 * 1000,
+    );
+    expect(schedulingResult?.avgPrice).toBe(50);
+  });
+
   it("price-only: with duration 2, prefers two moderately cheap hours over a window containing one extreme cheap hour", () => {
     const now = new Date("2025-01-15T12:00:00.000Z");
     const solar = solarWithResult(flatSolarCurve("2025-01-15", 500));
