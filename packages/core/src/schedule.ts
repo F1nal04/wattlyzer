@@ -50,6 +50,31 @@ export function hoursUntilEndOfLocalDay(now: Date): number {
   );
 }
 
+// forecast.solar keys its result with naive wall-clock stamps in the *roof's*
+// timezone ("2026-09-04 07:00:00"), which `new Date()` would resolve against
+// the runtime's zone instead — shifting the whole curve for anyone whose
+// device is not on the roof's offset.
+const NAIVE_STAMP = /^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}:\d{2})/;
+
+function parseNaiveAsUtc(value: string): number {
+  const match = NAIVE_STAMP.exec(value);
+  return match ? Date.parse(`${match[1]}T${match[2]}Z`) : NaN;
+}
+
+/**
+ * The roof's UTC offset in ms. `message.info.time` and `.time_utc` describe
+ * the same instant, so the gap between their wall-clocks is the offset.
+ *
+ * ponytail: one offset for the whole 2-day forecast. A DST transition inside
+ * that window leaves the far side an hour out; read info.timezone through
+ * Intl.DateTimeFormat per stamp if that ever matters.
+ */
+function roofOffsetMs(solarData: SolarData): number {
+  const local = parseNaiveAsUtc(solarData.message?.info?.time ?? "");
+  const utc = parseNaiveAsUtc(solarData.message?.info?.time_utc ?? "");
+  return Number.isNaN(local) || Number.isNaN(utc) ? 0 : local - utc;
+}
+
 export function calculatePowerGeneration(
   solarData: SolarData | null,
   settings: SchedulingSettings,
@@ -59,11 +84,14 @@ export function calculatePowerGeneration(
     return 0;
   }
 
+  const offsetMs = roofOffsetMs(solarData);
   const timestamps = Object.keys(solarData.result)
     .map((ts) => ({
-      timestamp: new Date(ts).getTime(),
+      timestamp: parseNaiveAsUtc(ts) - offsetMs,
       value: solarData.result[ts],
-      utcDateKey: new Date(ts).toISOString().slice(0, 10),
+      // The values are cumulative Wh reset at the roof's local midnight, so
+      // the reset is detected on the key's own date — not a UTC one.
+      dayKey: ts.slice(0, 10),
     }))
     .sort((a, b) => a.timestamp - b.timestamp);
 
@@ -95,9 +123,7 @@ export function calculatePowerGeneration(
   let nextIndex = closestAfterIndex;
   if (nextIndex === -1) {
     for (let i = closestBeforeIndex + 1; i < timestamps.length; i++) {
-      if (
-        timestamps[i].utcDateKey === timestamps[closestBeforeIndex].utcDateKey
-      ) {
+      if (timestamps[i].dayKey === timestamps[closestBeforeIndex].dayKey) {
         nextIndex = i;
         break;
       }
@@ -108,10 +134,7 @@ export function calculatePowerGeneration(
     return 0;
   }
 
-  if (
-    timestamps[closestBeforeIndex].utcDateKey !==
-    timestamps[nextIndex].utcDateKey
-  ) {
+  if (timestamps[closestBeforeIndex].dayKey !== timestamps[nextIndex].dayKey) {
     return 0;
   }
 
@@ -219,7 +242,8 @@ export function calculateSchedule({
 
   const results: SlotResult[] = [];
 
-  // Align with hourly solar keys (…Z) and [start,end) market rows on the UTC grid.
+  // Enumerate on the UTC grid, where [start,end) market rows already live and
+  // where the roof-local solar keys have been resolved to.
   // The window counts from the first schedulable hour so a window equal to the
   // run duration always yields exactly one slot (instead of zero mid-hour).
   const firstStartMs = ceilToUtcHour(now).getTime();

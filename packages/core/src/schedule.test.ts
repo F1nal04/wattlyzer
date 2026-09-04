@@ -233,6 +233,81 @@ describe("calculateMarketPrice", () => {
   });
 });
 
+// The real api.forecast.solar shape: naive wall-clock keys in the roof's own
+// timezone, with that offset recoverable from message.info.time/.time_utc.
+// Captured from a live call for Berlin (52.52/13.41), which runs at +02:00.
+function berlinSolar(): SolarData {
+  const message = stubSolarMessage();
+  return {
+    result: {
+      "2026-09-04 06:22:24": 0,
+      "2026-09-04 07:00:00": 54,
+      "2026-09-04 08:00:00": 339,
+      "2026-09-04 09:00:00": 851,
+      "2026-09-04 10:00:00": 1574,
+      "2026-09-04 11:00:00": 2465,
+      "2026-09-04 12:00:00": 3467,
+      "2026-09-04 13:00:00": 4522,
+      "2026-09-04 14:00:00": 5575,
+      "2026-09-04 15:00:00": 6568,
+      "2026-09-04 16:00:00": 7419,
+      "2026-09-04 17:00:00": 8073,
+      "2026-09-04 18:00:00": 8509,
+      "2026-09-04 19:00:00": 8730,
+      "2026-09-04 19:48:23": 8779,
+    },
+    message: {
+      ...message,
+      info: {
+        ...message.info,
+        latitude: 52.52,
+        longitude: 13.41,
+        place: "10178 Berlin, Germany",
+        timezone: "Europe/Berlin",
+        time: "2026-09-04T07:49:08+02:00",
+        time_utc: "2026-09-04T05:49:08+00:00",
+      },
+    },
+  };
+}
+
+describe("forecast.solar timestamp parsing", () => {
+  it("resolves naive keys against the roof's timezone, not the runtime's", () => {
+    const solar = berlinSolar();
+    let best = -1;
+    let bestHour = -1;
+
+    for (let h = 0; h < 24; h++) {
+      const production = calculatePowerGeneration(
+        solar,
+        baseSettings,
+        new Date(Date.UTC(2026, 8, 4, h)),
+      );
+      if (production > best) {
+        best = production;
+        bestHour = h;
+      }
+    }
+
+    // 12:00–13:00 Berlin is the steepest step in the curve. That is 10:00Z,
+    // whatever timezone the test process runs in.
+    expect(bestHour).toBe(10);
+    expect(best).toBeCloseTo((4522 - 3467) * 0.7, 5);
+  });
+
+  it("credits nothing across the roof-local overnight gap", () => {
+    const solar = berlinSolar();
+    // 21:00Z is 23:00 Berlin — past the last sample of the roof's day.
+    expect(
+      calculatePowerGeneration(
+        solar,
+        baseSettings,
+        new Date(Date.UTC(2026, 8, 4, 21)),
+      ),
+    ).toBe(0);
+  });
+});
+
 describe("hoursUntilEndOfLocalDay", () => {
   // Tests run at TZ=UTC, so local midnight is the UTC day boundary.
   it("never lets the window reach past local midnight", () => {
