@@ -7,7 +7,7 @@ import { usePrefs, useSettings } from "@/lib/settings";
 import { useGeolocation, useScheduling } from "@/lib/use-scheduling";
 import { useNow } from "@/lib/use-now";
 import { useMounted, useSkyHour } from "@/lib/use-sky-hour";
-import { weatherAt } from "@wattlyzer/core";
+import { hoursUntilEndOfLocalDay, weatherAt } from "@wattlyzer/core";
 import {
   ClockCluster,
   ClockStatus,
@@ -33,28 +33,6 @@ export const Route = createFileRoute("/")({
   component: HomeScreen,
 });
 
-function useHoursTillEndOfDay() {
-  const compute = () => {
-    const now = new Date();
-    const endOfDay = new Date(now);
-    endOfDay.setHours(23, 59, 59, 999);
-    return Math.ceil((endOfDay.getTime() - now.getTime()) / (1000 * 60 * 60));
-  };
-  const [hours, setHours] = useState(compute);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setHours((prev) => {
-        const next = compute();
-        return prev !== next ? next : prev;
-      });
-    }, 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return hours;
-}
-
 function HomeScreen() {
   // Gates the render tree + onboarding redirect below. `useSkyHour` keeps its
   // own internal mount guard for the palette; both flip in the same commit.
@@ -63,14 +41,13 @@ function HomeScreen() {
   const { settings } = useSettings();
   const { prefs, updatePrefs } = usePrefs();
   const { position, locationError } = useGeolocation();
-  const hoursTillEndOfDay = useHoursTillEndOfDay();
   const now = useNow();
   const { t: translate, decimal } = useI18n();
   const [quickOpen, setQuickOpen] = useState(false);
 
   const searchTimespanHours =
     prefs.searchWindow === "eod"
-      ? hoursTillEndOfDay
+      ? hoursUntilEndOfLocalDay(now)
       : parseInt(prefs.searchWindow, 10);
 
   const {

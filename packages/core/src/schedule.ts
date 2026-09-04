@@ -33,6 +33,23 @@ export function ceilToUtcHour(d: Date): Date {
     : floor;
 }
 
+/**
+ * Hours the "end of day" search window should cover: whole scheduling hours
+ * from the first schedulable hour up to the next local midnight.
+ *
+ * Counted from `ceilToUtcHour(now)` — the same anchor `calculateSchedule`
+ * enumerates from — not from `now`. Measuring from `now` counts the partial
+ * current hour twice and lets the window reach into the next day.
+ */
+export function hoursUntilEndOfLocalDay(now: Date): number {
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 0, 0);
+  return Math.max(
+    0,
+    Math.floor((midnight.getTime() - ceilToUtcHour(now).getTime()) / HOUR_MS),
+  );
+}
+
 export function calculatePowerGeneration(
   solarData: SolarData | null,
   settings: SchedulingSettings,
@@ -187,16 +204,16 @@ export function calculateSchedule({
     return { schedulingResult: null, topSlotsResult: null };
   }
 
-  // price-only scores purely on market rows, so it must not be held hostage
-  // by forecast.solar (which the user has no panels for, and whose free tier
-  // is 12 requests/hour/IP).
-  const needsSolarData = settings.bestSlotMode !== "price-only";
   const needsMarketData = settings.bestSlotMode !== "solar-only";
 
-  if (
-    (needsSolarData && !solarData) ||
-    (needsMarketData && !marketData)
-  ) {
+  // Only the signal a mode cannot answer without. price-only must not be held
+  // hostage by forecast.solar (no panels, and a 12 requests/hour/IP free
+  // tier), and combined needs just the solar half — with aWATTar down it
+  // falls back to the sunniest qualifying slot instead of refusing to answer.
+  const requiredSignal =
+    settings.bestSlotMode === "price-only" ? marketData : solarData;
+
+  if (!requiredSignal) {
     return { schedulingResult: null, topSlotsResult: null };
   }
 

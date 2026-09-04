@@ -6,6 +6,7 @@ import {
   skyTheme,
   type SkyTheme,
 } from "@wattlyzer/theme";
+import { hoursUntilEndOfLocalDay } from "@wattlyzer/core";
 import { updateSettings, usePrefs, useSettings } from "@/lib/settings";
 import { useNow } from "@/lib/use-now";
 import { useGeolocation, useScheduling } from "@/lib/use-scheduling";
@@ -300,19 +301,7 @@ function SettingsScreen() {
   const [scheduleSettings] = useState(settings);
   const searchTimespanHours =
     prefs.searchWindow === "eod"
-      ? Math.ceil(
-          (new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate(),
-            23,
-            59,
-            59,
-            999,
-          ).getTime() -
-            now.getTime()) /
-            (1000 * 60 * 60),
-        )
+      ? hoursUntilEndOfLocalDay(now)
       : parseInt(prefs.searchWindow, 10);
   const { schedulingResult } = useScheduling(
     position,

@@ -6,6 +6,7 @@ import {
   calculatePowerGeneration,
   calculateSchedule as calculateScheduleRequest,
   ceilToUtcHour,
+  hoursUntilEndOfLocalDay,
 } from "./schedule";
 
 const baseSettings: SchedulingSettings = {
@@ -232,6 +233,32 @@ describe("calculateMarketPrice", () => {
   });
 });
 
+describe("hoursUntilEndOfLocalDay", () => {
+  // Tests run at TZ=UTC, so local midnight is the UTC day boundary.
+  it("never lets the window reach past local midnight", () => {
+    const cases: [string, number][] = [
+      ["2025-01-15T08:30:00.000Z", 15],
+      ["2025-01-15T14:00:00.000Z", 10],
+      ["2025-01-15T14:30:00.000Z", 9],
+      ["2025-01-15T22:30:00.000Z", 1],
+      ["2025-01-15T23:00:00.000Z", 1],
+      ["2025-01-15T23:30:00.000Z", 0],
+    ];
+
+    for (const [iso, expected] of cases) {
+      const now = new Date(iso);
+      const span = hoursUntilEndOfLocalDay(now);
+      expect(span).toBe(expected);
+      if (span === 0) continue;
+      // The last one-hour slot must still start today.
+      const lastStart =
+        ceilToUtcHour(now).getTime() + (span - 1) * 60 * 60 * 1000;
+      expect(new Date(lastStart).getUTCDate()).toBe(15);
+      expect(new Date(lastStart).getUTCHours()).toBe(23);
+    }
+  });
+});
+
 describe("calculatePowerGeneration", () => {
   it("returns 0 for empty solar series", () => {
     const t = new Date("2025-01-15T12:00:00.000Z");
@@ -352,15 +379,30 @@ describe("calculateSchedule", () => {
     ).toBeNull();
   });
 
-  it("returns null when market data is required but missing", () => {
+  it("combined: returns null when the market API is down and no slot is sunny enough", () => {
     const now = new Date("2025-01-15T12:00:00.000Z");
-    const solar = solarWithResult(flatSolarCurve("2025-01-15", 2000));
+    const solar = solarWithResult(flatSolarCurve("2025-01-15", 100));
     const settings: SchedulingSettings = {
       ...baseSettings,
       bestSlotMode: "combined",
     };
     expect(
       calculateSchedule(solar, null, settings, 2, 6, now).schedulingResult,
+    ).toBeNull();
+  });
+
+  it("price-only: returns null when the market rows it scores by are missing", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const solar = solarWithResult(flatSolarCurve("2025-01-15", 2000));
+    expect(
+      calculateSchedule(
+        solar,
+        null,
+        { ...baseSettings, bestSlotMode: "price-only" },
+        2,
+        6,
+        now,
+      ).schedulingResult,
     ).toBeNull();
   });
 
@@ -486,6 +528,24 @@ describe("calculateSchedule", () => {
     expect(schedulingResult?.reason).toBe("price");
     expect(schedulingResult?.bestTime.getTime()).toBe(now.getTime());
     expect(schedulingResult?.avgPrice).toBeCloseTo(150, 5);
+  });
+
+  it("combined: falls back to the sunniest slot when the market API is down", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const rates = new Array(24).fill(0);
+    rates[13] = 2000; // the only hour clearing minKwh
+    rates[14] = 1500;
+    const { schedulingResult } = calculateSchedule(
+      solarFromHourlyRates("2025-01-15", rates),
+      null,
+      baseSettings,
+      1,
+      6,
+      now,
+    );
+    expect(schedulingResult?.reason).toBe("solar");
+    expect(schedulingResult?.bestTime.getUTCHours()).toBe(13);
+    expect(schedulingResult?.avgPrice).toBeUndefined();
   });
 
   it("price-only: schedules without solar data at all (no panels, or forecast.solar down)", () => {
