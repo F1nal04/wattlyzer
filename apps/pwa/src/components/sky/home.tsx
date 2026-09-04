@@ -14,6 +14,9 @@ import { useI18n } from "@/lib/i18n";
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
+// Breathing room kept either side of the big clock when it has to shrink.
+const CLOCK_GUTTER = 12;
+
 export function formatClock(d: Date) {
   return { hours: pad2(d.getHours()), minutes: pad2(d.getMinutes()) };
 }
@@ -167,8 +170,8 @@ export function ClockCluster({
     : translate("home.bestTimeTomorrow");
 
   // Shrink-to-fit guard: the font size never changes between clock and
-  // countdown — only if the text physically can't fit (e.g. "23h 59m" on a
-  // narrow phone) is it scaled down just enough.
+  // countdown — only if the text physically can't fit (German's "4 h 39 min"
+  // is far wider than English's "4h 39m") is it scaled down just enough.
   const textRef = useRef<HTMLSpanElement>(null);
   const [fit, setFit] = useState(1);
   useLayoutEffect(() => {
@@ -176,7 +179,7 @@ export function ClockCluster({
       const el = textRef.current;
       const box = el?.parentElement;
       if (!el || !box) return;
-      const avail = box.clientWidth - 12;
+      const avail = box.clientWidth - CLOCK_GUTTER;
       setFit(el.scrollWidth > avail ? avail / el.scrollWidth : 1);
     };
     measure();
@@ -239,8 +242,17 @@ export function ClockCluster({
           ref={textRef}
           style={{
             display: "inline-block",
-            transform: fit < 1 ? `scale(${fit})` : undefined,
-            transformOrigin: "center",
+            // Anchored left, not centred: a nowrap inline-block wider than
+            // its line box has no free space for `text-align: center` to
+            // distribute, so it sits flush at the line start and spills to
+            // the right. Scaling about its own centre therefore leaves the
+            // text still overflowing. Scale from the left edge it is
+            // actually pinned to, then re-centre by half the gutter.
+            transform:
+              fit < 1
+                ? `translateX(${CLOCK_GUTTER / 2}px) scale(${fit})`
+                : undefined,
+            transformOrigin: "left center",
           }}
         >
         {showCountdown ? (
