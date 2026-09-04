@@ -98,6 +98,9 @@ export interface SettingsData {
   shadingEndTime: number; // Hour when shading ends (0-23)
   eveningShading: boolean; // Enable evening shading compensation
   shadingStartTime: number; // Hour when evening shading starts (0-23)
+  solarPanels: boolean; // The roof has panels. Independent of bestSlotMode:
+                        // ranking by price only is a scheduling choice, not
+                        // a statement that the panels are gone.
   bestSlotMode: BestSlotMode; // UI mode for choosing how the best timeslot should be ranked
   ignoreSolarForBestSlot: boolean; // Ignore solar production when calculating best timeslot
   dynamicTariff: boolean; // Hourly spot price is available (e.g. Tibber, aWATTar)
@@ -128,6 +131,7 @@ const defaultSettings: SettingsData = {
   shadingEndTime: 10,
   eveningShading: false,
   shadingStartTime: 17,
+  solarPanels: true,
   bestSlotMode: "combined",
   ignoreSolarForBestSlot: false,
   dynamicTariff: true,
@@ -159,6 +163,9 @@ function loadSavedSettings(): SettingsData {
       ...defaultSettings,
       ...rest,
       bestSlotMode,
+      // Before solarPanels existed, panel presence was read off the mode.
+      // A stored flag wins; otherwise keep showing what the old UI showed.
+      solarPanels: parsed.solarPanels ?? bestSlotMode !== "price-only",
       ignoreSolarForBestSlot: bestSlotMode === "price-only",
       ...(betaCalculations !== undefined
         ? { morningShading: betaCalculations }

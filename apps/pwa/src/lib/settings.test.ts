@@ -52,6 +52,7 @@ describe("settings store", () => {
     expect(saved.angle).toBe(45); // missing fields filled from defaults
     expect(saved.kwh).toBe(5);
     expect(saved.dynamicTariff).toBe(true); // missing field filled from defaults
+    expect(saved.solarPanels).toBe(false); // derived from the migrated price-only mode
     expect("betaCalculations" in saved).toBe(false); // legacy key not re-persisted
   });
 
@@ -77,6 +78,17 @@ describe("settings store", () => {
     expect(saved.kwh).toBe(9.5);
     expect(saved.azimut).toBe(90); // from the earlier migration test
     expect(saved.morningShading).toBe(true);
+  });
+
+  it("persists solarPanels independently of bestSlotMode", () => {
+    // Picking the price-only ranking must not read as "this roof has no
+    // panels" — that used to switch the panels off and then lock the mode
+    // picker to price-only, with no way back except Settings.
+    updateSettings({ solarPanels: true, bestSlotMode: "combined" });
+
+    updateSettings({ bestSlotMode: "price-only" });
+    expect(savedSettings().solarPanels).toBe(true);
+    expect(savedSettings().bestSlotMode).toBe("price-only");
   });
 
   it("persists dynamicTariff independently of bestSlotMode", () => {

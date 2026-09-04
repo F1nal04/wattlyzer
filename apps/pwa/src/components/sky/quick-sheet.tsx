@@ -2,7 +2,6 @@ import { FONT_DISPLAY, FONT_MONO, FONT_SANS, type SkyTheme } from "@wattlyzer/th
 import { usePrefs, useSettings } from "@/lib/settings";
 import {
   solarModeUnavailableHintKey,
-  solarPanelsEnabled,
 } from "@/components/sky/solar";
 import {
   Display,
@@ -20,7 +19,7 @@ export function QuickSheet({ t, onClose }: { t: SkyTheme; onClose: () => void })
   const { prefs, updatePrefs } = usePrefs();
   const { t: translate, decimal } = useI18n();
   useEscapeKey(onClose);
-  const solarEnabled = solarPanelsEnabled(settings.bestSlotMode);
+  const solarEnabled = settings.solarPanels;
   const modeHintKey = solarModeUnavailableHintKey(
     solarEnabled,
     settings.dynamicTariff,

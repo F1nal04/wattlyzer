@@ -13,10 +13,7 @@ import {
   toSchedulingSettings,
   type SettingsData,
 } from "@/lib/settings";
-import {
-  schedulingSignalsAvailable,
-  solarPanelsEnabled,
-} from "@/components/sky/solar";
+import { schedulingSignalsAvailable } from "@/components/sky/solar";
 
 export function useGeolocation() {
   const [position, setPosition] = useState<Position | null>(null);
@@ -68,10 +65,13 @@ export function useScheduling(
   now: Date,
   settings: SettingsData,
 ) {
-  const needsSolarData = solarPanelsEnabled(settings.bestSlotMode);
+  // Query gates key off the *mode*, not off settings.solarPanels: price-only
+  // must never block on forecast.solar (12 requests/hour/IP free tier), even
+  // for a roof that does have panels.
+  const needsSolarData = settings.bestSlotMode !== "price-only";
   const needsMarketData = settings.bestSlotMode !== "solar-only";
   const canSchedule = schedulingSignalsAvailable(
-    needsSolarData,
+    settings.solarPanels,
     settings.dynamicTariff,
   );
   const queriesEnabled = position !== null && canSchedule;
