@@ -17,7 +17,6 @@ import {
 import {
   NOTHING_TO_SCHEDULE,
   schedulingSignalsAvailable,
-  solarPanelsEnabled,
 } from "@/components/sky/solar";
 import { useI18n } from "@/lib/i18n";
 import {
@@ -94,7 +93,7 @@ function HomeScreen() {
   );
 
   const invalidConfig = searchTimespanHours < prefs.duration;
-  const solarEnabled = solarPanelsEnabled(settings.bestSlotMode);
+  const solarEnabled = settings.solarPanels;
   const canSchedule = schedulingSignalsAvailable(
     solarEnabled,
     settings.dynamicTariff,

@@ -6,10 +6,6 @@ export const NOTHING_TO_SCHEDULE = {
   body: "status.nothingToSchedule.body",
 } as const satisfies Record<string, MessageKey>;
 
-export function solarPanelsEnabled(mode: BestSlotMode): boolean {
-  return mode !== "price-only";
-}
-
 export function schedulingSignalsAvailable(
   solarEnabled: boolean,
   dynamicTariff: boolean,
@@ -44,18 +40,27 @@ export function settingsPatchFromSolarConfig(
     tilt: number;
     sizeKw: number;
   },
-  currentMode: BestSlotMode,
-  dynamicTariff: boolean,
+  current: {
+    solarPanels: boolean;
+    bestSlotMode: BestSlotMode;
+    dynamicTariff: boolean;
+  },
 ) {
   return {
+    solarPanels: next.enabled,
     azimut: next.azimuth,
     angle: next.tilt,
     kwh: next.sizeKw,
-    bestSlotMode: bestSlotModeAfterSolarToggle(
-      next.enabled,
-      currentMode,
-      dynamicTariff,
-    ),
+    // The modal commits on every slider drag, so most calls here change only
+    // the roof geometry. Re-ranking is the panel switch's job alone.
+    bestSlotMode:
+      next.enabled === current.solarPanels
+        ? current.bestSlotMode
+        : bestSlotModeAfterSolarToggle(
+            next.enabled,
+            current.bestSlotMode,
+            current.dynamicTariff,
+          ),
   };
 }
 

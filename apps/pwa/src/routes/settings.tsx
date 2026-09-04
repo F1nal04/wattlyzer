@@ -33,7 +33,6 @@ import {
   NOTHING_TO_SCHEDULE,
   schedulingSignalsAvailable,
   settingsPatchFromSolarConfig,
-  solarPanelsEnabled,
   solarSettingsSubtitleKey,
 } from "@/components/sky/solar";
 import { SolarPanelsModal, type SolarConfig } from "@/components/sky/solar-modal";
@@ -316,7 +315,7 @@ function SettingsScreen() {
     schedulingResult ? schedulingResult.bestTime.getHours() : now.getHours(),
   );
   const t = skyTheme(themeHour);
-  const solarEnabled = solarPanelsEnabled(settings.bestSlotMode);
+  const solarEnabled = settings.solarPanels;
   const canSchedule = schedulingSignalsAvailable(
     solarEnabled,
     settings.dynamicTariff,
@@ -330,13 +329,7 @@ function SettingsScreen() {
   };
 
   const applySolar = (next: SolarConfig) => {
-    updateSettings(
-      settingsPatchFromSolarConfig(
-        next,
-        settings.bestSlotMode,
-        settings.dynamicTariff,
-      ),
-    );
+    updateSettings(settingsPatchFromSolarConfig(next, settings));
   };
 
   return (

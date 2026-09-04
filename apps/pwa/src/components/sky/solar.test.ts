@@ -8,24 +8,12 @@ import {
   schedulingSignalsAvailable,
   settingsPatchFromSolarConfig,
   solarModeUnavailableHintKey,
-  solarPanelsEnabled,
   solarSettingsSubtitleKey,
 } from "@/components/sky/solar";
 import { translatorFor } from "@/lib/i18n";
 
 const en = translatorFor("en");
 const de = translatorFor("de");
-
-describe("solarPanelsEnabled", () => {
-  it("treats price-only as panels off", () => {
-    expect(solarPanelsEnabled("price-only")).toBe(false);
-  });
-
-  it("treats solar-aware modes as panels on", () => {
-    expect(solarPanelsEnabled("combined")).toBe(true);
-    expect(solarPanelsEnabled("solar-only")).toBe(true);
-  });
-});
 
 describe("isBestSlotModeSelectable", () => {
   it("keeps every mode available while panels and a tariff are on", () => {
@@ -187,15 +175,31 @@ describe("settingsPatchFromSolarConfig", () => {
     expect(
       settingsPatchFromSolarConfig(
         { ...panels, enabled: false },
-        "combined",
-        true,
+        { solarPanels: true, bestSlotMode: "combined", dynamicTariff: true },
       ).bestSlotMode,
     ).toBe("price-only");
     expect(
       settingsPatchFromSolarConfig(
         { ...panels, enabled: false },
-        "solar-only",
-        true,
+        { solarPanels: true, bestSlotMode: "solar-only", dynamicTariff: true },
+      ).bestSlotMode,
+    ).toBe("price-only");
+  });
+
+  it("leaves the ranking mode alone when only the geometry changed", () => {
+    // The modal commits live, so every slider drag lands here. Panels on
+    // plus price-only is a legal combination — dragging the tilt must not
+    // quietly promote the user back to Both.
+    expect(
+      settingsPatchFromSolarConfig(
+        { ...panels, enabled: true, tilt: 30 },
+        { solarPanels: true, bestSlotMode: "price-only", dynamicTariff: true },
+      ).bestSlotMode,
+    ).toBe("price-only");
+    expect(
+      settingsPatchFromSolarConfig(
+        { ...panels, enabled: false, tilt: 30 },
+        { solarPanels: false, bestSlotMode: "price-only", dynamicTariff: true },
       ).bestSlotMode,
     ).toBe("price-only");
   });
@@ -204,10 +208,10 @@ describe("settingsPatchFromSolarConfig", () => {
     expect(
       settingsPatchFromSolarConfig(
         { enabled: false, azimuth: 90, tilt: 30, sizeKw: 8.5 },
-        "combined",
-        true,
+        { solarPanels: true, bestSlotMode: "combined", dynamicTariff: true },
       ),
     ).toEqual({
+      solarPanels: false,
       azimut: 90,
       angle: 30,
       kwh: 8.5,

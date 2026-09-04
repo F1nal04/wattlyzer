@@ -739,6 +739,7 @@ function OnboardingScreen() {
           shadingEndTime: shading.morning.hour,
           eveningShading: shading.evening.enabled,
           shadingStartTime: shading.evening.hour,
+          solarPanels: solar.enabled,
           bestSlotMode,
           dynamicTariff,
         });
