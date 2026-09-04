@@ -1,5 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import LanguageToggle from '../../components/LanguageToggle.astro';
 import HeroClouds from '../../components/HeroClouds.astro';
 import '../../styles/index.css';
 ---
@@ -19,19 +20,11 @@ import '../../styles/index.css';
       <a href="#faq" class="nav-link">FAQ</a>
     </div>
     <div class="nav-right">
-      <div class="lang-toggle">
-        <a class="lang-btn" href="/">EN</a>
-        <span class="lang-sep">·</span>
-        <a class="lang-btn active" href="/de/">DE</a>
-      </div>
+      <LanguageToggle canonicalPath="/" />
       <a href="https://pwa.wattlyzer.de/install" class="nav-cta">PWA installieren</a>
     </div>
     <div class="nav-mob-right">
-      <div class="lang-toggle lang-toggle-mob">
-        <a class="lang-btn" href="/">EN</a>
-        <span class="lang-sep">·</span>
-        <a class="lang-btn active" href="/de/">DE</a>
-      </div>
+      <LanguageToggle canonicalPath="/" variant="nav-mobile" />
       <button class="mob-ham" id="mob-ham" aria-label="Menü">
         <svg
           width="16"
@@ -373,11 +366,7 @@ import '../../styles/index.css';
 
       <div class="footer-bottom">
         <span class="footer-copy">© 2026 Wattlyzer. Apache-2.0-Lizenz.</span>
-        <div class="footer-lang">
-          <a class="footer-lang-btn" href="/">EN</a>
-          <span>·</span>
-          <a class="footer-lang-btn active" href="/de/">DE</a>
-        </div>
+        <LanguageToggle canonicalPath="/" variant="footer" />
       </div>
     </div>
   </footer>

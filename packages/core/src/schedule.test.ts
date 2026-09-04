@@ -6,6 +6,7 @@ import {
   calculatePowerGeneration,
   calculateSchedule as calculateScheduleRequest,
   ceilToUtcHour,
+  hoursUntilEndOfLocalDay,
 } from "./schedule";
 
 const baseSettings: SchedulingSettings = {
@@ -232,6 +233,107 @@ describe("calculateMarketPrice", () => {
   });
 });
 
+// The real api.forecast.solar shape: naive wall-clock keys in the roof's own
+// timezone, with that offset recoverable from message.info.time/.time_utc.
+// Captured from a live call for Berlin (52.52/13.41), which runs at +02:00.
+function berlinSolar(): SolarData {
+  const message = stubSolarMessage();
+  return {
+    result: {
+      "2026-09-04 06:22:24": 0,
+      "2026-09-04 07:00:00": 54,
+      "2026-09-04 08:00:00": 339,
+      "2026-09-04 09:00:00": 851,
+      "2026-09-04 10:00:00": 1574,
+      "2026-09-04 11:00:00": 2465,
+      "2026-09-04 12:00:00": 3467,
+      "2026-09-04 13:00:00": 4522,
+      "2026-09-04 14:00:00": 5575,
+      "2026-09-04 15:00:00": 6568,
+      "2026-09-04 16:00:00": 7419,
+      "2026-09-04 17:00:00": 8073,
+      "2026-09-04 18:00:00": 8509,
+      "2026-09-04 19:00:00": 8730,
+      "2026-09-04 19:48:23": 8779,
+    },
+    message: {
+      ...message,
+      info: {
+        ...message.info,
+        latitude: 52.52,
+        longitude: 13.41,
+        place: "10178 Berlin, Germany",
+        timezone: "Europe/Berlin",
+        time: "2026-09-04T07:49:08+02:00",
+        time_utc: "2026-09-04T05:49:08+00:00",
+      },
+    },
+  };
+}
+
+describe("forecast.solar timestamp parsing", () => {
+  it("resolves naive keys against the roof's timezone, not the runtime's", () => {
+    const solar = berlinSolar();
+    let best = -1;
+    let bestHour = -1;
+
+    for (let h = 0; h < 24; h++) {
+      const production = calculatePowerGeneration(
+        solar,
+        baseSettings,
+        new Date(Date.UTC(2026, 8, 4, h)),
+      );
+      if (production > best) {
+        best = production;
+        bestHour = h;
+      }
+    }
+
+    // 12:00–13:00 Berlin is the steepest step in the curve. That is 10:00Z,
+    // whatever timezone the test process runs in.
+    expect(bestHour).toBe(10);
+    expect(best).toBeCloseTo((4522 - 3467) * 0.7, 5);
+  });
+
+  it("credits nothing across the roof-local overnight gap", () => {
+    const solar = berlinSolar();
+    // 21:00Z is 23:00 Berlin — past the last sample of the roof's day.
+    expect(
+      calculatePowerGeneration(
+        solar,
+        baseSettings,
+        new Date(Date.UTC(2026, 8, 4, 21)),
+      ),
+    ).toBe(0);
+  });
+});
+
+describe("hoursUntilEndOfLocalDay", () => {
+  // Tests run at TZ=UTC, so local midnight is the UTC day boundary.
+  it("never lets the window reach past local midnight", () => {
+    const cases: [string, number][] = [
+      ["2025-01-15T08:30:00.000Z", 15],
+      ["2025-01-15T14:00:00.000Z", 10],
+      ["2025-01-15T14:30:00.000Z", 9],
+      ["2025-01-15T22:30:00.000Z", 1],
+      ["2025-01-15T23:00:00.000Z", 1],
+      ["2025-01-15T23:30:00.000Z", 0],
+    ];
+
+    for (const [iso, expected] of cases) {
+      const now = new Date(iso);
+      const span = hoursUntilEndOfLocalDay(now);
+      expect(span).toBe(expected);
+      if (span === 0) continue;
+      // The last one-hour slot must still start today.
+      const lastStart =
+        ceilToUtcHour(now).getTime() + (span - 1) * 60 * 60 * 1000;
+      expect(new Date(lastStart).getUTCDate()).toBe(15);
+      expect(new Date(lastStart).getUTCHours()).toBe(23);
+    }
+  });
+});
+
 describe("calculatePowerGeneration", () => {
   it("returns 0 for empty solar series", () => {
     const t = new Date("2025-01-15T12:00:00.000Z");
@@ -352,15 +454,30 @@ describe("calculateSchedule", () => {
     ).toBeNull();
   });
 
-  it("returns null when market data is required but missing", () => {
+  it("combined: returns null when the market API is down and no slot is sunny enough", () => {
     const now = new Date("2025-01-15T12:00:00.000Z");
-    const solar = solarWithResult(flatSolarCurve("2025-01-15", 2000));
+    const solar = solarWithResult(flatSolarCurve("2025-01-15", 100));
     const settings: SchedulingSettings = {
       ...baseSettings,
       bestSlotMode: "combined",
     };
     expect(
       calculateSchedule(solar, null, settings, 2, 6, now).schedulingResult,
+    ).toBeNull();
+  });
+
+  it("price-only: returns null when the market rows it scores by are missing", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const solar = solarWithResult(flatSolarCurve("2025-01-15", 2000));
+    expect(
+      calculateSchedule(
+        solar,
+        null,
+        { ...baseSettings, bestSlotMode: "price-only" },
+        2,
+        6,
+        now,
+      ).schedulingResult,
     ).toBeNull();
   });
 
@@ -486,6 +603,42 @@ describe("calculateSchedule", () => {
     expect(schedulingResult?.reason).toBe("price");
     expect(schedulingResult?.bestTime.getTime()).toBe(now.getTime());
     expect(schedulingResult?.avgPrice).toBeCloseTo(150, 5);
+  });
+
+  it("combined: falls back to the sunniest slot when the market API is down", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const rates = new Array(24).fill(0);
+    rates[13] = 2000; // the only hour clearing minKwh
+    rates[14] = 1500;
+    const { schedulingResult } = calculateSchedule(
+      solarFromHourlyRates("2025-01-15", rates),
+      null,
+      baseSettings,
+      1,
+      6,
+      now,
+    );
+    expect(schedulingResult?.reason).toBe("solar");
+    expect(schedulingResult?.bestTime.getUTCHours()).toBe(13);
+    expect(schedulingResult?.avgPrice).toBeUndefined();
+  });
+
+  it("price-only: schedules without solar data at all (no panels, or forecast.solar down)", () => {
+    const now = new Date("2025-01-15T12:00:00.000Z");
+    const market = marketUtcHourlyFrom(now, [200, 100, 300, 50]);
+    const { schedulingResult } = calculateSchedule(
+      null,
+      market,
+      { ...baseSettings, bestSlotMode: "price-only" },
+      1,
+      4,
+      now,
+    );
+    expect(schedulingResult?.reason).toBe("price");
+    expect(schedulingResult?.bestTime.getTime()).toBe(
+      now.getTime() + 3 * 60 * 60 * 1000,
+    );
+    expect(schedulingResult?.avgPrice).toBe(50);
   });
 
   it("price-only: with duration 2, prefers two moderately cheap hours over a window containing one extreme cheap hour", () => {

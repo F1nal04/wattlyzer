@@ -1,7 +1,7 @@
 import { FONT_DISPLAY, FONT_MONO, FONT_SANS, type SkyTheme } from "@wattlyzer/theme";
 import { usePrefs, useSettings } from "@/lib/settings";
 import {
-  solarModeUnavailableHint,
+  solarModeUnavailableHintKey,
   solarPanelsEnabled,
 } from "@/components/sky/solar";
 import {
@@ -12,14 +12,16 @@ import {
   SkySlider,
   useEscapeKey,
 } from "@/components/sky/primitives";
+import { useI18n } from "@/lib/i18n";
 
 // Sliding-up Quick controls sheet (design "A2"): Mode → Min solar → Search window.
 export function QuickSheet({ t, onClose }: { t: SkyTheme; onClose: () => void }) {
   const { settings, updateSettings } = useSettings();
   const { prefs, updatePrefs } = usePrefs();
+  const { t: translate, decimal } = useI18n();
   useEscapeKey(onClose);
   const solarEnabled = solarPanelsEnabled(settings.bestSlotMode);
-  const modeHint = solarModeUnavailableHint(
+  const modeHintKey = solarModeUnavailableHintKey(
     solarEnabled,
     settings.dynamicTariff,
   );
@@ -28,7 +30,7 @@ export function QuickSheet({ t, onClose }: { t: SkyTheme; onClose: () => void })
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Quick controls"
+      aria-label={translate("quick.title")}
       style={{ position: "absolute", inset: 0, zIndex: 20, fontFamily: FONT_SANS }}
     >
       {/* scrim over the dimmed home */}
@@ -73,7 +75,7 @@ export function QuickSheet({ t, onClose }: { t: SkyTheme; onClose: () => void })
           }}
         >
           <div style={{ fontFamily: FONT_DISPLAY, fontSize: 24, letterSpacing: "-0.01em" }}>
-            Quick controls
+            {translate("quick.title")}
           </div>
           <button
             onClick={onClose}
@@ -88,12 +90,12 @@ export function QuickSheet({ t, onClose }: { t: SkyTheme; onClose: () => void })
               fontFamily: FONT_SANS,
             }}
           >
-            Done
+            {translate("common.done")}
           </button>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          <Field label="Mode" t={t}>
+          <Field label={translate("quick.mode")} t={t}>
             <SkyModeSeg
               value={settings.bestSlotMode}
               solarEnabled={solarEnabled}
@@ -101,7 +103,7 @@ export function QuickSheet({ t, onClose }: { t: SkyTheme; onClose: () => void })
               onChange={(v) => updateSettings({ bestSlotMode: v })}
               t={t}
             />
-            {modeHint && (
+            {modeHintKey && (
               <div
                 style={{
                   fontSize: 11.5,
@@ -111,14 +113,18 @@ export function QuickSheet({ t, onClose }: { t: SkyTheme; onClose: () => void })
                   marginTop: 8,
                 }}
               >
-                {modeHint}
+                {translate(modeHintKey)}
               </div>
             )}
           </Field>
 
           <Field
-            label="Min solar"
-            right={<Display t={t}>{(settings.minKwh / 1000).toFixed(1)} kWh</Display>}
+            label={translate("quick.minSolar")}
+            right={
+              <Display t={t}>
+                {translate("unit.kwh", { value: decimal(settings.minKwh / 1000) })}
+              </Display>
+            }
             t={t}
           >
             <SkySlider
@@ -127,12 +133,12 @@ export function QuickSheet({ t, onClose }: { t: SkyTheme; onClose: () => void })
               max={3.0}
               step={0.1}
               t={t}
-              labels={["0.5", "1.0", "1.5", "2.0", "2.5", "3.0"]}
+              labels={[0.5, 1.0, 1.5, 2.0, 2.5, 3.0].map((v) => decimal(v))}
               onChange={(v) => updateSettings({ minKwh: Math.round(v * 1000) })}
             />
           </Field>
 
-          <Field label="Search window" t={t}>
+          <Field label={translate("quick.searchWindow")} t={t}>
             <SearchWindowChips
               value={prefs.searchWindow}
               t={t}

@@ -1,8 +1,9 @@
 import { describe, expect, it } from "bun:test";
 import {
+  countdownParts,
   formatClock,
-  formatCountdown,
   formatRange,
+  hasStarted,
   isSameLocalDay,
 } from "@/components/sky/home";
 
@@ -35,50 +36,64 @@ describe("formatRange", () => {
   });
 });
 
-describe("formatCountdown", () => {
+describe("countdownParts", () => {
   const at = (iso: string) => new Date(iso);
 
+  // Numbers, not "3h"/"38m": the unit suffix differs per locale ("38 min"
+  // in German) and `hasStarted` must not depend on a formatted string.
   it("splits the remaining time into hours and minutes", () => {
     // the canonical example: 10:22 now, best time 14:00 → 3h 38m
     expect(
-      formatCountdown(at("2025-01-15T14:00:00.000Z"), at("2025-01-15T10:22:00.000Z")),
-    ).toEqual({ hours: "3h", minutes: "38m" });
+      countdownParts(at("2025-01-15T14:00:00.000Z"), at("2025-01-15T10:22:00.000Z")),
+    ).toEqual({ hours: 3, minutes: 38 });
   });
 
-  it("omits the hours part under one hour", () => {
+  it("reports zero hours under one hour", () => {
     expect(
-      formatCountdown(at("2025-01-15T14:00:00.000Z"), at("2025-01-15T13:35:00.000Z")),
-    ).toEqual({ hours: "", minutes: "25m" });
+      countdownParts(at("2025-01-15T14:00:00.000Z"), at("2025-01-15T13:35:00.000Z")),
+    ).toEqual({ hours: 0, minutes: 25 });
   });
 
   it("rounds partial minutes up so an imminent start never reads 0m early", () => {
     expect(
-      formatCountdown(at("2025-01-15T14:00:00.000Z"), at("2025-01-15T13:59:59.000Z")),
-    ).toEqual({ hours: "", minutes: "1m" });
+      countdownParts(at("2025-01-15T14:00:00.000Z"), at("2025-01-15T13:59:59.000Z")),
+    ).toEqual({ hours: 0, minutes: 1 });
     expect(
-      formatCountdown(at("2025-01-15T14:00:00.000Z"), at("2025-01-15T13:58:30.000Z")),
-    ).toEqual({ hours: "", minutes: "2m" });
+      countdownParts(at("2025-01-15T14:00:00.000Z"), at("2025-01-15T13:58:30.000Z")),
+    ).toEqual({ hours: 0, minutes: 2 });
   });
 
-  it("clamps to 0m once the target time is reached or passed", () => {
+  it("clamps to zero once the target time is reached or passed", () => {
     expect(
-      formatCountdown(at("2025-01-15T14:00:00.000Z"), at("2025-01-15T14:00:00.000Z")),
-    ).toEqual({ hours: "", minutes: "0m" });
+      countdownParts(at("2025-01-15T14:00:00.000Z"), at("2025-01-15T14:00:00.000Z")),
+    ).toEqual({ hours: 0, minutes: 0 });
     expect(
-      formatCountdown(at("2025-01-15T14:00:00.000Z"), at("2025-01-15T15:30:00.000Z")),
-    ).toEqual({ hours: "", minutes: "0m" });
+      countdownParts(at("2025-01-15T14:00:00.000Z"), at("2025-01-15T15:30:00.000Z")),
+    ).toEqual({ hours: 0, minutes: 0 });
   });
 
-  it("shows 0m explicitly on exact hour boundaries", () => {
+  it("keeps zero minutes on exact hour boundaries", () => {
     expect(
-      formatCountdown(at("2025-01-15T14:00:00.000Z"), at("2025-01-15T12:00:00.000Z")),
-    ).toEqual({ hours: "2h", minutes: "0m" });
+      countdownParts(at("2025-01-15T14:00:00.000Z"), at("2025-01-15T12:00:00.000Z")),
+    ).toEqual({ hours: 2, minutes: 0 });
   });
 
   it("handles spans beyond 24 hours", () => {
     expect(
-      formatCountdown(at("2025-01-16T15:30:00.000Z"), at("2025-01-15T14:00:00.000Z")),
-    ).toEqual({ hours: "25h", minutes: "30m" });
+      countdownParts(at("2025-01-16T15:30:00.000Z"), at("2025-01-15T14:00:00.000Z")),
+    ).toEqual({ hours: 25, minutes: 30 });
+  });
+});
+
+describe("hasStarted", () => {
+  it("is true only once nothing is left to wait for", () => {
+    expect(hasStarted({ hours: 0, minutes: 0 })).toBe(true);
+  });
+
+  it("is false while any time remains, including the last minute", () => {
+    expect(hasStarted({ hours: 0, minutes: 1 })).toBe(false);
+    expect(hasStarted({ hours: 2, minutes: 0 })).toBe(false);
+    expect(hasStarted({ hours: 25, minutes: 30 })).toBe(false);
   });
 });
 

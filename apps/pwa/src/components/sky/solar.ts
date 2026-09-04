@@ -1,9 +1,10 @@
 import type { BestSlotMode } from "@/lib/settings";
+import type { MessageKey } from "@/lib/i18n";
 
 export const NOTHING_TO_SCHEDULE = {
-  title: "Nothing to schedule.",
-  body: "Wattlyzer needs solar panels or a dynamic tariff. Without either, there is no better window to find.",
-} as const;
+  title: "status.nothingToSchedule.title",
+  body: "status.nothingToSchedule.body",
+} as const satisfies Record<string, MessageKey>;
 
 export function solarPanelsEnabled(mode: BestSlotMode): boolean {
   return mode !== "price-only";
@@ -75,27 +76,27 @@ export function isBestSlotModeSelectable(
   return dynamicTariff;
 }
 
-export function solarSettingsSubtitle(
+export function solarSettingsSubtitleKey(
   enabled: boolean,
   dynamicTariff = true,
-): string {
-  if (enabled) return "Used to estimate production for your roof.";
-  if (!dynamicTariff) return "No solar.";
-  return "No solar — price-only.";
+): MessageKey {
+  if (enabled) return "settings.solar.subtitle.on";
+  if (!dynamicTariff) return "settings.solar.subtitle.off";
+  return "settings.solar.subtitle.priceOnly";
 }
 
-export function solarModeUnavailableHint(
+export function solarModeUnavailableHintKey(
   solarEnabled: boolean,
   dynamicTariff = true,
-): string | null {
+): MessageKey | null {
   if (!schedulingSignalsAvailable(solarEnabled, dynamicTariff)) {
-    return "Turn on solar panels or a dynamic tariff in Settings.";
+    return "mode.hint.noSignals";
   }
   if (!solarEnabled) {
-    return "Turn on solar panels in Settings to use Solar or Both.";
+    return "mode.hint.noSolar";
   }
   if (!dynamicTariff) {
-    return "Turn on a dynamic tariff in Settings to use Both or Price.";
+    return "mode.hint.noTariff";
   }
   return null;
 }

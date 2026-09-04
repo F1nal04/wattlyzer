@@ -7,7 +7,7 @@ import { usePrefs, useSettings } from "@/lib/settings";
 import { useGeolocation, useScheduling } from "@/lib/use-scheduling";
 import { useNow } from "@/lib/use-now";
 import { useMounted, useSkyHour } from "@/lib/use-sky-hour";
-import { weatherAt } from "@wattlyzer/core";
+import { hoursUntilEndOfLocalDay, weatherAt } from "@wattlyzer/core";
 import {
   ClockCluster,
   ClockStatus,
@@ -19,6 +19,7 @@ import {
   schedulingSignalsAvailable,
   solarPanelsEnabled,
 } from "@/components/sky/solar";
+import { useI18n } from "@/lib/i18n";
 import {
   Hills,
   SkyAppBar,
@@ -32,28 +33,6 @@ export const Route = createFileRoute("/")({
   component: HomeScreen,
 });
 
-function useHoursTillEndOfDay() {
-  const compute = () => {
-    const now = new Date();
-    const endOfDay = new Date(now);
-    endOfDay.setHours(23, 59, 59, 999);
-    return Math.ceil((endOfDay.getTime() - now.getTime()) / (1000 * 60 * 60));
-  };
-  const [hours, setHours] = useState(compute);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setHours((prev) => {
-        const next = compute();
-        return prev !== next ? next : prev;
-      });
-    }, 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return hours;
-}
-
 function HomeScreen() {
   // Gates the render tree + onboarding redirect below. `useSkyHour` keeps its
   // own internal mount guard for the palette; both flip in the same commit.
@@ -62,13 +41,13 @@ function HomeScreen() {
   const { settings } = useSettings();
   const { prefs, updatePrefs } = usePrefs();
   const { position, locationError } = useGeolocation();
-  const hoursTillEndOfDay = useHoursTillEndOfDay();
   const now = useNow();
+  const { t: translate, decimal } = useI18n();
   const [quickOpen, setQuickOpen] = useState(false);
 
   const searchTimespanHours =
     prefs.searchWindow === "eod"
-      ? hoursTillEndOfDay
+      ? hoursUntilEndOfLocalDay(now)
       : parseInt(prefs.searchWindow, 10);
 
   const {
@@ -134,35 +113,42 @@ function HomeScreen() {
   // with the loading message while a stale result is still on screen.
   function pickClockStatus(): { title: string; body: string } | null {
     if (!canSchedule) {
-      return NOTHING_TO_SCHEDULE;
+      return {
+        title: translate(NOTHING_TO_SCHEDULE.title),
+        body: translate(NOTHING_TO_SCHEDULE.body),
+      };
     }
 
     if (!position) {
       return locationError
         ? {
-            title: "Location needed.",
-            body: "Enable location services in your browser so the forecast can match your roof.",
+            title: translate("status.locationNeeded.title"),
+            body: translate("status.locationNeeded.body"),
           }
         : {
-            title: "Finding your sky…",
-            body: "Wattlyzer needs your current position to estimate local solar production.",
+            title: translate("status.findingSky.title"),
+            body: translate("status.findingSky.body"),
           };
     }
 
     if (invalidConfig) {
       return {
-        title: "Window too short.",
-        body: `The search window (${searchTimespanHours}h) must be at least as long as the run (${prefs.duration}h). Widen it in Quick controls.`,
+        title: translate("status.windowTooShort.title"),
+        body: translate("status.windowTooShort.body", {
+          window: searchTimespanHours,
+          duration: prefs.duration,
+        }),
       };
     }
 
     if (isLoading) {
       return {
-        title: "Reading sun and prices…",
-        body:
+        title: translate("status.loading.title"),
+        body: translate(
           settings.bestSlotMode === "solar-only"
-            ? "Fetching the solar forecast."
-            : "Fetching the solar forecast and market prices.",
+            ? "status.loading.solarOnly"
+            : "status.loading.solarAndPrices",
+        ),
       };
     }
 
@@ -172,22 +158,26 @@ function HomeScreen() {
 
     if (apiError) {
       return {
-        title: "Forecast unavailable.",
-        body: `A data request failed (${apiError}). Try again in a moment.`,
+        title: translate("status.forecastUnavailable.title"),
+        body: translate("status.forecastUnavailable.body", {
+          error: apiError,
+        }),
       };
     }
 
     if (settings.bestSlotMode !== "solar-only") {
       return {
-        title: "No window found.",
-        body: "Market prices don't cover the search window yet. Widen it in Quick controls or check back later.",
+        title: translate("status.noWindow.title"),
+        body: translate("status.noWindow.body"),
       };
     }
 
     if (solarData) {
       return {
-        title: "No sunny window.",
-        body: `No slot reaches the ${(settings.minKwh / 1000).toFixed(1)} kWh solar minimum. Lower it or widen the search window in Quick controls.`,
+        title: translate("status.noSunnyWindow.title"),
+        body: translate("status.noSunnyWindow.body", {
+          minimum: decimal(settings.minKwh / 1000),
+        }),
       };
     }
 
@@ -220,14 +210,18 @@ function HomeScreen() {
     <SkyAppBar
       t={t}
       left={
-        <SkyIconBtn t={t} label="Quick controls" onClick={() => setQuickOpen(true)}>
+        <SkyIconBtn
+          t={t}
+          label={translate("quick.title")}
+          onClick={() => setQuickOpen(true)}
+        >
           <WIcon name="sliders" />
         </SkyIconBtn>
       }
       right={
         <SkyIconBtn
           t={t}
-          label="Settings"
+          label={translate("settings.title")}
           onClick={() => navigate({ to: "/settings" })}
         >
           <WIcon name="settings" />
@@ -266,8 +260,10 @@ function HomeScreen() {
                   textTransform: "uppercase",
                 }}
               >
-                Prices cover {marketDataSufficiency.hoursAvailable}h of the{" "}
-                {searchTimespanHours}h window
+                {translate("home.marketCoverage", {
+                  covered: marketDataSufficiency.hoursAvailable,
+                  window: searchTimespanHours,
+                })}
               </div>
             )}
           </div>

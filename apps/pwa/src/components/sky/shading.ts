@@ -1,3 +1,5 @@
+import type { MessageKey, Translate } from "@/lib/i18n";
+
 export type ShadingKind = "morning" | "evening";
 
 export type ShadingWindow = {
@@ -38,12 +40,16 @@ export function shadingHourTicks(min: number, max: number): string[] {
   return [`${min}:00`, `${max}:00`];
 }
 
-export function shadingRowValue(kind: ShadingKind, window: ShadingWindow): string {
+export function shadingRowValue(
+  kind: ShadingKind,
+  window: ShadingWindow,
+  t: Translate,
+): string {
   if (!window.enabled) {
-    return "Off";
+    return t("common.off");
   }
   const hour = formatShadingHour(window.hour);
-  return kind === "morning" ? `until ${hour}` : `from ${hour}`;
+  return t(kind === "morning" ? "shading.until" : "shading.from", { hour });
 }
 
 export function shadingSettingsPatch(
@@ -92,11 +98,38 @@ export function shadingSettingsFromSetup(
   };
 }
 
-export function shadingSetupSummary(setup: ShadingSetup): string {
-  const morning = shadingRowValue("morning", setup.morning);
-  const evening = shadingRowValue("evening", setup.evening);
-  if (morning === "Off" && evening === "Off") {
-    return "Off";
+export function shadingSetupSummary(
+  setup: ShadingSetup,
+  t: Translate,
+): string {
+  // Branch on the flags, never on the rendered labels: "Off" is "Aus" in
+  // German and a string comparison would stop collapsing the summary.
+  if (!setup.morning.enabled && !setup.evening.enabled) {
+    return t("common.off");
   }
-  return `${morning} · ${evening}`;
+  return t("shading.summary", {
+    morning: shadingRowValue("morning", setup.morning, t),
+    evening: shadingRowValue("evening", setup.evening, t),
+  });
+}
+
+// Copy keys for one shading window. Returned as keys so the pure helper
+// stays language-free and the component translates at the render edge.
+export function shadingCopyKeys(kind: ShadingKind): {
+  title: MessageKey;
+  subtitle: MessageKey;
+  hourLabel: MessageKey;
+} {
+  if (kind === "morning") {
+    return {
+      title: "shading.morning.title",
+      subtitle: "shading.morning.subtitle",
+      hourLabel: "shading.morning.hourLabel",
+    };
+  }
+  return {
+    title: "shading.evening.title",
+    subtitle: "shading.evening.subtitle",
+    hourLabel: "shading.evening.hourLabel",
+  };
 }

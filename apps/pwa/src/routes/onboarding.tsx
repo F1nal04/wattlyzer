@@ -15,7 +15,10 @@ import {
   SkyScreen,
 } from "@/components/sky/primitives";
 import { WIcon } from "@/components/sky/icons";
-import { ObCard, ObCheckRow, ObSwitchRow, azimuthLabel } from "@/components/sky/rows";
+import { ObCard, ObCheckRow, ObSwitchRow, azimuthKey } from "@/components/sky/rows";
+import { LanguageSwitch } from "@/components/sky/language";
+import { useI18n, type Translate } from "@/lib/i18n";
+import { richParts } from "@/lib/i18n/rich";
 import { useSkyHour } from "@/lib/use-sky-hour";
 import { ShadingModal } from "@/components/sky/shading-modal";
 import {
@@ -37,6 +40,17 @@ export const Route = createFileRoute("/onboarding")({
 const ONB_HOUR = 11;
 const TOTAL_STEPS = 4;
 
+// The display italic used inside translated headlines.
+function Em({ children }: { children: ReactNode }) {
+  return (
+    <span style={{ fontStyle: "italic", fontWeight: 300 }}>{children}</span>
+  );
+}
+
+function headline(t: Translate, key: Parameters<Translate>[0], slot: string, emKey: Parameters<Translate>[0]) {
+  return richParts(t(key), { [slot]: <Em>{t(emKey)}</Em> });
+}
+
 function ObFrame({
   step,
   onBack,
@@ -52,6 +66,7 @@ function ObFrame({
   t: SkyTheme;
   hideTopChrome?: boolean;
 }) {
+  const { t: translate } = useI18n();
   return (
     <>
       <Hills t={t} height="26%" opacity={0.55} />
@@ -73,7 +88,12 @@ function ObFrame({
         >
           <div style={{ width: 44, height: 44, display: "flex", alignItems: "center" }}>
             {onBack && (
-              <SkyIconBtn t={t} label="Back" onClick={onBack} blurBackdrop={false}>
+              <SkyIconBtn
+                t={t}
+                label={translate("common.back")}
+                onClick={onBack}
+                blurBackdrop={false}
+              >
                 <WIcon name="back" />
               </SkyIconBtn>
             )}
@@ -121,7 +141,7 @@ function ObFrame({
                   letterSpacing: "0.02em",
                 }}
               >
-                Skip
+                {translate("common.skip")}
               </button>
             )}
           </div>
@@ -236,9 +256,23 @@ function BottomCta({
 }
 
 function ObWelcome({ t, onNext }: { t: SkyTheme; onNext: () => void }) {
+  const { t: translate } = useI18n();
   return (
     <ObFrame step={0} t={t} hideTopChrome>
       <HeroSun t={t} size={200} top={130} />
+
+      {/* Language switch up front: detection can be wrong, and everything
+          that follows is copy the user has to read. */}
+      <div
+        style={{
+          position: "absolute",
+          top: "calc(env(safe-area-inset-top, 0px) + 20px)",
+          right: 20,
+          zIndex: 5,
+        }}
+      >
+        <LanguageSwitch t={t} />
+      </div>
 
       <div
         style={{
@@ -259,7 +293,7 @@ function ObWelcome({ t, onNext }: { t: SkyTheme; onNext: () => void }) {
             textTransform: "uppercase",
           }}
         >
-          Wattlyzer
+          {translate("onboarding.welcome.eyebrow")}
         </div>
         <div
           style={{
@@ -271,13 +305,13 @@ function ObWelcome({ t, onNext }: { t: SkyTheme; onNext: () => void }) {
             color: t.fg,
           }}
         >
-          Run when energy is{" "}
-          <span style={{ fontStyle: "italic", fontWeight: 300 }}>clean</span> and{" "}
-          <span style={{ fontStyle: "italic", fontWeight: 300 }}>cheap</span>.
+          {richParts(translate("onboarding.welcome.title"), {
+            clean: <Em>{translate("onboarding.welcome.clean")}</Em>,
+            cheap: <Em>{translate("onboarding.welcome.cheap")}</Em>,
+          })}
         </div>
         <div style={{ marginTop: 14, fontSize: 14.5, color: t.fgDim, lineHeight: 1.5 }}>
-          Let the sun and the spot price decide when your dishwasher, EV, or heat
-          pump kicks on.
+          {translate("onboarding.welcome.lede")}
         </div>
       </div>
 
@@ -290,7 +324,7 @@ function ObWelcome({ t, onNext }: { t: SkyTheme; onNext: () => void }) {
         }}
       >
         <SkyPrimaryButton t={t} onClick={onNext}>
-          Get started
+          {translate("onboarding.welcome.cta")}
         </SkyPrimaryButton>
       </div>
       <div
@@ -306,7 +340,7 @@ function ObWelcome({ t, onNext }: { t: SkyTheme; onNext: () => void }) {
           letterSpacing: "0.1em",
         }}
       >
-        TAKES ABOUT A MINUTE
+        {translate("onboarding.welcome.duration")}
       </div>
     </ObFrame>
   );
@@ -323,21 +357,26 @@ function ObHow({
   onBack: () => void;
   onSkip: () => void;
 }) {
+  const { t: translate } = useI18n();
   const steps = [
     {
-      title: "We watch the sun and the price",
-      body: "Solar forecast for your roof + the day-ahead spot price, every hour.",
+      title: translate("onboarding.how.step1.title"),
+      body: translate("onboarding.how.step1.body"),
     },
     {
-      title: "We find the best window",
-      body: "Greenest, cheapest, or both — your call. Updated through the day.",
+      title: translate("onboarding.how.step2.title"),
+      body: translate("onboarding.how.step2.body"),
     },
   ];
   return (
     <ObFrame step={1} t={t} onBack={onBack} onSkip={onSkip}>
-      <ObTitle t={t} lede="Two things, one window a day.">
-        How <span style={{ fontStyle: "italic", fontWeight: 300 }}>Wattlyzer</span>{" "}
-        works.
+      <ObTitle t={t} lede={translate("onboarding.how.lede")}>
+        {headline(
+          translate,
+          "onboarding.how.title",
+          "wattlyzer",
+          "onboarding.how.titleEm",
+        )}
       </ObTitle>
 
       <div
@@ -380,7 +419,7 @@ function ObHow({
 
       <BottomCta>
         <SkyPrimaryButton t={t} onClick={onNext}>
-          Continue
+          {translate("common.continue")}
         </SkyPrimaryButton>
       </BottomCta>
     </ObFrame>
@@ -414,22 +453,33 @@ function ObSetup({
   const [solarOpen, setSolarOpen] = useState(false);
   const [shadingOpen, setShadingOpen] = useState(false);
   const { settings } = useSettings();
+  const { t: translate, decimal, integer } = useI18n();
   const nothingToSchedule = !schedulingSignalsAvailable(
     solar.enabled,
     dynamicTariff,
   );
   const canContinue = consentShare && !nothingToSchedule;
   const solarStatus = solar.enabled
-    ? `${solar.sizeKw.toFixed(1)} kWp · ${azimuthLabel(solar.azimuth)} · ${solar.tilt}° tilt`
-    : dynamicTariff
-      ? "No solar — price-only"
-      : "No solar";
+    ? translate("onboarding.setup.solarStatus", {
+        size: decimal(solar.sizeKw),
+        direction: translate(azimuthKey(solar.azimuth)),
+        tilt: integer(solar.tilt),
+      })
+    : translate(
+        dynamicTariff
+          ? "onboarding.setup.noSolarPriceOnly"
+          : "onboarding.setup.noSolar",
+      );
 
   return (
     <ObFrame step={2} t={t} onBack={onBack} onSkip={onSkip}>
-      <ObTitle t={t} lede="Two things and we can forecast your day.">
-        Tell us about your{" "}
-        <span style={{ fontStyle: "italic", fontWeight: 300 }}>setup</span>.
+      <ObTitle t={t} lede={translate("onboarding.setup.lede")}>
+        {headline(
+          translate,
+          "onboarding.setup.title",
+          "setup",
+          "onboarding.setup.titleEm",
+        )}
       </ObTitle>
 
       <div
@@ -451,34 +501,34 @@ function ObSetup({
         <ObCard
           t={t}
           icon="sun"
-          title="Solar panels"
+          title={translate("solar.modal.aria")}
           status={solarStatus}
-          action={solar.enabled ? "Edit" : "Add"}
+          action={translate(solar.enabled ? "common.edit" : "common.add")}
           onClick={() => setSolarOpen(true)}
         />
         {solar.enabled && (
           <ObCard
             t={t}
             icon="sunCloud"
-            title="Roof shading"
-            status={shadingSetupSummary(shading)}
-            action="Edit"
+            title={translate("onboarding.setup.roofShading")}
+            status={shadingSetupSummary(shading, translate)}
+            action={translate("common.edit")}
             onClick={() => setShadingOpen(true)}
           />
         )}
         <ObSwitchRow
           t={t}
           icon="euro"
-          title="Dynamic tariff"
-          subtitle="Hourly spot price (e.g. Tibber, aWATTar)"
+          title={translate("settings.tariff.dynamic")}
+          subtitle={translate("settings.tariff.detail")}
           checked={dynamicTariff}
           onChange={() => setDynamicTariff(!dynamicTariff)}
         />
         <ObSwitchRow
           t={t}
           icon="moon"
-          title="Dark mode"
-          subtitle="Match the sky to the current time"
+          title={translate("settings.appearance.darkMode")}
+          subtitle={translate("onboarding.setup.darkModeDetail")}
           checked={settings.currentTimeSky}
           onChange={() =>
             updateSettings({ currentTimeSky: !settings.currentTimeSky })
@@ -488,14 +538,18 @@ function ObSetup({
           t={t}
           checked={consentShare}
           onChange={() => setConsentShare((v) => !v)}
-          label={
-            <>
-              I understand that my{" "}
-              <span style={{ color: t.fg, fontWeight: 600 }}>location</span> and{" "}
-              <span style={{ color: t.fg, fontWeight: 600 }}>solar panel data</span>{" "}
-              are sent to a third party for accurate solar forecasts.
-            </>
-          }
+          label={richParts(translate("onboarding.setup.consent"), {
+            location: (
+              <span style={{ color: t.fg, fontWeight: 600 }}>
+                {translate("onboarding.setup.consentLocation")}
+              </span>
+            ),
+            solarData: (
+              <span style={{ color: t.fg, fontWeight: 600 }}>
+                {translate("onboarding.setup.consentSolarData")}
+              </span>
+            ),
+          })}
         />
       </div>
 
@@ -518,7 +572,7 @@ function ObSetup({
               color: t.fg,
             }}
           >
-            {NOTHING_TO_SCHEDULE.title}
+            {translate(NOTHING_TO_SCHEDULE.title)}
           </div>
           <div
             style={{
@@ -528,14 +582,14 @@ function ObSetup({
               lineHeight: 1.45,
             }}
           >
-            {NOTHING_TO_SCHEDULE.body}
+            {translate(NOTHING_TO_SCHEDULE.body)}
           </div>
         </div>
       )}
 
       <BottomCta dimmed={!canContinue}>
         <SkyPrimaryButton t={t} onClick={onNext} disabled={!canContinue}>
-          Continue
+          {translate("common.continue")}
         </SkyPrimaryButton>
       </BottomCta>
 
@@ -543,7 +597,7 @@ function ObSetup({
         <SolarPanelsModal
           t={t}
           value={solar}
-          eyebrow="Step 03 · Solar"
+          eyebrow={translate("onboarding.eyebrow.solar")}
           onChange={setSolar}
           onClose={() => setSolarOpen(false)}
         />
@@ -552,7 +606,7 @@ function ObSetup({
         <ShadingModal
           t={t}
           value={shading}
-          eyebrow="Step 03 · Shading"
+          eyebrow={translate("onboarding.eyebrow.shading")}
           onChange={setShading}
           onClose={() => setShadingOpen(false)}
         />
@@ -570,6 +624,7 @@ function ObDone({
   onNext: () => void;
   onBack: () => void;
 }) {
+  const { t: translate } = useI18n();
   return (
     <ObFrame step={3} t={t} hideTopChrome>
       <HeroSun t={t} size={220} top={110} />
@@ -593,7 +648,7 @@ function ObDone({
             textTransform: "uppercase",
           }}
         >
-          You're all set
+          {translate("onboarding.done.eyebrow")}
         </div>
         <div
           style={{
@@ -604,12 +659,15 @@ function ObDone({
             color: t.fg,
           }}
         >
-          Your first window is{" "}
-          <span style={{ fontStyle: "italic", fontWeight: 300 }}>one tap away</span>.
+          {headline(
+            translate,
+            "onboarding.done.title",
+            "oneTapAway",
+            "onboarding.done.titleEm",
+          )}
         </div>
         <div style={{ marginTop: 12, fontSize: 14.5, color: t.fgDim, lineHeight: 1.5 }}>
-          Allow location access on the next screen so the forecast matches your
-          roof.
+          {translate("onboarding.done.lede")}
         </div>
       </div>
 
@@ -622,7 +680,7 @@ function ObDone({
         }}
       >
         <SkyPrimaryButton t={t} onClick={onNext}>
-          Open Wattlyzer
+          {translate("onboarding.done.cta")}
         </SkyPrimaryButton>
       </div>
       <div
@@ -647,7 +705,7 @@ function ObDone({
             fontFamily: FONT_SANS,
           }}
         >
-          Back
+          {translate("common.back")}
         </button>
       </div>
     </ObFrame>

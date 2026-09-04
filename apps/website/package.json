@@ -12,12 +12,14 @@
     "preview": "astro preview",
     "lint": "eslint .",
     "typecheck": "astro check",
-    "test": "TZ=UTC bun test seo.test.ts hero.test.ts",
+    "test": "TZ=UTC bun test seo.test.ts hero.test.ts i18n.test.ts",
     "verify-seo": "TZ=UTC bun test seo.dist.test.ts",
     "astro": "astro"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.2",
+    "@wattlyzer/i18n": "workspace:*",
+    "@wattlyzer/legal": "workspace:*",
     "@wattlyzer/theme": "workspace:*",
     "astro": "^6.1.10"
   },

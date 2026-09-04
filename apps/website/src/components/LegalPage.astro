@@ -1,0 +1,70 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { DEFAULT_LOCALE, isLocale } from '@wattlyzer/i18n';
+import Layout from '../layouts/Layout.astro';
+import LanguageToggle from './LanguageToggle.astro';
+import {
+  IMPRESSUM,
+  impressumAddressLines,
+  translatorFor as impressumFor,
+} from '@wattlyzer/legal';
+import { translatorFor } from '../i18n/legal';
+import '../styles/legal.css';
+
+const CANONICAL_PATH = '/legal/';
+
+const locale = isLocale(Astro.currentLocale) ? Astro.currentLocale : DEFAULT_LOCALE;
+const t = translatorFor(locale);
+// Shared with the PWA so both impressums cannot drift apart.
+const impressum = impressumFor(locale);
+const addressLines = impressumAddressLines(locale);
+const home = getRelativeLocaleUrl(locale, '/');
+---
+
+<Layout
+  title={t('meta.title')}
+  description={t('meta.description')}
+  canonicalPath={CANONICAL_PATH}
+>
+  <div class="topbar">
+    <a class="brand" href={home}>Wattlyzer</a>
+    <div class="topbar-right">
+      <a href={home} class="back-link">{t('back')}</a>
+      <LanguageToggle canonicalPath={CANONICAL_PATH} />
+    </div>
+  </div>
+
+  <main class="wrap">
+    <div class="eyebrow">{t('eyebrow')}</div>
+    <h1>
+      {t('title')} <em>{t('titleEm')}</em>
+    </h1>
+    <div class="subtitle">{t('subtitle')}</div>
+
+    <section class="imp-section">
+      <h2>{impressum('operator')}</h2>
+      <p>
+        {addressLines.map((line, index) => (
+          <>
+            {index > 0 && <br />}
+            {line}
+          </>
+        ))}
+      </p>
+    </section>
+
+    <section class="imp-section">
+      <h2>{impressum('contact')}</h2>
+      <p><a href={`mailto:${IMPRESSUM.email}`}>{IMPRESSUM.email}</a></p>
+    </section>
+
+    <section class="imp-section">
+      <h2>{impressum('informational')}</h2>
+      <p>{impressum('informationalBody')}</p>
+    </section>
+  </main>
+
+  <div class="foot">
+    {t('foot')}
+  </div>
+</Layout>

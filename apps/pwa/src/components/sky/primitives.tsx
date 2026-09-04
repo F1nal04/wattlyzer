@@ -4,6 +4,7 @@ import { frostedGlass } from "@/components/sky/glass";
 import { WIcon } from "@/components/sky/icons";
 import { isBestSlotModeSelectable } from "@/components/sky/solar";
 import type { BestSlotMode, SearchWindow } from "@/lib/settings";
+import { useI18n, type MessageKey } from "@/lib/i18n";
 
 // Close sheets/modals on Escape
 export function useEscapeKey(onEscape: () => void) {
@@ -216,11 +217,16 @@ export function SkyModeSeg({
   solarEnabled?: boolean;
   dynamicTariff?: boolean;
 }) {
+  const { t: translate } = useI18n();
   const opts = [
-    { v: "combined", label: "Both", icon: "scale" },
-    { v: "solar-only", label: "Solar", icon: "sun" },
-    { v: "price-only", label: "Price", icon: "euro" },
-  ] as const;
+    { v: "combined", label: "mode.combined", icon: "scale" },
+    { v: "solar-only", label: "mode.solar", icon: "sun" },
+    { v: "price-only", label: "mode.price", icon: "euro" },
+  ] as const satisfies readonly {
+    v: BestSlotMode;
+    label: MessageKey;
+    icon: string;
+  }[];
   return (
     <div
       style={{
@@ -236,6 +242,7 @@ export function SkyModeSeg({
     >
       {opts.map((o) => {
         const active = value === o.v;
+        const label = translate(o.label);
         const selectable = isBestSlotModeSelectable(
           o.v,
           solarEnabled,
@@ -247,7 +254,9 @@ export function SkyModeSeg({
             type="button"
             disabled={!selectable}
             aria-disabled={!selectable}
-            aria-label={selectable ? undefined : `${o.label}, unavailable`}
+            aria-label={
+              selectable ? undefined : translate("mode.unavailable", { mode: label })
+            }
             onClick={() => selectable && onChange && onChange(o.v)}
             style={{
               border: "none",
@@ -272,7 +281,7 @@ export function SkyModeSeg({
             }}
           >
             <WIcon name={o.icon} size={14} />
-            {o.label}
+            {label}
           </button>
         );
       })}
@@ -290,13 +299,14 @@ export function SearchWindowChips({
   onChange?: (value: SearchWindow) => void;
   t: SkyTheme;
 }) {
-  const opts = [
-    { v: "3", label: "3h" },
-    { v: "6", label: "6h" },
-    { v: "12", label: "12h" },
-    { v: "24", label: "24h" },
-    { v: "eod", label: "EOD" },
-  ] as const;
+  const { t: translate } = useI18n();
+  const opts: { v: SearchWindow; label: string }[] = [
+    ...([3, 6, 12, 24] as const).map((hours) => ({
+      v: String(hours) as SearchWindow,
+      label: translate("unit.hours", { value: hours }),
+    })),
+    { v: "eod", label: translate("quick.window.endOfDay") },
+  ];
   return (
     <div
       style={{

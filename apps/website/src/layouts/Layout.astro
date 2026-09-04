@@ -3,6 +3,7 @@ import '../styles/global.css';
 import { Font } from 'astro:assets';
 import { ClientRouter } from 'astro:transitions';
 import { getRelativeLocaleUrl } from 'astro:i18n';
+import { DEFAULT_LOCALE, LOCALES, isLocale } from '@wattlyzer/i18n';
 
 interface Props {
   title?: string;
@@ -16,10 +17,13 @@ const {
   canonicalPath = '/',
 } = Astro.props;
 
-const locale = Astro.currentLocale ?? 'en';
-const enHref = new URL(getRelativeLocaleUrl('en', canonicalPath), Astro.site).toString();
-const deHref = new URL(getRelativeLocaleUrl('de', canonicalPath), Astro.site).toString();
-const canonicalHref = new URL(getRelativeLocaleUrl(locale, canonicalPath), Astro.site).toString();
+// Same locale model the PWA uses, from the shared package.
+const locale = isLocale(Astro.currentLocale) ? Astro.currentLocale : DEFAULT_LOCALE;
+const localeHref = (l: (typeof LOCALES)[number]) =>
+  new URL(getRelativeLocaleUrl(l, canonicalPath), Astro.site).toString();
+const enHref = localeHref('en');
+const deHref = localeHref('de');
+const canonicalHref = localeHref(locale);
 ---
 
 <!doctype html>

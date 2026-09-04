@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { Suspense, lazy, type ReactNode } from "react";
+import { Suspense, lazy, useEffect, type ReactNode } from "react";
 import {
   HeadContent,
   Outlet,
@@ -9,7 +9,10 @@ import {
 import type { QueryClient } from "@tanstack/react-query";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { DEFAULT_LOCALE } from "@wattlyzer/i18n";
 import { DATA_STALE_TIME_MS } from "@/lib/queries";
+import { useLocale } from "@/lib/locale";
+import { useI18n } from "@/lib/i18n";
 import appCss from "@/styles/app.css?url";
 
 const FONTS_URL =
@@ -108,6 +111,7 @@ function RootComponent() {
       client={queryClient}
       persistOptions={{ persister, maxAge: DATA_STALE_TIME_MS }}
     >
+      <DocumentLanguage />
       <Outlet />
       <Suspense fallback={null}>
         <Devtools />
@@ -116,9 +120,27 @@ function RootComponent() {
   );
 }
 
+// The shell renders `lang` and the head metadata for the default locale
+// (SSR cannot know the browser's preference). Once the resolved locale is
+// known, reflect it on the live document so assistive tech announces the
+// right language — mutating the attributes avoids a hydration mismatch on
+// <html>, which React never patches.
+function DocumentLanguage() {
+  const locale = useLocale();
+  const { t } = useI18n();
+  useEffect(() => {
+    document.documentElement.lang = locale;
+    document.title = t("app.title");
+    document
+      .querySelector('meta[name="description"]')
+      ?.setAttribute("content", t("app.description"));
+  }, [locale, t]);
+  return null;
+}
+
 function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang={DEFAULT_LOCALE}>
       <head>
         <HeadContent />
       </head>

@@ -2,6 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { FONT_DISPLAY, FONT_MONO, FONT_SANS, skyTheme } from "@wattlyzer/theme";
 import { Hills, SkyScreen } from "@/components/sky/primitives";
 import { useSkyHour } from "@/lib/use-sky-hour";
+import { useI18n } from "@/lib/i18n";
+import { richParts } from "@/lib/i18n/rich";
 
 // Default to a fixed midday hour; useSkyHour keeps SSR/first-render hydration
 // safe and follows the current time when "Dark mode" is on.
@@ -10,6 +12,7 @@ const PAGE_HOUR = 11;
 export function NotFound() {
   const themeHour = useSkyHour(PAGE_HOUR);
   const t = skyTheme(themeHour);
+  const { t: translate } = useI18n();
   return (
     <SkyScreen
       background={`linear-gradient(180deg, ${t.sky[0]} 0%, ${t.sky[1]} 55%, ${t.sky[2]} 100%)`}
@@ -36,7 +39,7 @@ export function NotFound() {
             marginBottom: 10,
           }}
         >
-          404
+          {translate("notFound.eyebrow")}
         </div>
         <div
           style={{
@@ -47,9 +50,13 @@ export function NotFound() {
             color: t.fg,
           }}
         >
-          Nothing under{" "}
-          <span style={{ fontStyle: "italic", fontWeight: 300 }}>this sky</span>
-          .
+          {richParts(translate("notFound.title"), {
+            thisSky: (
+              <span style={{ fontStyle: "italic", fontWeight: 300 }}>
+                {translate("notFound.titleEm")}
+              </span>
+            ),
+          })}
         </div>
         <div
           style={{
@@ -59,7 +66,7 @@ export function NotFound() {
             lineHeight: 1.5,
           }}
         >
-          The page you&apos;re looking for doesn&apos;t exist.
+          {translate("notFound.body")}
         </div>
         <div style={{ marginTop: 26 }}>
           <Link
@@ -77,7 +84,7 @@ export function NotFound() {
               textDecoration: "none",
             }}
           >
-            Back to the forecast
+            {translate("notFound.cta")}
           </Link>
         </div>
       </div>

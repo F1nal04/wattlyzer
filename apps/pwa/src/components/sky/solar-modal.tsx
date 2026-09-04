@@ -2,7 +2,9 @@ import type { ReactNode } from "react";
 import { FONT_MONO, FONT_SANS, type SkyTheme } from "@wattlyzer/theme";
 import { SkyEditSheet } from "@/components/sky/edit-sheet";
 import { SkySlider } from "@/components/sky/primitives";
-import { ObSwitchRow, azimuthLabel } from "@/components/sky/rows";
+import { ObSwitchRow, azimuthKey } from "@/components/sky/rows";
+import { useI18n } from "@/lib/i18n";
+import { richParts } from "@/lib/i18n/rich";
 
 export type SolarConfig = {
   enabled: boolean;
@@ -70,7 +72,7 @@ function ModalDisplay({ t, children }: { t: SkyTheme; children: ReactNode }) {
 export function SolarPanelsModal({
   t,
   value,
-  eyebrow = "Solar",
+  eyebrow,
   onChange,
   onClose,
 }: {
@@ -80,29 +82,30 @@ export function SolarPanelsModal({
   onChange: (next: SolarConfig) => void;
   onClose: () => void;
 }) {
+  const { t: translate, decimal, integer } = useI18n();
   const set = (patch: Partial<SolarConfig>) => onChange({ ...value, ...patch });
   const dim = !value.enabled;
   return (
     <SkyEditSheet
       t={t}
-      ariaLabel="Solar panels"
-      eyebrow={eyebrow}
-      title={
-        <>
-          Your <span style={{ fontStyle: "italic", fontWeight: 300 }}>panels</span>.
-        </>
-      }
+      ariaLabel={translate("solar.modal.aria")}
+      eyebrow={eyebrow ?? translate("solar.modal.eyebrow")}
+      title={richParts(translate("solar.modal.title"), {
+        panels: (
+          <span style={{ fontStyle: "italic", fontWeight: 300 }}>
+            {translate("solar.modal.titleEm")}
+          </span>
+        ),
+      })}
       onClose={onClose}
     >
       <ObSwitchRow
         t={t}
         icon="sun"
-        title="I have solar panels"
-        subtitle={
-          value.enabled
-            ? "Forecast uses your roof setup"
-            : "Skip — Wattlyzer uses spot price only"
-        }
+        title={translate("solar.modal.have")}
+        subtitle={translate(
+          value.enabled ? "solar.modal.haveOn" : "solar.modal.haveOff",
+        )}
         checked={value.enabled}
         onChange={() => set({ enabled: !value.enabled })}
       />
@@ -120,10 +123,11 @@ export function SolarPanelsModal({
       >
         <ModalField
           t={t}
-          label="Orientation"
+          label={translate("solar.modal.orientation")}
           right={
             <ModalDisplay t={t}>
-              {azimuthLabel(value.azimuth)} · {Math.round(value.azimuth)}°
+              {translate(azimuthKey(value.azimuth))} ·{" "}
+              {translate("unit.degrees", { value: integer(value.azimuth) })}
             </ModalDisplay>
           }
         >
@@ -133,27 +137,43 @@ export function SolarPanelsModal({
             max={360}
             step={5}
             t={t}
-            labels={["N", "E", "S", "W", "N"]}
+            labels={[0, 90, 180, 270, 360].map((deg) =>
+              translate(azimuthKey(deg)),
+            )}
             onChange={(next) => set({ azimuth: Math.round(next) })}
           />
         </ModalField>
 
-        <ModalField t={t} label="Roof tilt" right={<ModalDisplay t={t}>{value.tilt}°</ModalDisplay>}>
+        <ModalField
+          t={t}
+          label={translate("solar.modal.tilt")}
+          right={
+            <ModalDisplay t={t}>
+              {translate("unit.degrees", { value: integer(value.tilt) })}
+            </ModalDisplay>
+          }
+        >
           <SkySlider
             value={value.tilt}
             min={0}
             max={60}
             step={1}
             t={t}
-            labels={["0°", "15°", "30°", "45°", "60°"]}
+            labels={[0, 15, 30, 45, 60].map((deg) =>
+              translate("unit.degrees", { value: integer(deg) }),
+            )}
             onChange={(next) => set({ tilt: Math.round(next) })}
           />
         </ModalField>
 
         <ModalField
           t={t}
-          label="System size"
-          right={<ModalDisplay t={t}>{value.sizeKw.toFixed(1)} kWp</ModalDisplay>}
+          label={translate("solar.modal.size")}
+          right={
+            <ModalDisplay t={t}>
+              {translate("unit.kwp", { value: decimal(value.sizeKw) })}
+            </ModalDisplay>
+          }
         >
           <SkySlider
             value={value.sizeKw}
@@ -161,7 +181,7 @@ export function SolarPanelsModal({
             max={20}
             step={0.1}
             t={t}
-            labels={["1", "5", "10", "15", "20"]}
+            labels={[1, 5, 10, 15, 20].map((v) => integer(v))}
             onChange={(next) => set({ sizeKw: next })}
           />
           <div
@@ -173,7 +193,7 @@ export function SolarPanelsModal({
               marginTop: 8,
             }}
           >
-            PEAK PRODUCTION UNDER FULL SUN
+            {translate("solar.modal.sizeHint")}
           </div>
         </ModalField>
       </div>

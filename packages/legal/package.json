@@ -1,0 +1,21 @@
+{
+  "name": "@wattlyzer/legal",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@wattlyzer/i18n": "workspace:*"
+  },
+  "scripts": {
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "TZ=UTC bun test src"
+  },
+  "nx": {
+    "name": "legal",
+    "tags": ["type:content", "scope:shared", "platform:agnostic"]
+  }
+}

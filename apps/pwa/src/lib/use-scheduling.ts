@@ -68,9 +68,10 @@ export function useScheduling(
   now: Date,
   settings: SettingsData,
 ) {
+  const needsSolarData = solarPanelsEnabled(settings.bestSlotMode);
   const needsMarketData = settings.bestSlotMode !== "solar-only";
   const canSchedule = schedulingSignalsAvailable(
-    solarPanelsEnabled(settings.bestSlotMode),
+    needsSolarData,
     settings.dynamicTariff,
   );
   const queriesEnabled = position !== null && canSchedule;
@@ -83,7 +84,7 @@ export function useScheduling(
       azimut: settings.azimut,
       kwh: settings.kwh,
     }),
-    enabled: queriesEnabled,
+    enabled: queriesEnabled && needsSolarData,
   });
 
   const marketQuery = useQuery({
@@ -91,7 +92,7 @@ export function useScheduling(
     enabled: queriesEnabled && needsMarketData,
   });
 
-  const solarData = solarQuery.data ?? null;
+  const solarData = needsSolarData ? (solarQuery.data ?? null) : null;
   const marketData = needsMarketData ? (marketQuery.data ?? null) : null;
 
   const { schedulingResult, topSlotsResult } = useMemo(
@@ -125,10 +126,13 @@ export function useScheduling(
 
   const isLoading =
     queriesEnabled &&
-    (solarQuery.isPending || (needsMarketData && marketQuery.isPending));
+    ((needsSolarData && solarQuery.isPending) ||
+      (needsMarketData && marketQuery.isPending));
+  // Never surface a solar failure to a user with no panels — they do not use
+  // that signal and the schedule no longer depends on it.
   const apiError =
     canSchedule
-      ? (solarQuery.error?.message ??
+      ? ((needsSolarData ? solarQuery.error?.message : undefined) ??
         (needsMarketData ? marketQuery.error?.message : undefined) ??
         null)
       : null;

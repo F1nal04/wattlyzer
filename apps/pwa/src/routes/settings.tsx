@@ -6,6 +6,7 @@ import {
   skyTheme,
   type SkyTheme,
 } from "@wattlyzer/theme";
+import { hoursUntilEndOfLocalDay } from "@wattlyzer/core";
 import { updateSettings, usePrefs, useSettings } from "@/lib/settings";
 import { useNow } from "@/lib/use-now";
 import { useGeolocation, useScheduling } from "@/lib/use-scheduling";
@@ -17,8 +18,10 @@ import {
   SkySwitch,
 } from "@/components/sky/primitives";
 import { WIcon } from "@/components/sky/icons";
-import { azimuthLabel } from "@/components/sky/rows";
+import { azimuthKey } from "@/components/sky/rows";
 import { ShadingModal } from "@/components/sky/shading-modal";
+import { LanguageSwitch } from "@/components/sky/language";
+import { useI18n } from "@/lib/i18n";
 import {
   shadingRowValue,
   shadingSettingsFromSetup,
@@ -31,7 +34,7 @@ import {
   schedulingSignalsAvailable,
   settingsPatchFromSolarConfig,
   solarPanelsEnabled,
-  solarSettingsSubtitle,
+  solarSettingsSubtitleKey,
 } from "@/components/sky/solar";
 import { SolarPanelsModal, type SolarConfig } from "@/components/sky/solar-modal";
 import packageJson from "../../package.json";
@@ -187,6 +190,52 @@ function SetToggleRow({
   );
 }
 
+function SetControlRow({
+  label,
+  detail,
+  control,
+  t,
+  last,
+}: {
+  label: string;
+  detail?: string;
+  control: ReactNode;
+  t: SkyTheme;
+  last?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: 12,
+        padding: "13px 16px",
+        borderBottom: last ? "none" : `1px solid ${t.rule}`,
+        fontSize: 14,
+      }}
+    >
+      <div style={{ minWidth: 0, display: "flex", flexDirection: "column" }}>
+        <div style={{ fontWeight: 500, color: t.fg }}>{label}</div>
+        {detail && (
+          <div
+            style={{
+              fontSize: 11.5,
+              color: t.fgMute,
+              fontFamily: FONT_MONO,
+              marginTop: 2,
+              overflowWrap: "anywhere",
+            }}
+          >
+            {detail}
+          </div>
+        )}
+      </div>
+      {control}
+    </div>
+  );
+}
+
 function LinkRow({
   label,
   t,
@@ -242,6 +291,7 @@ function SettingsScreen() {
   const { settings } = useSettings();
   const { prefs } = usePrefs();
   const now = useNow();
+  const { t: translate, decimal, integer } = useI18n();
   const { position } = useGeolocation();
   const [solarOpen, setSolarOpen] = useState(false);
   const [shadingOpen, setShadingOpen] = useState(false);
@@ -251,19 +301,7 @@ function SettingsScreen() {
   const [scheduleSettings] = useState(settings);
   const searchTimespanHours =
     prefs.searchWindow === "eod"
-      ? Math.ceil(
-          (new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate(),
-            23,
-            59,
-            59,
-            999,
-          ).getTime() -
-            now.getTime()) /
-            (1000 * 60 * 60),
-        )
+      ? hoursUntilEndOfLocalDay(now)
       : parseInt(prefs.searchWindow, 10);
   const { schedulingResult } = useScheduling(
     position,
@@ -308,12 +346,12 @@ function SettingsScreen() {
     >
       <SkyAppBar
         t={t}
-        title="Settings"
-        subtle="YOUR SOLAR SETUP"
+        title={translate("settings.title")}
+        subtle={translate("settings.subtitle")}
         left={
           <SkyIconBtn
             t={t}
-            label="Back"
+            label={translate("common.back")}
             onClick={() => navigate({ to: "/" })}
             blurBackdrop={false}
           >
@@ -345,7 +383,7 @@ function SettingsScreen() {
                 color: t.fg,
               }}
             >
-              {NOTHING_TO_SCHEDULE.title}
+              {translate(NOTHING_TO_SCHEDULE.title)}
             </div>
             <div
               style={{
@@ -355,33 +393,39 @@ function SettingsScreen() {
                 lineHeight: 1.45,
               }}
             >
-              {NOTHING_TO_SCHEDULE.body}
+              {translate(NOTHING_TO_SCHEDULE.body)}
             </div>
           </div>
         )}
 
         <SetGroup
-          title="Solar panels"
-          subtitle={solarSettingsSubtitle(solarEnabled, settings.dynamicTariff)}
+          title={translate("settings.solar.title")}
+          subtitle={translate(
+            solarSettingsSubtitleKey(solarEnabled, settings.dynamicTariff),
+          )}
           t={t}
         >
           {solarEnabled ? (
             <>
               <SetRow
-                label="Peak power"
-                value={`${settings.kwh.toFixed(1)} kWp`}
+                label={translate("settings.solar.peakPower")}
+                value={translate("unit.kwp", { value: decimal(settings.kwh) })}
                 t={t}
                 onClick={() => setSolarOpen(true)}
               />
               <SetRow
-                label="Azimuth"
-                value={`${Math.round(settings.azimut)}° ${azimuthLabel(settings.azimut)}`}
+                label={translate("settings.solar.azimuth")}
+                value={`${translate("unit.degrees", {
+                  value: integer(settings.azimut),
+                })} ${translate(azimuthKey(settings.azimut))}`}
                 t={t}
                 onClick={() => setSolarOpen(true)}
               />
               <SetRow
-                label="Tilt"
-                value={`${Math.round(settings.angle)}°`}
+                label={translate("settings.solar.tilt")}
+                value={translate("unit.degrees", {
+                  value: integer(settings.angle),
+                })}
                 t={t}
                 last
                 onClick={() => setSolarOpen(true)}
@@ -389,8 +433,8 @@ function SettingsScreen() {
             </>
           ) : (
             <SetRow
-              label="Status"
-              value="Off"
+              label={translate("settings.solar.status")}
+              value={translate("common.off")}
               t={t}
               last
               onClick={() => setSolarOpen(true)}
@@ -398,10 +442,10 @@ function SettingsScreen() {
           )}
         </SetGroup>
 
-        <SetGroup title="Tariff" t={t}>
+        <SetGroup title={translate("settings.tariff.title")} t={t}>
           <SetToggleRow
-            label="Dynamic tariff"
-            detail="Hourly spot price (e.g. Tibber, aWATTar)"
+            label={translate("settings.tariff.dynamic")}
+            detail={translate("settings.tariff.detail")}
             on={settings.dynamicTariff}
             onToggle={() => {
               const next = !settings.dynamicTariff;
@@ -416,24 +460,26 @@ function SettingsScreen() {
         </SetGroup>
 
         <SetGroup
-          title="Shading"
-          subtitle="Compensate for trees, neighbours, etc."
+          title={translate("settings.shading.title")}
+          subtitle={translate("settings.shading.subtitle")}
           t={t}
         >
           <SetRow
-            label="Morning shading"
+            label={translate("shading.morning.title")}
             value={shadingRowValue(
               "morning",
               shadingWindowFromSettings("morning", settings),
+              translate,
             )}
             t={t}
             onClick={() => setShadingOpen(true)}
           />
           <SetRow
-            label="Evening shading"
+            label={translate("shading.evening.title")}
             value={shadingRowValue(
               "evening",
               shadingWindowFromSettings("evening", settings),
+              translate,
             )}
             t={t}
             last
@@ -441,24 +487,38 @@ function SettingsScreen() {
           />
         </SetGroup>
 
-        <SetGroup title="Appearance" t={t}>
+        <SetGroup title={translate("settings.appearance.title")} t={t}>
           <SetToggleRow
-            label="Dark mode"
-            detail="Match the sky to now, not the chosen slot"
+            label={translate("settings.appearance.darkMode")}
+            detail={translate("settings.appearance.darkModeDetail")}
             on={settings.currentTimeSky}
             onToggle={() =>
               updateSettings({ currentTimeSky: !settings.currentTimeSky })
             }
             t={t}
+          />
+          <SetControlRow
+            label={translate("settings.language.title")}
+            detail={translate("settings.language.detail")}
+            control={<LanguageSwitch t={t} />}
+            t={t}
             last
           />
         </SetGroup>
 
-        <SetGroup title="More" t={t}>
-          <LinkRow label="Privacy" t={t} onClick={() => navigate({ to: "/privacy" })} />
-          <LinkRow label="Legal" t={t} onClick={() => navigate({ to: "/legal" })} />
+        <SetGroup title={translate("settings.more.title")} t={t}>
           <LinkRow
-            label="GitHub"
+            label={translate("settings.more.privacy")}
+            t={t}
+            onClick={() => navigate({ to: "/privacy" })}
+          />
+          <LinkRow
+            label={translate("settings.more.legal")}
+            t={t}
+            onClick={() => navigate({ to: "/legal" })}
+          />
+          <LinkRow
+            label={translate("settings.more.github")}
             t={t}
             last
             href="https://github.com/F1nal04/wattlyzer"
@@ -475,7 +535,7 @@ function SettingsScreen() {
             textAlign: "center",
           }}
         >
-          v{packageJson.version} · made for the German market
+          {translate("settings.footer", { version: packageJson.version })}
         </div>
       </div>
 
@@ -483,7 +543,7 @@ function SettingsScreen() {
         <SolarPanelsModal
           t={t}
           value={solarConfig}
-          eyebrow="Settings · Solar"
+          eyebrow={translate("settings.eyebrow.solar")}
           onChange={applySolar}
           onClose={() => setSolarOpen(false)}
         />
@@ -492,7 +552,7 @@ function SettingsScreen() {
         <ShadingModal
           t={t}
           value={shadingSetupFromSettings(settings)}
-          eyebrow="Settings · Shading"
+          eyebrow={translate("settings.eyebrow.shading")}
           onChange={(setup) => updateSettings(shadingSettingsFromSetup(setup))}
           onClose={() => setShadingOpen(false)}
         />
