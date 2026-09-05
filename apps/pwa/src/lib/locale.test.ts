@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import {
   LOCALE_STORAGE_KEY,
+  localeFromSearch,
   parseStoredLocale,
   serializeStoredLocale,
 } from "@/lib/locale";
@@ -105,5 +106,17 @@ describe("locale store", () => {
     const { getLocaleServerSnapshot } = await import("@/lib/locale");
 
     expect(getLocaleServerSnapshot()).toEqual({ chosen: null, preferred: [] });
+  });
+});
+
+describe("cross-domain language choice", () => {
+  it("accepts supported explicit languages", () => {
+    expect(localeFromSearch("?lang=de")).toBe("de");
+    expect(localeFromSearch("?lang=en&source=website")).toBe("en");
+  });
+  it("ignores absent and unsupported languages", () => {
+    for (const search of ["", "?lang=", "?lang=fr", "?lang=de-DE"]) {
+      expect(localeFromSearch(search)).toBeNull();
+    }
   });
 });
