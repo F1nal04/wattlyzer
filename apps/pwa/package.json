@@ -1,6 +1,6 @@
 {
   "name": "@wattlyzer/pwa",
-  "version": "1.8.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -49,13 +49,22 @@
   ],
   "nx": {
     "name": "pwa",
-    "tags": ["type:app", "scope:pwa", "platform:web"],
+    "tags": [
+      "type:app",
+      "scope:pwa",
+      "platform:web"
+    ],
     "targets": {
       "build": {
-        "outputs": ["{projectRoot}/dist", "{projectRoot}/.netlify"]
+        "outputs": [
+          "{projectRoot}/dist",
+          "{projectRoot}/.netlify"
+        ]
       },
       "verify-seo": {
-        "dependsOn": ["build"]
+        "dependsOn": [
+          "build"
+        ]
       }
     }
   }
