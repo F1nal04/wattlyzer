@@ -34,6 +34,12 @@ export function parseStoredLocale(raw: string | null): Locale | null {
   }
 }
 
+// Cross-domain links carry an explicit language choice, never inferred detection.
+export function localeFromSearch(search: string): Locale | null {
+  const lang = new URLSearchParams(search).get("lang");
+  return isLocale(lang) ? lang : null;
+}
+
 export function serializeStoredLocale(locale: Locale | null): string {
   return JSON.stringify({ locale });
 }

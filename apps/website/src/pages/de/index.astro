@@ -1,4 +1,6 @@
 ---
+import { translatorFor } from '../../i18n/app-links';
+const appLink = translatorFor('de');
 import Layout from '../../layouts/Layout.astro';
 import LanguageToggle from '../../components/LanguageToggle.astro';
 import HeroClouds from '../../components/HeroClouds.astro';
@@ -21,7 +23,7 @@ import '../../styles/index.css';
     </div>
     <div class="nav-right">
       <LanguageToggle canonicalPath="/" />
-      <a href="https://pwa.wattlyzer.de/install" class="nav-cta">PWA installieren</a>
+      <a href="https://pwa.wattlyzer.de/install?lang=de" class="nav-cta">{appLink('install')}</a>
     </div>
     <div class="nav-mob-right">
       <LanguageToggle canonicalPath="/" variant="nav-mobile" />
@@ -77,7 +79,7 @@ import '../../styles/index.css';
         </p>
 
         <div class="hero-cta-row" id="install">
-          <a href="#" class="hero-cta-btn" id="hero-cta-btn">
+          <a href="https://pwa.wattlyzer.de/install?lang=de" class="hero-cta-btn" id="hero-cta-btn">
             <svg
               width="16"
               height="16"
@@ -91,8 +93,9 @@ import '../../styles/index.css';
               <path d="M12 4v12m0 0l-4-4m4 4l4-4"></path>
               <path d="M5 20h14"></path>
             </svg>
-            PWA installieren
+            {appLink('install')}
           </a>
+          <a href="https://pwa.wattlyzer.de/?lang=de" class="inline-link">{appLink('open')}</a>
           <span class="hero-cta-sub">Kostenlos · ohne Konto</span>
         </div>
       </div>
@@ -386,7 +389,7 @@ import '../../styles/index.css';
       <a href="#privacy" class="mob-nav-link" id="mob-link-privacy">Datenschutz</a>
       <a href="#faq" class="mob-nav-link" id="mob-link-faq">FAQ</a>
       <a href="/de/legal/" class="mob-nav-link" id="mob-link-imp">Impressum</a>
-      <a href="https://pwa.wattlyzer.de/install" class="mob-cta" id="mob-cta">PWA installieren</a>
+      <a href="https://pwa.wattlyzer.de/install?lang=de" class="mob-cta" id="mob-cta">{appLink('install')}</a>
     </div>
   </div>
 </Layout>

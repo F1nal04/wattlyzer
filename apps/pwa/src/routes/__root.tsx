@@ -11,7 +11,7 @@ import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persist
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { DEFAULT_LOCALE } from "@wattlyzer/i18n";
 import { DATA_STALE_TIME_MS } from "@/lib/queries";
-import { useLocale } from "@/lib/locale";
+import { localeFromSearch, setLocale, useLocale } from "@/lib/locale";
 import { useI18n } from "@/lib/i18n";
 import appCss from "@/styles/app.css?url";
 
@@ -106,6 +106,12 @@ const persister = createSyncStoragePersister({
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  // Consume a website link once per document, after hydration. Later changes
+  // in Settings must remain free to override the incoming language choice.
+  useEffect(() => {
+    const linkedLocale = localeFromSearch(window.location.search);
+    if (linkedLocale) setLocale(linkedLocale);
+  }, []);
   return (
     <PersistQueryClientProvider
       client={queryClient}
