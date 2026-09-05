@@ -126,7 +126,6 @@ export const en = {
   "settings.more.title": "More",
   "settings.more.privacy": "Privacy",
   "settings.more.legal": "Legal",
-  "settings.more.website": "Website",
   "settings.more.github": "GitHub",
   "settings.footer": "v{version} · made for the German market",
   "settings.eyebrow.solar": "Settings · Solar",

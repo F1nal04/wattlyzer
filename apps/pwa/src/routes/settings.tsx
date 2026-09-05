@@ -290,7 +290,7 @@ function SettingsScreen() {
   const { settings } = useSettings();
   const { prefs } = usePrefs();
   const now = useNow();
-  const { t: translate, decimal, integer, locale } = useI18n();
+  const { t: translate, decimal, integer } = useI18n();
   const { position } = useGeolocation();
   const [solarOpen, setSolarOpen] = useState(false);
   const [shadingOpen, setShadingOpen] = useState(false);
@@ -509,11 +509,6 @@ function SettingsScreen() {
             label={translate("settings.more.legal")}
             t={t}
             onClick={() => navigate({ to: "/legal" })}
-          />
-          <LinkRow
-            label={translate("settings.more.website")}
-            t={t}
-            href={locale === "de" ? "https://wattlyzer.de/de/" : "https://wattlyzer.de/"}
           />
           <LinkRow
             label={translate("settings.more.github")}

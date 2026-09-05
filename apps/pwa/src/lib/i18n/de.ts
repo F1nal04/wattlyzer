@@ -123,7 +123,6 @@ export const de: Record<MessageKey, string> = {
   "settings.more.title": "Mehr",
   "settings.more.privacy": "Datenschutz",
   "settings.more.legal": "Impressum",
-  "settings.more.website": "Website",
   "settings.more.github": "GitHub",
   "settings.footer": "v{version} · für den deutschen Markt gemacht",
   "settings.eyebrow.solar": "Einstellungen · Solar",
