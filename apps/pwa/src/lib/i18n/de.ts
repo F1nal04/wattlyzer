@@ -204,6 +204,10 @@ export const de: Record<MessageKey, string> = {
   "onboarding.done.cta": "Wattlyzer öffnen",
 
   // ── Install guidance ───────────────────────────────────────
+  "install.choose.eyebrow": "Wattlyzer installieren",
+  "install.choose.title": "Wähle dein Gerät.",
+  "install.choose.lede": "Öffne die Anleitung für dein Smartphone oder Tablet oder nutze Wattlyzer im Browser.",
+  "install.choose.browser": "Im Browser fortfahren",
   "install.ios.eyebrow": "iOS · Safari",
   "install.ios.title": "Auf den {em} legen.",
   "install.ios.titleEm": "Home-Bildschirm",

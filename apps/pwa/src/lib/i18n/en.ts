@@ -204,6 +204,10 @@ export const en = {
   "onboarding.done.cta": "Open Wattlyzer",
 
   // ── Install guidance ───────────────────────────────────────
+  "install.choose.eyebrow": "Install Wattlyzer",
+  "install.choose.title": "Choose your device.",
+  "install.choose.lede": "Open the guide for your phone or tablet, or use Wattlyzer in your browser.",
+  "install.choose.browser": "Continue in the browser",
   "install.ios.eyebrow": "iOS · Safari",
   "install.ios.title": "Add to your {em}.",
   "install.ios.titleEm": "home screen",

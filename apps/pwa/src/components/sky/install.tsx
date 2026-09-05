@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { FONT_DISPLAY, skyTheme, type SkyTheme } from "@wattlyzer/theme";
 import { frostedGlass } from "@/components/sky/glass";
@@ -204,5 +205,37 @@ export function InstallAndroid() {
         { glyph: "home", key: "install.android.step3" },
       ]}
     />
+  );
+}
+
+export function InstallChooser() {
+  const t = skyTheme(useSkyHour(INST_HOUR));
+  const { t: translate } = useI18n();
+  return (
+    <SkyScreen
+      background={`linear-gradient(180deg, ${t.sky[0]} 0%, ${t.sky[1]} 55%, ${t.sky[2]} 100%)`}
+      color={t.fg}
+    >
+      <Hills t={t} height="26%" opacity={0.55} />
+      <main style={{ position: "relative", padding: "96px 28px 32px" }}>
+        <SkyPageHead
+          t={t}
+          eyebrow={translate("install.choose.eyebrow")}
+          title={translate("install.choose.title")}
+          lede={translate("install.choose.lede")}
+        />
+        <div style={{ display: "grid", gap: 16, marginTop: 32 }}>
+          <Link to="/install/ios" search={(previous) => previous} style={{ color: t.fg }}>
+            {translate("install.ios.eyebrow")}
+          </Link>
+          <Link to="/install/android" search={(previous) => previous} style={{ color: t.fg }}>
+            {translate("install.android.eyebrow")}
+          </Link>
+          <Link to="/" search={(previous) => previous} style={{ color: t.fg }}>
+            {translate("install.choose.browser")}
+          </Link>
+        </div>
+      </main>
+    </SkyScreen>
   );
 }

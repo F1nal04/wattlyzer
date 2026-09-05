@@ -14,6 +14,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LegalRouteImport } from './routes/legal'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as InstallIndexRouteImport } from './routes/install.index'
 import { Route as InstallIosRouteImport } from './routes/install.ios'
 import { Route as InstallAndroidRouteImport } from './routes/install.android'
 
@@ -42,6 +43,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InstallIndexRoute = InstallIndexRouteImport.update({
+  id: '/install/',
+  path: '/install/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InstallIosRoute = InstallIosRouteImport.update({
   id: '/install/ios',
   path: '/install/ios',
@@ -61,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/install/android': typeof InstallAndroidRoute
   '/install/ios': typeof InstallIosRoute
+  '/install/': typeof InstallIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/install/android': typeof InstallAndroidRoute
   '/install/ios': typeof InstallIosRoute
+  '/install': typeof InstallIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +88,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/install/android': typeof InstallAndroidRoute
   '/install/ios': typeof InstallIosRoute
+  '/install/': typeof InstallIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +100,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/install/android'
     | '/install/ios'
+    | '/install/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +110,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/install/android'
     | '/install/ios'
+    | '/install'
   id:
     | '__root__'
     | '/'
@@ -109,6 +120,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/install/android'
     | '/install/ios'
+    | '/install/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +131,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   InstallAndroidRoute: typeof InstallAndroidRoute
   InstallIosRoute: typeof InstallIosRoute
+  InstallIndexRoute: typeof InstallIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -158,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/install/': {
+      id: '/install/'
+      path: '/install'
+      fullPath: '/install/'
+      preLoaderRoute: typeof InstallIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/install/ios': {
       id: '/install/ios'
       path: '/install/ios'
@@ -183,6 +203,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   InstallAndroidRoute: InstallAndroidRoute,
   InstallIosRoute: InstallIosRoute,
+  InstallIndexRoute: InstallIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
