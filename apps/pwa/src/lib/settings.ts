@@ -106,6 +106,8 @@ export interface SettingsData {
   dynamicTariff: boolean; // Hourly spot price is available (e.g. Tibber, aWATTar)
   currentTimeSky: boolean; // UI "Dark mode": derive the sky palette from the
                            // current local hour instead of the recommended slot
+  nerdMode: boolean; // Show the recommended slot's average production/price
+                     // on the home screen. Display only — not a scheduling input.
 }
 
 export function toSchedulingSettings(
@@ -136,6 +138,7 @@ const defaultSettings: SettingsData = {
   ignoreSolarForBestSlot: false,
   dynamicTariff: true,
   currentTimeSky: false,
+  nerdMode: false,
 };
 
 const SETTINGS_STORAGE_KEY = "wattlyzer_settings";

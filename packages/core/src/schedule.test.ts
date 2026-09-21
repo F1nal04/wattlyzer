@@ -7,6 +7,7 @@ import {
   calculateSchedule as calculateScheduleRequest,
   ceilToUtcHour,
   hoursUntilEndOfLocalDay,
+  marketPriceToCentsPerKwh,
 } from "./schedule";
 
 const baseSettings: SchedulingSettings = {
@@ -270,6 +271,17 @@ function berlinSolar(): SolarData {
     },
   };
 }
+
+describe("marketPriceToCentsPerKwh", () => {
+  it("converts aWATTar's Eur/MWh to ct/kWh", () => {
+    expect(marketPriceToCentsPerKwh(83.07)).toBeCloseTo(8.307, 10);
+    expect(marketPriceToCentsPerKwh(0)).toBe(0);
+  });
+
+  it("keeps negative spot prices negative", () => {
+    expect(marketPriceToCentsPerKwh(-25.5)).toBeCloseTo(-2.55, 10);
+  });
+});
 
 describe("forecast.solar timestamp parsing", () => {
   it("resolves naive keys against the roof's timezone, not the runtime's", () => {

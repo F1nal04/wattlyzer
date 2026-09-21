@@ -197,6 +197,16 @@ export function calculateMarketPrice(
   return findMarketPrice(marketData, targetTime) ?? 0;
 }
 
+/**
+ * Convert a raw aWATTar `marketprice` (EUR/MWh — its rows literally carry
+ * `"unit": "Eur/MWh"`) into the ct/kWh every UI shows. Same number, divided
+ * by ten. This is the only place that division may happen; negative prices
+ * stay negative because the spot market really does go below zero.
+ */
+export function marketPriceToCentsPerKwh(eurPerMwh: number): number {
+  return eurPerMwh / 10;
+}
+
 function hasAvgPrice(
   slot: SlotResult,
 ): slot is SlotResult & { avgPrice: number } {

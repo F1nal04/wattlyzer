@@ -28,6 +28,7 @@ export const en = {
   "unit.hours": "{value}h",
   "unit.minutes": "{value}m",
   "unit.kwh": "{value} kWh",
+  "unit.ctPerKwh": "{value} ct/kWh",
   "unit.kwp": "{value} kWp",
   "unit.degrees": "{value}°",
   "unit.hourOfDay": "{hour}:00",
@@ -53,6 +54,9 @@ export const en = {
   "home.reason.solar": "Catches the most sun",
   "home.reason.price": "Cheapest window",
   "home.runFor": "Run for",
+  // Nerd mode — short labels next to the recommended slot's averages
+  "home.nerd.production": "Avg. production",
+  "home.nerd.price": "Avg. price",
   "home.marketCoverage": "Prices cover {covered}h of the {window}h window",
 
   // ── Status messages ────────────────────────────────────────
@@ -120,6 +124,9 @@ export const en = {
   "settings.appearance.darkMode": "Dark mode",
   "settings.appearance.darkModeDetail":
     "Match the sky to now, not the chosen slot",
+  "settings.appearance.nerdMode": "Nerd mode",
+  "settings.appearance.nerdModeDetail":
+    "Show the average production and price behind the recommendation",
   "settings.language.title": "Language",
   "settings.language.detail":
     "Follows your browser until you pick one here.",

@@ -490,6 +490,13 @@ function SettingsScreen() {
             }
             t={t}
           />
+          <SetToggleRow
+            label={translate("settings.appearance.nerdMode")}
+            detail={translate("settings.appearance.nerdModeDetail")}
+            on={settings.nerdMode}
+            onToggle={() => updateSettings({ nerdMode: !settings.nerdMode })}
+            t={t}
+          />
           <SetControlRow
             label={translate("settings.language.title")}
             detail={translate("settings.language.detail")}

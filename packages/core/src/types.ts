@@ -41,6 +41,8 @@ export type MarketData = {
   data: Array<{
     start_timestamp: number;
     end_timestamp: number;
+    /** EUR/MWh — aWATTar sends `unit: "Eur/MWh"`. ct/kWh is this / 10,
+     *  and only `marketPriceToCentsPerKwh` may do that division. */
     marketprice: number;
     unit: string;
   }>;
@@ -50,7 +52,12 @@ export type MarketData = {
 export type SchedulingResult = {
   bestTime: Date;
   reason: "solar" | "price";
+  /** Average Wh generated per hour over the slot, after the fixed 0.7
+   *  factor — the same scale as `settings.minKwh` (e.g. 1200 = 1.2 kWh).
+   *  Meaningless in `price-only` mode, which never waits for forecast.solar. */
   avgSolarProduction?: number;
+  /** Mean raw aWATTar `marketprice` over the slot, so EUR/MWh. Convert with
+   *  `marketPriceToCentsPerKwh`. Undefined without complete market coverage. */
   avgPrice?: number;
 };
 
