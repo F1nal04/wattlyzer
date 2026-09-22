@@ -1,6 +1,6 @@
 {
-  "name": "wattlyzer",
-  "short_name": "wattlyzer",
+  "name": "Wattlyzer",
+  "short_name": "Wattlyzer",
   "id": "/",
   "start_url": "/",
   "icons": [
@@ -17,7 +17,7 @@
       "purpose": "maskable"
     }
   ],
-  "theme_color": "#000000",
-  "background_color": "#000000",
+  "theme_color": "#59326c",
+  "background_color": "#59326c",
   "display": "standalone"
 }
