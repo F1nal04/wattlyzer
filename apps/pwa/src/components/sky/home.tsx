@@ -5,7 +5,8 @@ import {
   FONT_SANS,
   type SkyTheme,
 } from "@wattlyzer/theme";
-import type { SchedulingResult } from "@wattlyzer/core";
+import { marketPriceToCentsPerKwh } from "@wattlyzer/core";
+import type { BestSlotMode, SchedulingResult } from "@wattlyzer/core";
 import type { WeatherKind } from "@wattlyzer/core";
 import { SkyClouds, SkySunCloud } from "@/components/sky/clouds";
 import { frostedGlass } from "@/components/sky/glass";
@@ -57,6 +58,39 @@ export function countdownParts(target: Date, now: Date): Countdown {
 
 export function hasStarted(countdown: Countdown): boolean {
   return countdown.hours === 0 && countdown.minutes === 0;
+}
+
+export interface NerdStats {
+  productionKwh?: number;
+  priceCentsPerKwh?: number;
+}
+
+// Which nerd-mode numbers the recommended slot actually supports, already in
+// display units. Gating is on the mode, not on field presence: `price-only`
+// still carries an `avgSolarProduction` it never waited for, and `solar-only`
+// ran without any market data. Numbers only — the units and labels are
+// localized at the render edge. Null when there is nothing to show.
+export function nerdStats(
+  result: SchedulingResult,
+  mode: BestSlotMode,
+): NerdStats | null {
+  const production =
+    mode !== "price-only" && result.avgSolarProduction !== undefined
+      ? result.avgSolarProduction / 1000
+      : undefined;
+  const price =
+    mode !== "solar-only" && result.avgPrice !== undefined
+      ? marketPriceToCentsPerKwh(result.avgPrice)
+      : undefined;
+
+  if (production === undefined && price === undefined) {
+    return null;
+  }
+
+  return {
+    ...(production !== undefined ? { productionKwh: production } : {}),
+    ...(price !== undefined ? { priceCentsPerKwh: price } : {}),
+  };
 }
 
 // Weather-aware hero — sun arcs over the day (apex at noon, centered),
@@ -140,10 +174,14 @@ export function ClockCluster({
   t,
   result,
   duration,
+  bestSlotMode,
+  nerdMode,
 }: {
   t: SkyTheme;
   result: SchedulingResult;
   duration: number;
+  bestSlotMode: BestSlotMode;
+  nerdMode: boolean;
 }) {
   const [showCountdown, setShowCountdown] = useState(false);
   const [now, setNow] = useState(() => new Date());
@@ -155,7 +193,8 @@ export function ClockCluster({
     return () => clearInterval(timer);
   }, []);
 
-  const { t: translate } = useI18n();
+  const { t: translate, decimal } = useI18n();
+  const stats = nerdMode ? nerdStats(result, bestSlotMode) : null;
   const clock = formatClock(result.bestTime);
   const countdown = countdownParts(result.bestTime, now);
   const started = showCountdown && hasStarted(countdown);
@@ -314,6 +353,38 @@ export function ClockCluster({
             : translate("home.reason.price")}
         </div>
       </div>
+      {stats && (
+        <div
+          style={{
+            marginTop: 12,
+            display: "flex",
+            justifyContent: "center",
+            flexWrap: "wrap",
+            gap: "4px 16px",
+            fontSize: 13,
+            color: t.fgDim,
+            fontWeight: 500,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {stats.productionKwh !== undefined && (
+            <span>
+              {translate("home.nerd.production")}{" "}
+              {translate("unit.kwh", {
+                value: decimal(stats.productionKwh, 1),
+              })}
+            </span>
+          )}
+          {stats.priceCentsPerKwh !== undefined && (
+            <span>
+              {translate("home.nerd.price")}{" "}
+              {translate("unit.ctPerKwh", {
+                value: decimal(stats.priceCentsPerKwh, 1),
+              })}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

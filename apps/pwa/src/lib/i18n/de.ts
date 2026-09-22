@@ -23,6 +23,7 @@ export const de: Record<MessageKey, string> = {
   "unit.hours": "{value} h",
   "unit.minutes": "{value} min",
   "unit.kwh": "{value} kWh",
+  "unit.ctPerKwh": "{value} ct/kWh",
   "unit.kwp": "{value} kWp",
   "unit.degrees": "{value}°",
   "unit.hourOfDay": "{hour}:00",
@@ -49,6 +50,8 @@ export const de: Record<MessageKey, string> = {
   "home.reason.solar": "Fängt die meiste Sonne",
   "home.reason.price": "Günstigstes Fenster",
   "home.runFor": "Laufzeit",
+  "home.nerd.production": "Ø Erzeugung",
+  "home.nerd.price": "Ø Preis",
   "home.marketCoverage": "Preise decken {covered} h von {window} h ab",
 
   // ── Status messages ────────────────────────────────────────
@@ -117,6 +120,9 @@ export const de: Record<MessageKey, string> = {
   "settings.appearance.darkMode": "Dunkelmodus",
   "settings.appearance.darkModeDetail":
     "Himmel nach der aktuellen Zeit statt nach dem gewählten Fenster",
+  "settings.appearance.nerdMode": "Nerd-Modus",
+  "settings.appearance.nerdModeDetail":
+    "Durchschnittliche Erzeugung und Preis hinter der Empfehlung anzeigen",
   "settings.language.title": "Sprache",
   "settings.language.detail":
     "Folgt deinem Browser, bis du hier eine Sprache wählst.",

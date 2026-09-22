@@ -196,7 +196,13 @@ function HomeScreen() {
   const hills = <Hills t={t} />;
   const cluster =
     canSchedule && position && !invalidConfig && schedulingResult ? (
-      <ClockCluster t={t} result={schedulingResult} duration={prefs.duration} />
+      <ClockCluster
+        t={t}
+        result={schedulingResult}
+        duration={prefs.duration}
+        bestSlotMode={settings.bestSlotMode}
+        nerdMode={settings.nerdMode}
+      />
     ) : null;
   const dock = (
     <DurationDock

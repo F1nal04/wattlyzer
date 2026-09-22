@@ -5,6 +5,7 @@ import {
   formatRange,
   hasStarted,
   isSameLocalDay,
+  nerdStats,
 } from "@/components/sky/home";
 
 // Tests run with TZ=UTC (see package.json scripts), so local time == UTC.
@@ -126,5 +127,48 @@ describe("isSameLocalDay", () => {
     expect(
       isSameLocalDay(at("2027-01-01T00:30:00.000Z"), at("2026-12-31T23:30:00.000Z")),
     ).toBe(false);
+  });
+});
+
+describe("nerdStats", () => {
+  const result = {
+    bestTime: new Date("2025-01-15T14:00:00.000Z"),
+    reason: "solar" as const,
+    avgSolarProduction: 1850, // Wh per hour, post-0.7-factor
+    avgPrice: 92.5, // Eur/MWh, as aWATTar sends it
+  };
+
+  it("shows production in kWh and price in ct/kWh in combined mode", () => {
+    expect(nerdStats(result, "combined")).toEqual({
+      productionKwh: 1.85,
+      priceCentsPerKwh: 9.25,
+    });
+  });
+
+  it("drops the price when aWATTar gave none", () => {
+    expect(nerdStats({ ...result, avgPrice: undefined }, "combined")).toEqual({
+      productionKwh: 1.85,
+    });
+  });
+
+  it("never shows a price in solar-only mode", () => {
+    expect(nerdStats(result, "solar-only")).toEqual({ productionKwh: 1.85 });
+  });
+
+  // price-only never waits for forecast.solar, so its avgSolarProduction is
+  // a leftover number, not a forecast.
+  it("never shows production in price-only mode", () => {
+    expect(nerdStats(result, "price-only")).toEqual({
+      priceCentsPerKwh: 9.25,
+    });
+  });
+
+  it("returns null when nothing is worth showing", () => {
+    expect(
+      nerdStats(
+        { ...result, avgSolarProduction: undefined, avgPrice: undefined },
+        "combined",
+      ),
+    ).toBeNull();
   });
 });

@@ -52,6 +52,7 @@ describe("settings store", () => {
     expect(saved.angle).toBe(45); // missing fields filled from defaults
     expect(saved.kwh).toBe(5);
     expect(saved.dynamicTariff).toBe(true); // missing field filled from defaults
+    expect(saved.nerdMode).toBe(false); // opt-in, so off for stored settings that predate it
     expect(saved.solarPanels).toBe(false); // derived from the migrated price-only mode
     expect("betaCalculations" in saved).toBe(false); // legacy key not re-persisted
   });
