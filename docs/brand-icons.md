@@ -1,8 +1,9 @@
 # Wattlyzer brand icons
 
-The browser and installed-app icon set uses the purple and yellow Wattlyzer
-clock, energy curve, and lightning artwork. The adaptive SVG is the reusable
-source asset and lives at `apps/pwa/public/favicon.svg`; the website copy at
+The browser favicon set uses the purple and yellow Wattlyzer “W + lightning”
+artwork. The installed-app icons retain the clock, energy curve, and lightning
+artwork. The adaptive favicon SVG is the reusable source asset and lives at
+`apps/pwa/public/favicon.svg`; the website copy at
 `apps/website/public/favicon.svg` must stay byte-for-byte identical.
 
 ## Published variants
