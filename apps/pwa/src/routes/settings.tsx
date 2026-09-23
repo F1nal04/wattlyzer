@@ -6,7 +6,10 @@ import {
   skyTheme,
   type SkyTheme,
 } from "@wattlyzer/theme";
-import { updateSettings, useSettings } from "@/lib/settings";
+import { hoursUntilEndOfLocalDay } from "@wattlyzer/core";
+import { updateSettings, usePrefs, useSettings } from "@/lib/settings";
+import { useNow } from "@/lib/use-now";
+import { useGeolocation, useScheduling } from "@/lib/use-scheduling";
 import { useSkyHour } from "@/lib/use-sky-hour";
 import {
   NothingToSchedule,
@@ -250,12 +253,33 @@ function LinkRow({
 function SettingsScreen() {
   const navigate = useNavigate();
   const { settings } = useSettings();
+  const { prefs } = usePrefs();
+  const now = useNow();
   const { t: translate, decimal, integer } = useI18n();
+  const { position } = useGeolocation();
   const [solarOpen, setSolarOpen] = useState(false);
   const [shadingOpen, setShadingOpen] = useState(false);
-  // The current local hour: this screen does not re-run the schedule (and
-  // its geolocation prompt) just to pick a palette.
-  const t = skyTheme(useSkyHour());
+  // Keep the sky and any in-flight forecast on the values from when this
+  // screen opened. Live sheet edits must not refetch solar or rescore slots;
+  // home does that when you go back.
+  const [scheduleSettings] = useState(settings);
+  const searchTimespanHours =
+    prefs.searchWindow === "eod"
+      ? hoursUntilEndOfLocalDay(now)
+      : parseInt(prefs.searchWindow, 10);
+  const { schedulingResult } = useScheduling(
+    position,
+    prefs.duration,
+    searchTimespanHours,
+    now,
+    scheduleSettings,
+  );
+  // Same hour as home: the recommended slot, or now until a slot exists.
+  // Dark mode then switches every page onto the current local hour.
+  const themeHour = useSkyHour(
+    schedulingResult ? schedulingResult.bestTime.getHours() : now.getHours(),
+  );
+  const t = skyTheme(themeHour);
   const solarEnabled = settings.solarPanels;
   const canSchedule = solarEnabled || settings.dynamicTariff;
 
