@@ -3,6 +3,7 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import netlify from "@netlify/vite-plugin-tanstack-start";
 import viteReact from "@vitejs/plugin-react";
 import path from "node:path";
+import packageJson from "./package.json";
 
 export default defineConfig({
   server: {
@@ -14,6 +15,18 @@ export default defineConfig({
     },
   },
   plugins: [
+    {
+      // Deployed sessions poll /version.json to notice a newer release.
+      name: "wattlyzer-version-json",
+      generateBundle() {
+        if (this.environment.name !== "client") return;
+        this.emitFile({
+          type: "asset",
+          fileName: "version.json",
+          source: JSON.stringify({ version: packageJson.version }),
+        });
+      },
+    },
     tanstackStart(),
     netlify(),
     // react's vite plugin must come after start's vite plugin
