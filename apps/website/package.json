@@ -12,8 +12,8 @@
     "preview": "astro preview",
     "lint": "eslint .",
     "typecheck": "astro check",
-    "test": "TZ=UTC bun test seo.test.ts hero.test.ts i18n.test.ts",
-    "verify-seo": "TZ=UTC bun test seo.dist.test.ts",
+    "test": "TZ=UTC bun test seo.test.ts hero.test.ts i18n.test.ts routes.test.ts",
+    "verify-seo": "TZ=UTC bun test seo.dist.test.ts pages.dist.test.ts",
     "astro": "astro"
   },
   "dependencies": {
