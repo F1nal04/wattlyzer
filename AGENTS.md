@@ -74,7 +74,7 @@ The Astro site is static, bilingual, and framework-free. English routes are unpr
 
 The language switcher is `src/components/LanguageToggle.astro` — one component with `nav` / `nav-mobile` / `footer` variants, driven by `localeOptions`. Never hand-write a `lang-btn` in a page; it was copy-pasted into eight places before, each with its own hard-coded active locale. Its class names are load-bearing for `index.css` and `legal.css`.
 
-`/legal/` and `/de/legal/` are thin routes over `src/components/LegalPage.astro`. Only page chrome lives in `src/i18n/legal.ts`; the impressum itself comes from `@wattlyzer/legal`, shared with the PWA. The landing pages are still hand-duplicated: `index.astro` and `de/index.astro` have identical markup and only differ in copy, and `hero.test.ts` reads their markup directly, so converting them is a separate change.
+`/legal/` and `/de/legal/` are thin routes over `src/components/LegalPage.astro`. Only page chrome lives in `src/i18n/legal.ts`; the impressum itself comes from `@wattlyzer/legal`, shared with the PWA. The landing pages work the same way: `index.astro` and `de/index.astro` render `src/components/LandingPage.astro`, whose copy lives in `src/i18n/landing.ts` (`en` is the key source of truth, `de` is a `Record<LandingKey, string>`). Install links (`?lang=`) and the legal link are derived from the route's locale inside the component; `hero.test.ts` and `routes.test.ts` read that component, and `pages.dist.test.ts` checks the built links.
 
 ## CI, releases, and Netlify
 

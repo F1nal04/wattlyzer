@@ -9,15 +9,12 @@ function marketUtcHourlyFrom(
   hours: number
 ): MarketData {
   return {
-    object: "list",
-    url: "",
     data: Array.from({ length: hours }, (_, index) => {
       const start_timestamp = anchorUtcHourStart.getTime() + index * HOUR_MS;
       return {
         start_timestamp,
         end_timestamp: start_timestamp + HOUR_MS,
         marketprice: index,
-        unit: "EUR/MWh",
       };
     }),
   };

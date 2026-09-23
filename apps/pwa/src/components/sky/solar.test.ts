@@ -1,12 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import {
   bestSlotModeAfterSolarToggle,
-  bestSlotModeAfterTariffToggle,
   bestSlotModeFromSignals,
   isBestSlotModeSelectable,
   NOTHING_TO_SCHEDULE,
-  schedulingSignalsAvailable,
-  settingsPatchFromSolarConfig,
+  settingsPatchFromSolar,
   solarModeUnavailableHintKey,
   solarSettingsSubtitleKey,
 } from "@/components/sky/solar";
@@ -39,21 +37,21 @@ describe("solarSettingsSubtitleKey", () => {
   // Keys, not copy: the helper stays language-free and the screen
   // translates it, so the same branch works in English and German.
   it("keeps the roof-setup copy while panels are on", () => {
-    expect(solarSettingsSubtitleKey(true)).toBe("settings.solar.subtitle.on");
-    expect(en(solarSettingsSubtitleKey(true))).toBe(
+    expect(solarSettingsSubtitleKey(true, true)).toBe("settings.solar.subtitle.on");
+    expect(en(solarSettingsSubtitleKey(true, true))).toBe(
       "Used to estimate production for your roof.",
     );
-    expect(de(solarSettingsSubtitleKey(true))).toBe(
+    expect(de(solarSettingsSubtitleKey(true, true))).toBe(
       "Dient der Ertragsschätzung für dein Dach.",
     );
   });
 
   it("states the off / price-only status without opening the sheet", () => {
-    expect(solarSettingsSubtitleKey(false)).toBe(
+    expect(solarSettingsSubtitleKey(false, true)).toBe(
       "settings.solar.subtitle.priceOnly",
     );
-    expect(en(solarSettingsSubtitleKey(false))).toBe("No solar — price-only.");
-    expect(de(solarSettingsSubtitleKey(false))).toBe(
+    expect(en(solarSettingsSubtitleKey(false, true))).toBe("No solar — price-only.");
+    expect(de(solarSettingsSubtitleKey(false, true))).toBe(
       "Keine Solaranlage — nur Preis.",
     );
   });
@@ -68,14 +66,14 @@ describe("solarSettingsSubtitleKey", () => {
 
 describe("solarModeUnavailableHintKey", () => {
   it("is silent while panels are on", () => {
-    expect(solarModeUnavailableHintKey(true)).toBeNull();
+    expect(solarModeUnavailableHintKey(true, true)).toBeNull();
   });
 
   it("explains how to restore solar-aware modes while panels are off", () => {
-    expect(en(solarModeUnavailableHintKey(false)!)).toBe(
+    expect(en(solarModeUnavailableHintKey(false, true)!)).toBe(
       "Turn on solar panels in Settings to use Solar or Both.",
     );
-    expect(de(solarModeUnavailableHintKey(false)!)).toBe(
+    expect(de(solarModeUnavailableHintKey(false, true)!)).toBe(
       "Aktiviere die Solaranlage in den Einstellungen, um Solar oder Beides zu nutzen.",
     );
   });
@@ -103,18 +101,6 @@ describe("NOTHING_TO_SCHEDULE", () => {
     expect(de(NOTHING_TO_SCHEDULE.body)).toBe(
       "Wattlyzer braucht eine Solaranlage oder einen dynamischen Tarif. Ohne beides gibt es kein besseres Fenster zu finden.",
     );
-  });
-});
-
-describe("schedulingSignalsAvailable", () => {
-  it("is true when solar, tariff, or both are on", () => {
-    expect(schedulingSignalsAvailable(true, true)).toBe(true);
-    expect(schedulingSignalsAvailable(true, false)).toBe(true);
-    expect(schedulingSignalsAvailable(false, true)).toBe(true);
-  });
-
-  it("is false when solar panels and dynamic tariff are both off", () => {
-    expect(schedulingSignalsAvailable(false, false)).toBe(false);
   });
 });
 
@@ -168,19 +154,19 @@ describe("bestSlotModeAfterSolarToggle", () => {
   });
 });
 
-describe("settingsPatchFromSolarConfig", () => {
-  const panels = { azimuth: 180, tilt: 45, sizeKw: 5 };
+describe("settingsPatchFromSolar", () => {
+  const panels = { azimut: 180, angle: 45, kwh: 5 };
 
   it("writes price-only as soon as panels turn off from Both or Solar", () => {
     expect(
-      settingsPatchFromSolarConfig(
-        { ...panels, enabled: false },
+      settingsPatchFromSolar(
+        { ...panels, solarPanels: false },
         { solarPanels: true, bestSlotMode: "combined", dynamicTariff: true },
       ).bestSlotMode,
     ).toBe("price-only");
     expect(
-      settingsPatchFromSolarConfig(
-        { ...panels, enabled: false },
+      settingsPatchFromSolar(
+        { ...panels, solarPanels: false },
         { solarPanels: true, bestSlotMode: "solar-only", dynamicTariff: true },
       ).bestSlotMode,
     ).toBe("price-only");
@@ -191,14 +177,14 @@ describe("settingsPatchFromSolarConfig", () => {
     // plus price-only is a legal combination — dragging the tilt must not
     // quietly promote the user back to Both.
     expect(
-      settingsPatchFromSolarConfig(
-        { ...panels, enabled: true, tilt: 30 },
+      settingsPatchFromSolar(
+        { ...panels, solarPanels: true, angle: 30 },
         { solarPanels: true, bestSlotMode: "price-only", dynamicTariff: true },
       ).bestSlotMode,
     ).toBe("price-only");
     expect(
-      settingsPatchFromSolarConfig(
-        { ...panels, enabled: false, tilt: 30 },
+      settingsPatchFromSolar(
+        { ...panels, solarPanels: false, angle: 30 },
         { solarPanels: false, bestSlotMode: "price-only", dynamicTariff: true },
       ).bestSlotMode,
     ).toBe("price-only");
@@ -206,8 +192,8 @@ describe("settingsPatchFromSolarConfig", () => {
 
   it("carries roof geometry through with the mode change", () => {
     expect(
-      settingsPatchFromSolarConfig(
-        { enabled: false, azimuth: 90, tilt: 30, sizeKw: 8.5 },
+      settingsPatchFromSolar(
+        { solarPanels: false, azimut: 90, angle: 30, kwh: 8.5 },
         { solarPanels: true, bestSlotMode: "combined", dynamicTariff: true },
       ),
     ).toEqual({
@@ -217,23 +203,5 @@ describe("settingsPatchFromSolarConfig", () => {
       kwh: 8.5,
       bestSlotMode: "price-only",
     });
-  });
-});
-
-describe("bestSlotModeAfterTariffToggle", () => {
-  it("keeps price-only when panels are off and a tariff turns on", () => {
-    expect(bestSlotModeAfterTariffToggle(true, false)).toBe("price-only");
-  });
-
-  it("stores price-only when the tariff turns off with panels already off", () => {
-    expect(bestSlotModeAfterTariffToggle(false, false)).toBe("price-only");
-  });
-
-  it("switches to solar-only when the tariff turns off with panels on", () => {
-    expect(bestSlotModeAfterTariffToggle(false, true)).toBe("solar-only");
-  });
-
-  it("restores combined when a tariff turns on with panels on", () => {
-    expect(bestSlotModeAfterTariffToggle(true, true)).toBe("combined");
   });
 });

@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import {
   compassToApiAzimuth,
-  marketQueryOptions,
   roundCoordinate,
-  solarQueryOptions,
   utcDate,
+} from "@wattlyzer/api-client";
+import {
+  marketQueryOptions,
+  solarQueryOptions,
   weatherQueryOptions,
 } from "@/lib/queries";
 

@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { FONT_DISPLAY, FONT_MONO, FONT_SANS, skyTheme } from "@wattlyzer/theme";
-import { Hills, SkyScreen } from "@/components/sky/primitives";
+import { FONT_SANS, skyTheme } from "@wattlyzer/theme";
+import { Hills, SkyPageHead, SkyScreen } from "@/components/sky/primitives";
 import { useSkyHour } from "@/lib/use-sky-hour";
 import { useI18n } from "@/lib/i18n";
 import { Em, richParts } from "@/lib/i18n/rich";
@@ -14,10 +14,7 @@ export function NotFound() {
   const t = skyTheme(themeHour);
   const { t: translate } = useI18n();
   return (
-    <SkyScreen
-      background={`linear-gradient(180deg, ${t.sky[0]} 0%, ${t.sky[1]} 55%, ${t.sky[2]} 100%)`}
-      color={t.fg}
-    >
+    <SkyScreen t={t}>
       <Hills t={t} height="26%" opacity={0.55} />
       <div
         style={{
@@ -29,45 +26,14 @@ export function NotFound() {
           textAlign: "center",
         }}
       >
-        <div
-          style={{
-            fontFamily: FONT_MONO,
-            fontSize: 11,
-            letterSpacing: "0.22em",
-            color: t.fgMute,
-            textTransform: "uppercase",
-            marginBottom: 10,
-          }}
-        >
-          {translate("notFound.eyebrow")}
-        </div>
-        <div
-          style={{
-            fontFamily: FONT_DISPLAY,
-            fontSize: 32,
-            lineHeight: 1.1,
-            letterSpacing: "-0.015em",
-            color: t.fg,
-          }}
-        >
-          {richParts(translate("notFound.title"), {
-            thisSky: (
-              <Em>
-                {translate("notFound.titleEm")}
-              </Em>
-            ),
+        <SkyPageHead
+          t={t}
+          eyebrow={translate("notFound.eyebrow")}
+          title={richParts(translate("notFound.title"), {
+            thisSky: <Em>{translate("notFound.titleEm")}</Em>,
           })}
-        </div>
-        <div
-          style={{
-            marginTop: 10,
-            fontSize: 14,
-            color: t.fgDim,
-            lineHeight: 1.5,
-          }}
-        >
-          {translate("notFound.body")}
-        </div>
+          lede={translate("notFound.body")}
+        />
         <div style={{ marginTop: 26 }}>
           <Link
             to="/"

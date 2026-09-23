@@ -1,4 +1,3 @@
-import { Fragment } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   IMPRESSUM,
@@ -34,12 +33,9 @@ function LegalScreen() {
       {(theme) => (
         <>
           <TextCard t={theme} title={impressum("operator")}>
-            {impressumAddressLines(locale).map((line, index) => (
-              <Fragment key={line}>
-                {index > 0 && <br />}
-                {line}
-              </Fragment>
-            ))}
+            <div style={{ whiteSpace: "pre-line" }}>
+              {impressumAddressLines(locale).join("\n")}
+            </div>
           </TextCard>
           <TextCard t={theme} title={impressum("contact")}>
             <a

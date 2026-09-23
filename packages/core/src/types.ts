@@ -1,24 +1,12 @@
+// forecast.solar estimate — only the fields we read. `result` maps naive
+// roof-local wall-clock stamps to cumulative Wh; `time`/`time_utc` describe
+// the same instant and give away the roof's UTC offset.
 export type SolarData = {
   result: Record<string, number>;
   message: {
-    code: number;
-    type: string;
-    text: string;
-    pid: string;
     info: {
-      latitude: number;
-      longitude: number;
-      distance: number;
-      place: string;
-      timezone: string;
       time: string;
       time_utc: string;
-    };
-    ratelimit: {
-      zone: string;
-      period: number;
-      limit: number;
-      remaining: number;
     };
   };
 };
@@ -37,16 +25,13 @@ export type WeatherData = {
 };
 
 export type MarketData = {
-  object: string;
   data: Array<{
     start_timestamp: number;
     end_timestamp: number;
     /** EUR/MWh — aWATTar sends `unit: "Eur/MWh"`. ct/kWh is this / 10,
      *  and only `marketPriceToCentsPerKwh` may do that division. */
     marketprice: number;
-    unit: string;
   }>;
-  url: string;
 };
 
 export type SchedulingResult = {

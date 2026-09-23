@@ -2,7 +2,6 @@ import { describe, expect, it } from "bun:test";
 import type { SchedulingSettings } from "./config";
 import type { MarketData, SolarData } from "./types";
 import {
-  calculateMarketPrice,
   calculatePowerGeneration,
   calculateSchedule as calculateScheduleRequest,
   ceilToUtcHour,
@@ -23,7 +22,7 @@ const baseSettings: SchedulingSettings = {
 function calculateSchedule(
   solarData: SolarData | null,
   marketData: MarketData | null,
-  settings: SchedulingSettings | undefined,
+  settings: SchedulingSettings,
   consumerDuration: number,
   searchTimespan: number,
   now: Date,
@@ -39,22 +38,7 @@ function calculateSchedule(
 }
 
 function stubSolarMessage(): SolarData["message"] {
-  return {
-    code: 0,
-    type: "test",
-    text: "",
-    pid: "",
-    info: {
-      latitude: 0,
-      longitude: 0,
-      distance: 0,
-      place: "",
-      timezone: "UTC",
-      time: "",
-      time_utc: "",
-    },
-    ratelimit: { zone: "", period: 0, limit: 0, remaining: 0 },
-  };
+  return { info: { time: "", time_utc: "" } };
 }
 
 function solarWithResult(result: Record<string, number>): SolarData {
@@ -111,14 +95,19 @@ function marketUtcHourlyFrom(
   const data = prices.map((marketprice, i) => {
     const start_timestamp = start + i * HOUR_MS;
     const end_timestamp = start_timestamp + HOUR_MS;
-    return {
-      start_timestamp,
-      end_timestamp,
-      marketprice,
-      unit: "EUR/MWh",
-    };
+    return { start_timestamp, end_timestamp, marketprice };
   });
-  return { object: "list", data, url: "" };
+  return { data };
+}
+
+// Price of the row covering `at`, 0 outside coverage
+function priceAt(market: MarketData, at: Date): number {
+  const ms = at.getTime();
+  return (
+    market.data.find(
+      (row) => ms >= row.start_timestamp && ms < row.end_timestamp,
+    )?.marketprice ?? 0
+  );
 }
 
 function oracleCheapestUtcWindows(
@@ -138,7 +127,7 @@ function oracleCheapestUtcWindows(
     }
     let sum = 0;
     for (let i = 0; i < consumerDuration; i++) {
-      sum += calculateMarketPrice(market, new Date(startMs + i * HOUR_MS));
+      sum += priceAt(market, new Date(startMs + i * HOUR_MS));
     }
     const avg = sum / consumerDuration;
     if (avg < bestAvg) {
@@ -194,46 +183,6 @@ describe("ceilToUtcHour", () => {
   });
 });
 
-describe("calculateMarketPrice", () => {
-  it("returns price for the UTC hour bucket containing targetTime", () => {
-    const anchor = new Date("2025-01-15T12:00:00.000Z");
-    const market = marketUtcHourlyFrom(anchor, [10, 20, 30]);
-    expect(
-      calculateMarketPrice(market, new Date("2025-01-15T12:30:00.000Z")),
-    ).toBe(10);
-    expect(
-      calculateMarketPrice(market, new Date("2025-01-15T13:00:00.000Z")),
-    ).toBe(20);
-    expect(
-      calculateMarketPrice(market, new Date("2025-01-15T14:59:59.999Z")),
-    ).toBe(30);
-  });
-
-  it("returns 0 when no interval matches", () => {
-    const now = new Date("2025-01-15T12:00:00.000Z");
-    const market: MarketData = {
-      object: "list",
-      url: "",
-      data: [
-        {
-          start_timestamp: now.getTime() - 7200_000,
-          end_timestamp: now.getTime() - 3600_000,
-          marketprice: 99,
-          unit: "EUR/MWh",
-        },
-      ],
-    };
-    expect(calculateMarketPrice(market, now)).toBe(0);
-  });
-
-  it("returns 0 for null or missing data", () => {
-    expect(calculateMarketPrice(null, new Date())).toBe(0);
-    expect(
-      calculateMarketPrice({ object: "list", data: [], url: "" }, new Date()),
-    ).toBe(0);
-  });
-});
-
 // The real api.forecast.solar shape: naive wall-clock keys in the roof's own
 // timezone, with that offset recoverable from message.info.time/.time_utc.
 // Captured from a live call for Berlin (52.52/13.41), which runs at +02:00.
@@ -261,10 +210,6 @@ function berlinSolar(): SolarData {
       ...message,
       info: {
         ...message.info,
-        latitude: 52.52,
-        longitude: 13.41,
-        place: "10178 Berlin, Germany",
-        timezone: "Europe/Berlin",
         time: "2026-09-04T07:49:08+02:00",
         time_utc: "2026-09-04T05:49:08+00:00",
       },
@@ -455,14 +400,10 @@ describe("calculatePowerGeneration", () => {
 });
 
 describe("calculateSchedule", () => {
-  it("returns null when solar or settings missing", () => {
+  it("returns null when solar data is missing", () => {
     const now = new Date();
     expect(
       calculateSchedule(null, null, baseSettings, 2, 6, now).schedulingResult,
-    ).toBeNull();
-    expect(
-      calculateSchedule(solarWithResult({}), null, undefined, 2, 6, now)
-        .schedulingResult,
     ).toBeNull();
   });
 

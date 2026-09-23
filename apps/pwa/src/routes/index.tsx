@@ -14,10 +14,7 @@ import {
   DurationDock,
   SkyHero,
 } from "@/components/sky/home";
-import {
-  NOTHING_TO_SCHEDULE,
-  schedulingSignalsAvailable,
-} from "@/components/sky/solar";
+import { NOTHING_TO_SCHEDULE } from "@/components/sky/solar";
 import { useI18n } from "@/lib/i18n";
 import {
   Hills,
@@ -76,7 +73,6 @@ function HomeScreen() {
     schedulingResult ? schedulingResult.bestTime.getHours() : now.getHours(),
   );
   const t = skyTheme(themeHour);
-  const [c1, c2, c3] = t.sky;
 
   // Real DWD cloud cover for the hero. Purely cosmetic, so a failed request
   // never surfaces as an error — weatherAt falls back to the solar heuristic.
@@ -94,10 +90,7 @@ function HomeScreen() {
 
   const invalidConfig = searchTimespanHours < prefs.duration;
   const solarEnabled = settings.solarPanels;
-  const canSchedule = schedulingSignalsAvailable(
-    solarEnabled,
-    settings.dynamicTariff,
-  );
+  const canSchedule = solarEnabled || settings.dynamicTariff;
   const showMarketDataWarning =
     canSchedule &&
     settings.bestSlotMode !== "solar-only" &&
@@ -236,10 +229,7 @@ function HomeScreen() {
   );
 
   return (
-    <SkyScreen
-      background={`linear-gradient(180deg, ${c1} 0%, ${c2} 55%, ${c3} 100%)`}
-      color={t.fg}
-    >
+    <SkyScreen t={t}>
       {mounted && (
         <>
           <div style={{ animation: "sky-fade-in 320ms ease" }}>

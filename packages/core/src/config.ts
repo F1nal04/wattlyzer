@@ -21,7 +21,7 @@ export interface SchedulingSettings {
 export interface ScheduleRequest {
   solarData: SolarData | null;
   marketData: MarketData | null;
-  settings: SchedulingSettings | undefined;
+  settings: SchedulingSettings;
   consumerDuration: number;
   searchTimespan: number;
   now: Date;

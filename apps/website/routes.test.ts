@@ -24,14 +24,21 @@ describe("route structure", () => {
     expect(english).toEqual(["index.astro", "legal.astro"]);
   });
 
-  it("keeps both legal routes thin over the shared LegalPage", () => {
-    // The impressum comes from @wattlyzer/legal; hand-duplicated legal
-    // pages drifted apart before.
-    for (const page of ["src/pages/legal.astro", "src/pages/de/legal.astro"]) {
-      const source = read(page);
-      expect(source).toMatch(/import LegalPage from '[./]+\/components\/LegalPage\.astro'/);
-      expect(source).toContain("<LegalPage />");
-      expect(source).not.toContain("<Layout");
+  it("keeps both routes of each page thin over one shared component", () => {
+    // Hand-duplicated pages drifted apart before (two legal notices with
+    // different contact addresses, a landing page with stale copy).
+    for (const [page, component] of [
+      ["legal.astro", "LegalPage"],
+      ["index.astro", "LandingPage"],
+    ]) {
+      for (const dir of ["src/pages/", "src/pages/de/"]) {
+        const source = read(dir + page);
+        expect(source).toMatch(
+          new RegExp(`import ${component} from '[./]+/components/${component}\\.astro'`),
+        );
+        expect(source).toContain(`<${component} />`);
+        expect(source).not.toContain("<Layout");
+      }
     }
   });
 });
@@ -42,6 +49,7 @@ describe("locale selection", () => {
       "src/layouts/Layout.astro",
       "src/components/LanguageToggle.astro",
       "src/components/LegalPage.astro",
+      "src/components/LandingPage.astro",
     ]) {
       const source = read(file);
       expect(source).toMatch(
@@ -67,19 +75,15 @@ describe("locale selection", () => {
 });
 
 describe("localized links", () => {
-  it("keeps the English landing page on English targets", () => {
-    const source = read("src/pages/index.astro");
-    expect(source).toContain('href="/legal/"');
-    expect(source).toContain("https://pwa.wattlyzer.de/install?lang=en");
-    expect(source).not.toContain("/de/legal/");
-    expect(source).not.toContain("?lang=de");
-  });
-
-  it("keeps the German landing page on German targets", () => {
-    const source = read("src/pages/de/index.astro");
-    expect(source).toContain('href="/de/legal/"');
-    expect(source).toContain("https://pwa.wattlyzer.de/install?lang=de");
-    expect(source).not.toContain('href="/legal/"');
+  it("derives the landing page's install and legal links from the locale", () => {
+    // The built pages are checked in pages.dist.test.ts; here only that no
+    // language is hard-coded into the shared component.
+    const source = read("src/components/LandingPage.astro");
+    expect(source).toContain("install?lang=${locale}");
+    expect(source).toContain("getRelativeLocaleUrl(locale, '/legal/')");
     expect(source).not.toContain("?lang=en");
+    expect(source).not.toContain("?lang=de");
+    expect(source).not.toContain('"/legal/"');
+    expect(source).not.toContain('"/de/legal/"');
   });
 });

@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  marketQueryOptions,
-  solarQueryOptions,
-  type Position,
-} from "@/lib/queries";
+import { marketQueryOptions, solarQueryOptions } from "@/lib/queries";
+import type { Position } from "@wattlyzer/api-client";
 import {
   calculateSchedule,
   checkMarketDataSufficiency,
@@ -13,7 +10,6 @@ import {
   toSchedulingSettings,
   type SettingsData,
 } from "@/lib/settings";
-import { schedulingSignalsAvailable } from "@/components/sky/solar";
 
 export function useGeolocation() {
   const [position, setPosition] = useState<Position | null>(null);
@@ -58,10 +54,7 @@ export function useScheduling(
   // for a roof that does have panels.
   const needsSolarData = settings.bestSlotMode !== "price-only";
   const needsMarketData = settings.bestSlotMode !== "solar-only";
-  const canSchedule = schedulingSignalsAvailable(
-    settings.solarPanels,
-    settings.dynamicTariff,
-  );
+  const canSchedule = settings.solarPanels || settings.dynamicTariff;
   const queriesEnabled = position !== null && canSchedule;
 
   const solarQuery = useQuery({

@@ -7,7 +7,10 @@ import {
 } from "@wattlyzer/theme";
 import { frostedGlass } from "@/components/sky/glass";
 import { WIcon } from "@/components/sky/icons";
-import { isBestSlotModeSelectable } from "@/components/sky/solar";
+import {
+  isBestSlotModeSelectable,
+  NOTHING_TO_SCHEDULE,
+} from "@/components/sky/solar";
 import type { BestSlotMode, SearchWindow } from "@/lib/settings";
 import { useI18n, type MessageKey } from "@/lib/i18n";
 
@@ -30,7 +33,7 @@ export function SkyPageHead({
   lede,
 }: {
   t: SkyTheme;
-  eyebrow: string;
+  eyebrow?: string;
   // A node, not a string + italic pair: the emphasised fragment sits
   // wherever the translation puts it.
   title: ReactNode;
@@ -38,18 +41,20 @@ export function SkyPageHead({
 }) {
   return (
     <>
-      <div
-        style={{
-          fontFamily: FONT_MONO,
-          fontSize: 11,
-          letterSpacing: "0.22em",
-          color: t.fgMute,
-          textTransform: "uppercase",
-          marginBottom: 10,
-        }}
-      >
-        {eyebrow}
-      </div>
+      {eyebrow && (
+        <div
+          style={{
+            fontFamily: FONT_MONO,
+            fontSize: 11,
+            letterSpacing: "0.22em",
+            color: t.fgMute,
+            textTransform: "uppercase",
+            marginBottom: 10,
+          }}
+        >
+          {eyebrow}
+        </div>
+      )}
       <div
         style={{
           fontFamily: FONT_DISPLAY,
@@ -70,25 +75,69 @@ export function SkyPageHead({
   );
 }
 
-// Full-viewport screen wrapper. The design canvas was a 360x780 phone frame;
-// in the real app the sky fills the viewport and content is capped for desktop.
-export function SkyScreen({
-  background,
-  color,
-  children,
-}: {
-  background: string;
-  color: string;
-  children: ReactNode;
-}) {
+// The "nothing to schedule" notice: no panels and no tariff means there is
+// no signal to rank by. Settings and onboarding both show it.
+export function NothingToSchedule({ t }: { t: SkyTheme }) {
+  const { t: translate } = useI18n();
+  return (
+    <div style={{ textAlign: "center" }}>
+      <div
+        style={{
+          fontFamily: FONT_DISPLAY,
+          fontSize: 22,
+          lineHeight: 1.15,
+          letterSpacing: "-0.015em",
+          color: t.fg,
+        }}
+      >
+        {translate(NOTHING_TO_SCHEDULE.title)}
+      </div>
+      <div
+        style={{ marginTop: 6, fontSize: 13, color: t.fgDim, lineHeight: 1.45 }}
+      >
+        {translate(NOTHING_TO_SCHEDULE.body)}
+      </div>
+    </div>
+  );
+}
+
+// Numbered step badge (install guides, onboarding "how it works").
+export function CircleNum({ n, t }: { n: number; t: SkyTheme }) {
+  return (
+    <div
+      style={{
+        width: 44,
+        height: 44,
+        borderRadius: 999,
+        flexShrink: 0,
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: t.mode === "dark" ? "rgba(255,255,255,0.92)" : "#1a1410",
+        color: t.mode === "dark" ? "#1a1410" : "#fff8e7",
+        fontFamily: FONT_DISPLAY,
+        fontSize: 20,
+        fontWeight: 500,
+        letterSpacing: "-0.02em",
+      }}
+    >
+      {n}
+    </div>
+  );
+}
+
+// Full-viewport screen wrapper painted with the theme's sky gradient. The
+// design canvas was a 360x780 phone frame; in the real app the sky fills the
+// viewport and content is capped for desktop.
+export function SkyScreen({ t, children }: { t: SkyTheme; children: ReactNode }) {
   return (
     <div
       style={{
         position: "fixed",
         inset: 0,
-        background,
+        background: `linear-gradient(180deg, ${t.sky[0]} 0%, ${t.sky[1]} 55%, ${t.sky[2]} 100%)`,
         fontFamily: FONT_SANS,
-        color,
+        color: t.fg,
         overflow: "hidden",
       }}
     >
@@ -170,7 +219,7 @@ export function SkySlider({
   step?: number;
   t: SkyTheme;
   labels?: (string | number)[];
-  onChange?: (value: number) => void;
+  onChange: (value: number) => void;
 }) {
   const pct = ((value - min) / (max - min)) * 100;
   const ticks =
@@ -224,17 +273,15 @@ export function SkySlider({
           boxShadow: "0 1px 3px rgba(0,0,0,0.18)",
         }}
       />
-      {onChange && (
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onChange={(e) => onChange(parseFloat(e.target.value))}
-          style={invisibleRangeStyle}
-        />
-      )}
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        style={invisibleRangeStyle}
+      />
       <div
         style={{
           position: "absolute",
@@ -261,14 +308,14 @@ export function SkyModeSeg({
   value,
   onChange,
   t,
-  solarEnabled = true,
-  dynamicTariff = true,
+  solarEnabled,
+  dynamicTariff,
 }: {
   value: BestSlotMode;
-  onChange?: (value: BestSlotMode) => void;
+  onChange: (value: BestSlotMode) => void;
   t: SkyTheme;
-  solarEnabled?: boolean;
-  dynamicTariff?: boolean;
+  solarEnabled: boolean;
+  dynamicTariff: boolean;
 }) {
   const { t: translate } = useI18n();
   const opts = [
@@ -310,7 +357,7 @@ export function SkyModeSeg({
             aria-label={
               selectable ? undefined : translate("mode.unavailable", { mode: label })
             }
-            onClick={() => selectable && onChange && onChange(o.v)}
+            onClick={() => selectable && onChange(o.v)}
             style={{
               border: "none",
               cursor: selectable ? "pointer" : "not-allowed",
@@ -349,7 +396,7 @@ export function SearchWindowChips({
   t,
 }: {
   value: SearchWindow;
-  onChange?: (value: SearchWindow) => void;
+  onChange: (value: SearchWindow) => void;
   t: SkyTheme;
 }) {
   const { t: translate } = useI18n();
@@ -374,7 +421,7 @@ export function SearchWindowChips({
         return (
           <button
             key={c.v}
-            onClick={() => onChange && onChange(c.v)}
+            onClick={() => onChange(c.v)}
             style={{
               padding: "8px 14px",
               borderRadius: 999,

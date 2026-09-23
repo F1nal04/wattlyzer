@@ -31,7 +31,4 @@ export const de: Record<LegalKey, string> = {
   "foot": "© 2026 Wattlyzer · Impressum",
 };
 
-export const { messages, translate, translatorFor } = createTranslator<LegalKey>({
-  en,
-  de,
-});
+export const { translatorFor } = createTranslator<LegalKey>({ en, de });

@@ -31,7 +31,7 @@ export const de: Record<ImpressumKey, string> = {
     "Wattlyzer liefert Schätzungen und Empfehlungsunterstützung, keine garantierten Ergebnisse oder professionelle Beratung. Alle Berechnungen sind Schätzwerte und nicht für kritische Entscheidungen ohne unabhängige Überprüfung geeignet.",
 };
 
-export const { messages, translate, translatorFor } =
+export const { translate, translatorFor } =
   createTranslator<ImpressumKey>({ en, de });
 
 // The operator block as the lines both apps render, one per line. Only the

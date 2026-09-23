@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import {
   FONT_DISPLAY,
   FONT_MONO,
@@ -13,6 +13,7 @@ import { frostedGlass } from "@/components/sky/glass";
 import { SkySlider } from "@/components/sky/primitives";
 import { useI18n } from "@/lib/i18n";
 import { Em } from "@/lib/i18n/rich";
+import { useNow } from "@/lib/use-now";
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
@@ -74,23 +75,19 @@ export function nerdStats(
   result: SchedulingResult,
   mode: BestSlotMode,
 ): NerdStats | null {
-  const production =
-    mode !== "price-only" && result.avgSolarProduction !== undefined
-      ? result.avgSolarProduction / 1000
-      : undefined;
-  const price =
-    mode !== "solar-only" && result.avgPrice !== undefined
-      ? marketPriceToCentsPerKwh(result.avgPrice)
-      : undefined;
-
-  if (production === undefined && price === undefined) {
-    return null;
-  }
-
-  return {
-    ...(production !== undefined ? { productionKwh: production } : {}),
-    ...(price !== undefined ? { priceCentsPerKwh: price } : {}),
+  const stats: NerdStats = {
+    productionKwh:
+      mode !== "price-only" && result.avgSolarProduction !== undefined
+        ? result.avgSolarProduction / 1000
+        : undefined,
+    priceCentsPerKwh:
+      mode !== "solar-only" && result.avgPrice !== undefined
+        ? marketPriceToCentsPerKwh(result.avgPrice)
+        : undefined,
   };
+  return stats.productionKwh === undefined && stats.priceCentsPerKwh === undefined
+    ? null
+    : stats;
 }
 
 // Weather-aware hero — sun arcs over the day (apex at noon, centered),
@@ -184,15 +181,8 @@ export function ClockCluster({
   nerdMode: boolean;
 }) {
   const [showCountdown, setShowCountdown] = useState(false);
-  const [now, setNow] = useState(() => new Date());
-
   // Tick so the countdown and the today/tomorrow label never go stale
-  useEffect(() => {
-    setNow(new Date());
-    const timer = setInterval(() => setNow(new Date()), 30_000);
-    return () => clearInterval(timer);
-  }, []);
-
+  const now = useNow(30_000);
   const { t: translate, decimal } = useI18n();
   const stats = nerdMode ? nerdStats(result, bestSlotMode) : null;
   const clock = formatClock(result.bestTime);

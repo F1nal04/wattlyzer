@@ -81,11 +81,11 @@ describe("locale store", () => {
   });
 
   it("exposes the stored choice and the browser preference separately", async () => {
-    const { getLocaleSnapshot, setLocale } = await import("@/lib/locale");
+    const { localeStore, setLocale } = await import("@/lib/locale");
 
     setLocale("en");
 
-    const snapshot = getLocaleSnapshot();
+    const snapshot = localeStore.getSnapshot();
     // The manual choice overrides, but the browser preference is still
     // reported so `resolveLocale` can fall back to it once cleared.
     expect(snapshot.chosen).toBe("en");
@@ -93,19 +93,19 @@ describe("locale store", () => {
   });
 
   it("clears back to automatic detection", async () => {
-    const { getLocaleSnapshot, setLocale } = await import("@/lib/locale");
+    const { localeStore, setLocale } = await import("@/lib/locale");
 
     setLocale("en");
     setLocale(null);
 
-    expect(getLocaleSnapshot().chosen).toBeNull();
+    expect(localeStore.getSnapshot().chosen).toBeNull();
     expect(backing.get(LOCALE_STORAGE_KEY)).toBe('{"locale":null}');
   });
 
   it("reports the default locale to the server renderer", async () => {
-    const { getLocaleServerSnapshot } = await import("@/lib/locale");
+    const { localeStore } = await import("@/lib/locale");
 
-    expect(getLocaleServerSnapshot()).toEqual({ chosen: null, preferred: [] });
+    expect(localeStore.getServerSnapshot()).toEqual({ chosen: null, preferred: [] });
   });
 });
 

@@ -56,6 +56,8 @@ describe("published pages", () => {
         const wrongHref = locale === "en" ? "/de/legal/" : "/legal/";
         expect(html).toContain(`href="${legalHref}"`);
         expect(html).not.toContain(`href="${wrongHref}"`);
+        expect(html).toContain(`https://pwa.wattlyzer.de/install?lang=${locale}`);
+        expect(html).not.toContain(`install?lang=${other}`);
         expect(html).toContain('href="https://github.com/F1nal04/wattlyzer"');
       });
     }

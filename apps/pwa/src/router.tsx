@@ -1,7 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
-import { DATA_STALE_TIME_MS } from "@/lib/queries";
+import { DATA_STALE_TIME_MS } from "@wattlyzer/api-client";
 import { NotFound } from "@/components/sky/not-found";
 
 export function getRouter() {
@@ -9,6 +9,7 @@ export function getRouter() {
     defaultOptions: {
       queries: {
         staleTime: DATA_STALE_TIME_MS,
+        gcTime: DATA_STALE_TIME_MS,
         retry: 1,
       },
     },
