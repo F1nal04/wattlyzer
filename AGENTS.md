@@ -10,6 +10,7 @@
 - `bun run affected` — run those checks only for Git-affected projects.
 - Single project: `bunx nx test core`, `bunx nx build pwa`, or `bunx nx build website`.
 - Single test: `TZ=UTC bun test packages/core/src/schedule.test.ts`, optionally with `-t "<name pattern>"`.
+- Website: `bunx nx test website` runs the static source checks (`apps/website/*.test.ts`); `bunx nx verify-seo website` builds and then smoke-tests `dist` (`apps/website/*.dist.test.ts`). Both scripts list their files explicitly in `apps/website/package.json`, so a new test file must be added there.
 
 Bun is the package manager and test runner; tests use `bun:test`, not Vitest. Keep Nx, `@nx/devkit`, and `@nx/eslint-plugin` on matching versions.
 
@@ -88,6 +89,6 @@ The two Netlify sites publish independent crawler policies. Do not point one app
 - **Website (`wattlyzer.de`)** — crawlable. `apps/website/public/robots.txt` allows `/` and references `https://wattlyzer.de/sitemap-index.xml`. `@astrojs/sitemap` generates that index from `site: "https://wattlyzer.de"` in `apps/website/astro.config.mjs`. Canonical and `hreflang` URLs are emitted from `Astro.site` in `apps/website/src/layouts/Layout.astro`.
 - **PWA (`pwa.wattlyzer.de`)** — not crawlable or indexable. `apps/pwa/public/robots.txt` contains `Disallow: /`. The root document head includes `noindex, nofollow`, and `apps/pwa/netlify.toml` sends `X-Robots-Tag: noindex, nofollow` on every path.
 
-`verify-seo` runs after each app's build and checks the published `dist` artifacts. `bun run check` and `bun run affected` include that target.
+`verify-seo` runs after each app's build and checks the published `dist` artifacts. For the website it also smoke-tests the four built pages (`<html lang>`, title, description, canonical, `hreflang`, language toggle, legal and back links, sitemap) because Astro pages cannot be rendered under `bun test` without a Vite server. `bun run check` and `bun run affected` include that target.
 
 Update this AGENTS.md together with major workspace or architectural changes.
