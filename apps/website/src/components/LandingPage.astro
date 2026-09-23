@@ -14,9 +14,11 @@ const t = translatorFor(locale);
 const installHref = `https://pwa.wattlyzer.de/install?lang=${locale}`;
 const legalHref = getRelativeLocaleUrl(locale, '/legal/');
 const github = 'https://github.com/F1nal04/wattlyzer';
-const faqs = [1, 2, 3, 5].map((n) => ({
+// FAQ 4 carries an inline GitHub link, so its answer is rendered from
+// `before`/`after` halves instead of one string.
+const faqs = [1, 2, 3, 4, 5].map((n) => ({
   q: `faq${n}.q` as LandingKey,
-  a: `faq${n}.a` as LandingKey,
+  a: n === 4 ? null : (`faq${n}.a` as LandingKey),
 }));
 ---
 
@@ -289,25 +291,13 @@ const faqs = [1, 2, 3, 5].map((n) => ({
                 </span>
               </button>
               <div class="faq-a">
-                <div class="faq-a-inner">{t(faq.a)}</div>
+                <div class="faq-a-inner">
+                  {faq.a ? t(faq.a) : <>{t('faq4.before')}<a href={github} target="_blank" rel="noopener" class="inline-link">GitHub</a>{t('faq4.after')}</>}
+                </div>
               </div>
             </div>
           ))
         }
-
-        <div class="faq-item" data-open="false">
-          <button class="faq-q">
-            <span class="faq-q-text">{t('faq4.q')}</span>
-            <span class="faq-icon">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <path d="M12 5v14M5 12h14"></path>
-              </svg>
-            </span>
-          </button>
-          <div class="faq-a">
-            <div class="faq-a-inner">{t('faq4.before')}<a href={github} target="_blank" rel="noopener" class="inline-link">GitHub</a>{t('faq4.after')}</div>
-          </div>
-        </div>
 
         <div class="faq-border-bottom"></div>
       </div>

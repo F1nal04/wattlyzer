@@ -54,7 +54,7 @@ function weatherRecordAt(
 ): WeatherRecord | null {
   const hourStart = Math.floor(at.getTime() / 3_600_000) * 3_600_000;
   return (
-    data?.weather.find((record) => Date.parse(record.timestamp) === hourStart) ??
+    data?.weather?.find((record) => Date.parse(record.timestamp) === hourStart) ??
     null
   );
 }
