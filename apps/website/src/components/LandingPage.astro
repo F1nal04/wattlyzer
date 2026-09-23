@@ -55,9 +55,10 @@ const faqs = [1, 2, 3, 5].map((n) => ({
   </nav>
 
   <!-- ── HERO ── -->
+  <!-- No `id="top"` element on purpose: browsers scroll `#top` to the
+       document top natively, whereas a marker div inside the centred hero
+       flex box lands half a viewport down. -->
   <section class="hero" id="hero" data-sky-mode="light">
-    <div id="top"></div>
-
     <div class="hero-sky" aria-hidden="true">
       <div id="hero-sun" class="hero-sun"></div>
       <div id="hero-moon" class="hero-moon"></div>
