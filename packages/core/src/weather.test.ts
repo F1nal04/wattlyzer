@@ -31,22 +31,7 @@ function solarFromHourlyRates(day: string, rates: number[]): SolarData {
   }
   return {
     result,
-    message: {
-      code: 0,
-      type: "test",
-      text: "",
-      pid: "",
-      info: {
-        latitude: 0,
-        longitude: 0,
-        distance: 0,
-        place: "",
-        timezone: "UTC",
-        time: "",
-        time_utc: "",
-      },
-      ratelimit: { zone: "", period: 0, limit: 0, remaining: 0 },
-    },
+    message: { info: { time: "", time_utc: "" } },
   };
 }
 

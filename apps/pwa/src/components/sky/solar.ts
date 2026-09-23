@@ -1,4 +1,4 @@
-import type { BestSlotMode } from "@/lib/settings";
+import type { BestSlotMode, SettingsData } from "@/lib/settings";
 import type { MessageKey } from "@/lib/i18n";
 
 export const NOTHING_TO_SCHEDULE = {
@@ -6,12 +6,11 @@ export const NOTHING_TO_SCHEDULE = {
   body: "status.nothingToSchedule.body",
 } as const satisfies Record<string, MessageKey>;
 
-export function schedulingSignalsAvailable(
-  solarEnabled: boolean,
-  dynamicTariff: boolean,
-): boolean {
-  return solarEnabled || dynamicTariff;
-}
+// What the solar-panels sheet edits: presence plus roof geometry.
+export type SolarSettings = Pick<
+  SettingsData,
+  "solarPanels" | "azimut" | "angle" | "kwh"
+>;
 
 export function bestSlotModeFromSignals(
   solarEnabled: boolean,
@@ -33,48 +32,29 @@ export function bestSlotModeAfterSolarToggle(
   return dynamicTariff ? "combined" : "solar-only";
 }
 
-export function settingsPatchFromSolarConfig(
-  next: {
-    enabled: boolean;
-    azimuth: number;
-    tilt: number;
-    sizeKw: number;
-  },
-  current: {
-    solarPanels: boolean;
-    bestSlotMode: BestSlotMode;
-    dynamicTariff: boolean;
-  },
+export function settingsPatchFromSolar(
+  next: SolarSettings,
+  current: Pick<SettingsData, "solarPanels" | "bestSlotMode" | "dynamicTariff">,
 ) {
   return {
-    solarPanels: next.enabled,
-    azimut: next.azimuth,
-    angle: next.tilt,
-    kwh: next.sizeKw,
+    ...next,
     // The modal commits on every slider drag, so most calls here change only
     // the roof geometry. Re-ranking is the panel switch's job alone.
     bestSlotMode:
-      next.enabled === current.solarPanels
+      next.solarPanels === current.solarPanels
         ? current.bestSlotMode
         : bestSlotModeAfterSolarToggle(
-            next.enabled,
+            next.solarPanels,
             current.bestSlotMode,
             current.dynamicTariff,
           ),
   };
 }
 
-export function bestSlotModeAfterTariffToggle(
-  dynamicTariff: boolean,
-  solarEnabled: boolean,
-): BestSlotMode {
-  return bestSlotModeFromSignals(solarEnabled, dynamicTariff) ?? "price-only";
-}
-
 export function isBestSlotModeSelectable(
   option: BestSlotMode,
   solarEnabled: boolean,
-  dynamicTariff = true,
+  dynamicTariff: boolean,
 ): boolean {
   if (option === "combined") return solarEnabled && dynamicTariff;
   if (option === "solar-only") return solarEnabled;
@@ -83,7 +63,7 @@ export function isBestSlotModeSelectable(
 
 export function solarSettingsSubtitleKey(
   enabled: boolean,
-  dynamicTariff = true,
+  dynamicTariff: boolean,
 ): MessageKey {
   if (enabled) return "settings.solar.subtitle.on";
   if (!dynamicTariff) return "settings.solar.subtitle.off";
@@ -92,16 +72,10 @@ export function solarSettingsSubtitleKey(
 
 export function solarModeUnavailableHintKey(
   solarEnabled: boolean,
-  dynamicTariff = true,
+  dynamicTariff: boolean,
 ): MessageKey | null {
-  if (!schedulingSignalsAvailable(solarEnabled, dynamicTariff)) {
-    return "mode.hint.noSignals";
-  }
-  if (!solarEnabled) {
-    return "mode.hint.noSolar";
-  }
-  if (!dynamicTariff) {
-    return "mode.hint.noTariff";
-  }
+  if (!solarEnabled && !dynamicTariff) return "mode.hint.noSignals";
+  if (!solarEnabled) return "mode.hint.noSolar";
+  if (!dynamicTariff) return "mode.hint.noTariff";
   return null;
 }

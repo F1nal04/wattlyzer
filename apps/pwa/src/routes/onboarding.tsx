@@ -9,8 +9,11 @@ import {
 } from "@wattlyzer/theme";
 import { updatePrefs, updateSettings, useSettings } from "@/lib/settings";
 import {
+  CircleNum,
   Hills,
+  NothingToSchedule,
   SkyIconBtn,
+  SkyPageHead,
   SkyPrimaryButton,
   SkyScreen,
 } from "@/components/sky/primitives";
@@ -23,14 +26,13 @@ import { useSkyHour } from "@/lib/use-sky-hour";
 import { ShadingModal } from "@/components/sky/shading-modal";
 import {
   shadingSetupSummary,
-  type ShadingSetup,
+  type ShadingSettingsSlice,
 } from "@/components/sky/shading";
 import {
   bestSlotModeFromSignals,
-  NOTHING_TO_SCHEDULE,
-  schedulingSignalsAvailable,
+  type SolarSettings,
 } from "@/components/sky/solar";
-import { SolarPanelsModal, type SolarConfig } from "@/components/sky/solar-modal";
+import { SolarPanelsModal } from "@/components/sky/solar-modal";
 
 export const Route = createFileRoute("/onboarding")({
   component: OnboardingScreen,
@@ -164,20 +166,7 @@ function ObTitle({
         right: 28,
       }}
     >
-      <div
-        style={{
-          fontFamily: FONT_DISPLAY,
-          fontSize: 32,
-          lineHeight: 1.05,
-          letterSpacing: "-0.015em",
-          color: t.fg,
-        }}
-      >
-        {children}
-      </div>
-      <div style={{ marginTop: 8, fontSize: 14, color: t.fgDim, lineHeight: 1.5 }}>
-        {lede}
-      </div>
+      <SkyPageHead t={t} title={children} lede={lede} />
     </div>
   );
 }
@@ -197,30 +186,6 @@ function HeroSun({ t, size, top }: { t: SkyTheme; size: number; top: number }) {
         boxShadow: `0 0 120px 30px ${t.sunMid}88`,
       }}
     />
-  );
-}
-
-function CircleNum({ n, t }: { n: number; t: SkyTheme }) {
-  return (
-    <div
-      style={{
-        width: 44,
-        height: 44,
-        borderRadius: 999,
-        flexShrink: 0,
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: t.mode === "dark" ? "rgba(255,255,255,0.92)" : "#1a1410",
-        color: t.mode === "dark" ? "#1a1410" : "#fff8e7",
-        fontFamily: FONT_DISPLAY,
-        fontSize: 20,
-        fontWeight: 500,
-        letterSpacing: "-0.02em",
-      }}
-    >
-      {n}
-    </div>
   );
 }
 
@@ -432,10 +397,10 @@ function ObSetup({
   onSkip,
 }: {
   t: SkyTheme;
-  solar: SolarConfig;
-  setSolar: (next: SolarConfig) => void;
-  shading: ShadingSetup;
-  setShading: (next: ShadingSetup) => void;
+  solar: SolarSettings;
+  setSolar: (next: SolarSettings) => void;
+  shading: ShadingSettingsSlice;
+  setShading: (patch: Partial<ShadingSettingsSlice>) => void;
   dynamicTariff: boolean;
   setDynamicTariff: (next: boolean) => void;
   onNext: () => void;
@@ -447,16 +412,13 @@ function ObSetup({
   const [shadingOpen, setShadingOpen] = useState(false);
   const { settings } = useSettings();
   const { t: translate, decimal, integer } = useI18n();
-  const nothingToSchedule = !schedulingSignalsAvailable(
-    solar.enabled,
-    dynamicTariff,
-  );
+  const nothingToSchedule = !solar.solarPanels && !dynamicTariff;
   const canContinue = consentShare && !nothingToSchedule;
-  const solarStatus = solar.enabled
+  const solarStatus = solar.solarPanels
     ? translate("onboarding.setup.solarStatus", {
-        size: decimal(solar.sizeKw),
-        direction: translate(azimuthKey(solar.azimuth)),
-        tilt: integer(solar.tilt),
+        size: decimal(solar.kwh),
+        direction: translate(azimuthKey(solar.azimut)),
+        tilt: integer(solar.angle),
       })
     : translate(
         dynamicTariff
@@ -496,10 +458,10 @@ function ObSetup({
           icon="sun"
           title={translate("solar.modal.aria")}
           status={solarStatus}
-          action={translate(solar.enabled ? "common.edit" : "common.add")}
+          action={translate(solar.solarPanels ? "common.edit" : "common.add")}
           onClick={() => setSolarOpen(true)}
         />
-        {solar.enabled && (
+        {solar.solarPanels && (
           <ObCard
             t={t}
             icon="sunCloud"
@@ -553,30 +515,9 @@ function ObSetup({
             left: 28,
             right: 28,
             bottom: "calc(env(safe-area-inset-bottom, 0px) + 108px)",
-            textAlign: "center",
           }}
         >
-          <div
-            style={{
-              fontFamily: FONT_DISPLAY,
-              fontSize: 22,
-              lineHeight: 1.15,
-              letterSpacing: "-0.015em",
-              color: t.fg,
-            }}
-          >
-            {translate(NOTHING_TO_SCHEDULE.title)}
-          </div>
-          <div
-            style={{
-              marginTop: 6,
-              fontSize: 13,
-              color: t.fgDim,
-              lineHeight: 1.45,
-            }}
-          >
-            {translate(NOTHING_TO_SCHEDULE.body)}
-          </div>
+          <NothingToSchedule t={t} />
         </div>
       )}
 
@@ -713,36 +654,27 @@ function OnboardingScreen() {
   const themeHour = useSkyHour(ONB_HOUR, step <= 1);
   const t = skyTheme(themeHour);
   const [dynamicTariff, setDynamicTariff] = useState(true);
-  const [solar, setSolar] = useState<SolarConfig>({
-    enabled: true,
-    azimuth: 180,
-    tilt: 45,
-    sizeKw: 5,
+  const [solar, setSolar] = useState<SolarSettings>({
+    solarPanels: true,
+    azimut: 180,
+    angle: 45,
+    kwh: 5,
   });
-  const [shading, setShading] = useState<ShadingSetup>({
-    morning: { enabled: false, hour: 10 },
-    evening: { enabled: false, hour: 17 },
+  const [shading, setShading] = useState<ShadingSettingsSlice>({
+    morningShading: false,
+    shadingEndTime: 10,
+    eveningShading: false,
+    shadingStartTime: 17,
   });
 
   const finish = (save: boolean) => {
     if (save) {
       const bestSlotMode = bestSlotModeFromSignals(
-        solar.enabled,
+        solar.solarPanels,
         dynamicTariff,
       );
       if (bestSlotMode) {
-        updateSettings({
-          azimut: solar.azimuth,
-          angle: solar.tilt,
-          kwh: solar.sizeKw,
-          morningShading: shading.morning.enabled,
-          shadingEndTime: shading.morning.hour,
-          eveningShading: shading.evening.enabled,
-          shadingStartTime: shading.evening.hour,
-          solarPanels: solar.enabled,
-          bestSlotMode,
-          dynamicTariff,
-        });
+        updateSettings({ ...solar, ...shading, bestSlotMode, dynamicTariff });
       }
     }
     updatePrefs({ onboarded: true });
@@ -754,10 +686,7 @@ function OnboardingScreen() {
   const next = () => setStep((s) => s + 1);
 
   return (
-    <SkyScreen
-      background={`linear-gradient(180deg, ${t.sky[0]} 0%, ${t.sky[1]} 55%, ${t.sky[2]} 100%)`}
-      color={t.fg}
-    >
+    <SkyScreen t={t}>
       {step === 0 && <ObWelcome t={t} onNext={next} />}
       {step === 1 && <ObHow t={t} onNext={next} onBack={back} onSkip={skip} />}
       {step === 2 && (
@@ -766,7 +695,7 @@ function OnboardingScreen() {
           solar={solar}
           setSolar={setSolar}
           shading={shading}
-          setShading={setShading}
+          setShading={(patch) => setShading((prev) => ({ ...prev, ...patch }))}
           dynamicTariff={dynamicTariff}
           setDynamicTariff={setDynamicTariff}
           onNext={next}

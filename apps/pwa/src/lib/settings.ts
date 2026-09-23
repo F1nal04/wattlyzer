@@ -14,17 +14,13 @@ interface StoreOptions<T> {
   transform?: (next: T, patch: Partial<T>) => T;
   // Reflect cross-tab writes to storageKey back into the store
   syncAcrossTabs?: boolean;
+  // What lands in localStorage; defaults to the whole state
+  persist?: (state: T) => string;
 }
 
-interface Store<T> {
-  getSnapshot: () => T;
-  getServerSnapshot: () => T;
-  subscribe: (listener: () => void) => () => void;
-  update: (patch: Partial<T>) => void;
-}
-
-function createStore<T extends object>(options: StoreOptions<T>): Store<T> {
+export function createStore<T extends object>(options: StoreOptions<T>) {
   const { storageKey, defaults, load, transform, syncAcrossTabs } = options;
+  const persist = options.persist ?? JSON.stringify;
   const listeners = new Set<() => void>();
   let cached = defaults;
   let hasLoaded = false;
@@ -77,7 +73,7 @@ function createStore<T extends object>(options: StoreOptions<T>): Store<T> {
     const next = { ...getSnapshot(), ...patch };
     cached = transform ? transform(next, patch) : next;
     hasLoaded = true;
-    localStorage.setItem(storageKey, JSON.stringify(cached));
+    localStorage.setItem(storageKey, persist(cached));
     emit();
   }
 

@@ -5,6 +5,7 @@ import {
   resolveLocale,
   type Locale,
 } from "@wattlyzer/i18n";
+import { createStore } from "@/lib/settings";
 import { useMounted } from "@/lib/use-sky-hour";
 
 export type { Locale } from "@wattlyzer/i18n";
@@ -54,65 +55,21 @@ function browserPreferences(): readonly string[] {
   return navigator.language ? [navigator.language] : [];
 }
 
-const serverSnapshot: LocaleSnapshot = { chosen: null, preferred: [] };
-
-const listeners = new Set<() => void>();
-let cached: LocaleSnapshot = serverSnapshot;
-let hasLoaded = false;
-
-function load(): LocaleSnapshot {
-  return {
+export const localeStore = createStore<LocaleSnapshot>({
+  storageKey: LOCALE_STORAGE_KEY,
+  defaults: { chosen: null, preferred: [] },
+  load: () => ({
     chosen: parseStoredLocale(localStorage.getItem(LOCALE_STORAGE_KEY)),
     preferred: browserPreferences(),
-  };
-}
-
-export function getLocaleSnapshot(): LocaleSnapshot {
-  if (typeof window === "undefined") {
-    return serverSnapshot;
-  }
-
-  if (!hasLoaded) {
-    cached = load();
-    hasLoaded = true;
-  }
-
-  return cached;
-}
-
-export function getLocaleServerSnapshot(): LocaleSnapshot {
-  return serverSnapshot;
-}
-
-function emit() {
-  listeners.forEach((listener) => listener());
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-
-  const handleStorage = (event: StorageEvent) => {
-    if (event.key !== LOCALE_STORAGE_KEY) {
-      return;
-    }
-    cached = load();
-    emit();
-  };
-
-  window.addEventListener("storage", handleStorage);
-
-  return () => {
-    listeners.delete(listener);
-    window.removeEventListener("storage", handleStorage);
-  };
-}
+  }),
+  // Detection is never written back, only the explicit choice.
+  persist: ({ chosen }) => serializeStoredLocale(chosen),
+  syncAcrossTabs: true,
+});
 
 // `null` restores automatic browser detection.
 export function setLocale(locale: Locale | null) {
-  cached = { ...getLocaleSnapshot(), chosen: locale };
-  hasLoaded = true;
-  localStorage.setItem(LOCALE_STORAGE_KEY, serializeStoredLocale(locale));
-  emit();
+  localeStore.update({ chosen: locale });
 }
 
 // The active locale. `useMounted` pins it to the default for SSR and the
@@ -120,17 +77,13 @@ export function setLocale(locale: Locale | null) {
 // the same convention `useSkyHour` uses for the palette.
 export function useLocale(): Locale {
   const mounted = useMounted();
-  const snapshot = useSyncExternalStore(
-    subscribe,
-    getLocaleSnapshot,
-    getLocaleServerSnapshot,
+  const { chosen, preferred } = useSyncExternalStore(
+    localeStore.subscribe,
+    localeStore.getSnapshot,
+    localeStore.getServerSnapshot,
   );
 
-  return resolveLocale({
-    mounted,
-    stored: snapshot.chosen,
-    preferred: snapshot.preferred,
-  });
+  return resolveLocale({ mounted, stored: chosen, preferred });
 }
 
 export { DEFAULT_LOCALE };

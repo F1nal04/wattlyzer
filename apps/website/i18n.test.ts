@@ -41,6 +41,8 @@ describe("language toggle", () => {
     "src/pages/de/index.astro",
     "src/pages/legal.astro",
     "src/pages/de/legal.astro",
+    "src/components/LandingPage.astro",
+    "src/components/LegalPage.astro",
   ];
 
   it("is never hand-written in a page", () => {

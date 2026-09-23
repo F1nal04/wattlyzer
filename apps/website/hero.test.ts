@@ -4,8 +4,11 @@ import { join } from "node:path";
 
 const websiteRoot = import.meta.dir;
 const css = readFileSync(join(websiteRoot, "src/styles/index.css"), "utf8");
-const en = readFileSync(join(websiteRoot, "src/pages/index.astro"), "utf8");
-const de = readFileSync(join(websiteRoot, "src/pages/de/index.astro"), "utf8");
+// Both landing routes render this one component.
+const landing = readFileSync(
+  join(websiteRoot, "src/components/LandingPage.astro"),
+  "utf8",
+);
 
 function heroSky(page: string) {
   const start = page.indexOf("hero-sky");
@@ -35,11 +38,10 @@ describe("website hero clouds", () => {
     expect(css).toMatch(
       /prefers-reduced-motion:\s*reduce[\s\S]*?\.hero-cloud[\s\S]*?animation:\s*none/,
     );
-    expect(en).toContain("prefers-reduced-motion");
-    expect(de).toContain("prefers-reduced-motion");
+    expect(landing).toContain("prefers-reduced-motion");
   });
 
-  it("draws clouds as a continuous SVG silhouette on both locales", () => {
+  it("draws clouds as a continuous SVG silhouette", () => {
     const componentPath = join(
       websiteRoot,
       "src/components/HeroClouds.astro",
@@ -49,9 +51,7 @@ describe("website hero clouds", () => {
     expect(clouds).toContain("<svg");
     expect(clouds).toContain("<path");
     expect(clouds).toContain("M46 96");
-    expect(heroSky(en)).toContain("HeroClouds");
-    expect(heroSky(de)).toContain("HeroClouds");
-    expect(heroSky(en)).not.toContain('id="hc1"');
-    expect(heroSky(de)).not.toContain('id="hc1"');
+    expect(heroSky(landing)).toContain("HeroClouds");
+    expect(heroSky(landing)).not.toContain('id="hc1"');
   });
 });

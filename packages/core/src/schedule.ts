@@ -190,13 +190,6 @@ function findMarketPrice(
   return priceData ? priceData.marketprice : null;
 }
 
-export function calculateMarketPrice(
-  marketData: MarketData | null,
-  targetTime: Date,
-) {
-  return findMarketPrice(marketData, targetTime) ?? 0;
-}
-
 /**
  * Convert a raw aWATTar `marketprice` (EUR/MWh — its rows literally carry
  * `"unit": "Eur/MWh"`) into the ct/kWh every UI shows. Same number, divided
@@ -233,10 +226,6 @@ export function calculateSchedule({
   searchTimespan,
   now,
 }: ScheduleRequest): ScheduleEvaluation {
-  if (!settings) {
-    return { schedulingResult: null, topSlotsResult: null };
-  }
-
   const needsMarketData = settings.bestSlotMode !== "solar-only";
 
   // Only the signal a mode cannot answer without. price-only must not be held

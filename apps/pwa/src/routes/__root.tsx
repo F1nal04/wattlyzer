@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { Suspense, lazy, useEffect, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import {
   HeadContent,
   Outlet,
@@ -10,7 +10,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { DEFAULT_LOCALE } from "@wattlyzer/i18n";
-import { DATA_STALE_TIME_MS } from "@/lib/queries";
+import { DATA_STALE_TIME_MS } from "@wattlyzer/api-client";
 import { localeFromSearch, setLocale, useLocale } from "@/lib/locale";
 import { useI18n } from "@/lib/i18n";
 import appCss from "@/styles/app.css?url";
@@ -74,37 +74,6 @@ export const Route = createRootRouteWithContext<{
   shellComponent: RootDocument,
 })
 
-// Dev-only: the unified devtools shell does NOT exclude itself from
-// production bundles, so gate it behind a statically eliminable branch.
-const Devtools = import.meta.env.DEV
-  ? lazy(async () => {
-      const [devtools, router, query] = await Promise.all([
-        import("@tanstack/react-devtools"),
-        import("@tanstack/react-router-devtools"),
-        import("@tanstack/react-query-devtools"),
-      ]);
-      const { TanStackDevtools } = devtools;
-      const { TanStackRouterDevtoolsPanel } = router;
-      const { ReactQueryDevtoolsPanel } = query;
-      return {
-        default: () => (
-          <TanStackDevtools
-            plugins={[
-              {
-                name: "TanStack Router",
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-              {
-                name: "TanStack Query",
-                render: <ReactQueryDevtoolsPanel />,
-              },
-            ]}
-          />
-        ),
-      };
-    })
-  : () => null;
-
 const persister = createSyncStoragePersister({
   storage: typeof window !== "undefined" ? window.localStorage : null,
   key: "wattlyzer_query_cache",
@@ -125,9 +94,6 @@ function RootComponent() {
     >
       <DocumentLanguage />
       <Outlet />
-      <Suspense fallback={null}>
-        <Devtools />
-      </Suspense>
     </PersistQueryClientProvider>
   );
 }

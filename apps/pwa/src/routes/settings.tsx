@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   FONT_DISPLAY,
@@ -12,6 +12,7 @@ import { useNow } from "@/lib/use-now";
 import { useGeolocation, useScheduling } from "@/lib/use-scheduling";
 import { useSkyHour } from "@/lib/use-sky-hour";
 import {
+  NothingToSchedule,
   SkyAppBar,
   SkyIconBtn,
   SkyScreen,
@@ -22,21 +23,39 @@ import { azimuthKey } from "@/components/sky/rows";
 import { ShadingModal } from "@/components/sky/shading-modal";
 import { LanguageSwitch } from "@/components/sky/language";
 import { useI18n } from "@/lib/i18n";
+import { shadingRowValue } from "@/components/sky/shading";
 import {
-  shadingRowValue,
-  shadingSettingsFromSetup,
-  shadingSetupFromSettings,
-  shadingWindowFromSettings,
-} from "@/components/sky/shading";
-import {
-  bestSlotModeAfterTariffToggle,
-  NOTHING_TO_SCHEDULE,
-  schedulingSignalsAvailable,
-  settingsPatchFromSolarConfig,
+  bestSlotModeFromSignals,
+  settingsPatchFromSolar,
   solarSettingsSubtitleKey,
 } from "@/components/sky/solar";
-import { SolarPanelsModal, type SolarConfig } from "@/components/sky/solar-modal";
+import { SolarPanelsModal } from "@/components/sky/solar-modal";
 import packageJson from "../../package.json";
+
+// One settings row: label left, control right, hairline below unless last.
+const rowStyle = (t: SkyTheme, last?: boolean): CSSProperties => ({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: 12,
+  padding: "13px 16px",
+  fontSize: 14,
+  borderBottom: last ? "none" : `1px solid ${t.rule}`,
+});
+
+// The same row as a full-width button/link without native chrome.
+const rowButtonStyle = (t: SkyTheme, last?: boolean): CSSProperties => ({
+  width: "100%",
+  background: "transparent",
+  border: "none",
+  borderRadius: 0,
+  cursor: "pointer",
+  textAlign: "left",
+  color: t.fg,
+  fontFamily: "inherit",
+  textDecoration: "none",
+  ...rowStyle(t, last),
+});
 
 export const Route = createFileRoute("/settings")({
   component: SettingsScreen,
@@ -105,16 +124,7 @@ function SetRow({
   return (
     <div
       onClick={onClick}
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        gap: 12,
-        padding: "13px 16px",
-        borderBottom: last ? "none" : `1px solid ${t.rule}`,
-        fontSize: 14,
-        cursor: onClick ? "pointer" : "default",
-      }}
+      style={{ ...rowStyle(t, last), cursor: onClick ? "pointer" : "default" }}
     >
       <span style={{ color: t.fg, fontWeight: 500, whiteSpace: "nowrap" }}>{label}</span>
       <span
@@ -148,26 +158,7 @@ function SetToggleRow({
   last?: boolean;
 }) {
   return (
-    <button
-      onClick={onToggle}
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        gap: 12,
-        padding: "13px 16px",
-        fontSize: 14,
-        width: "100%",
-        background: "transparent",
-        border: "none",
-        borderBottom: last ? "none" : `1px solid ${t.rule}`,
-        borderRadius: 0,
-        cursor: "pointer",
-        textAlign: "left",
-        color: t.fg,
-        fontFamily: "inherit",
-      }}
-    >
+    <button onClick={onToggle} style={rowButtonStyle(t, last)}>
       <div style={{ minWidth: 0, display: "flex", flexDirection: "column" }}>
         <div style={{ fontWeight: 500, color: t.fg, whiteSpace: "nowrap" }}>{label}</div>
         <div
@@ -203,17 +194,7 @@ function SetControlRow({
   last?: boolean;
 }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        gap: 12,
-        padding: "13px 16px",
-        borderBottom: last ? "none" : `1px solid ${t.rule}`,
-        fontSize: 14,
-      }}
-    >
+    <div style={rowStyle(t, last)}>
       <div style={{ minWidth: 0, display: "flex", flexDirection: "column" }}>
         <div style={{ fontWeight: 500, color: t.fg }}>{label}</div>
         {detail && (
@@ -254,23 +235,7 @@ function LinkRow({
       <span style={{ color: t.fgMute, fontSize: 14 }}>›</span>
     </>
   );
-  const style = {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 12,
-    padding: "13px 16px",
-    fontSize: 14,
-    width: "100%",
-    background: "transparent",
-    border: "none",
-    borderBottom: last ? "none" : `1px solid ${t.rule}`,
-    cursor: "pointer",
-    textAlign: "left" as const,
-    color: t.fg,
-    fontFamily: "inherit",
-    textDecoration: "none",
-  };
+  const style = rowButtonStyle(t, last);
   if (href) {
     return (
       <a href={href} target="_blank" rel="noopener noreferrer" style={style}>
@@ -316,27 +281,10 @@ function SettingsScreen() {
   );
   const t = skyTheme(themeHour);
   const solarEnabled = settings.solarPanels;
-  const canSchedule = schedulingSignalsAvailable(
-    solarEnabled,
-    settings.dynamicTariff,
-  );
-
-  const solarConfig: SolarConfig = {
-    enabled: solarEnabled,
-    azimuth: settings.azimut,
-    tilt: settings.angle,
-    sizeKw: settings.kwh,
-  };
-
-  const applySolar = (next: SolarConfig) => {
-    updateSettings(settingsPatchFromSolarConfig(next, settings));
-  };
+  const canSchedule = solarEnabled || settings.dynamicTariff;
 
   return (
-    <SkyScreen
-      background={`linear-gradient(180deg, ${t.sky[0]} 0%, ${t.sky[1]} 55%, ${t.sky[2]} 100%)`}
-      color={t.fg}
-    >
+    <SkyScreen t={t}>
       <SkyAppBar
         t={t}
         title={translate("settings.title")}
@@ -366,28 +314,8 @@ function SettingsScreen() {
         }}
       >
         {!canSchedule && (
-          <div style={{ marginBottom: 22, textAlign: "center" }}>
-            <div
-              style={{
-                fontFamily: FONT_DISPLAY,
-                fontSize: 22,
-                lineHeight: 1.15,
-                letterSpacing: "-0.015em",
-                color: t.fg,
-              }}
-            >
-              {translate(NOTHING_TO_SCHEDULE.title)}
-            </div>
-            <div
-              style={{
-                marginTop: 6,
-                fontSize: 13,
-                color: t.fgDim,
-                lineHeight: 1.45,
-              }}
-            >
-              {translate(NOTHING_TO_SCHEDULE.body)}
-            </div>
+          <div style={{ marginBottom: 22 }}>
+            <NothingToSchedule t={t} />
           </div>
         )}
 
@@ -444,7 +372,8 @@ function SettingsScreen() {
               const next = !settings.dynamicTariff;
               updateSettings({
                 dynamicTariff: next,
-                bestSlotMode: bestSlotModeAfterTariffToggle(next, solarEnabled),
+                bestSlotMode:
+                  bestSlotModeFromSignals(solarEnabled, next) ?? "price-only",
               });
             }}
             t={t}
@@ -459,21 +388,13 @@ function SettingsScreen() {
         >
           <SetRow
             label={translate("shading.morning.title")}
-            value={shadingRowValue(
-              "morning",
-              shadingWindowFromSettings("morning", settings),
-              translate,
-            )}
+            value={shadingRowValue("morning", settings, translate)}
             t={t}
             onClick={() => setShadingOpen(true)}
           />
           <SetRow
             label={translate("shading.evening.title")}
-            value={shadingRowValue(
-              "evening",
-              shadingWindowFromSettings("evening", settings),
-              translate,
-            )}
+            value={shadingRowValue("evening", settings, translate)}
             t={t}
             last
             onClick={() => setShadingOpen(true)}
@@ -542,18 +463,18 @@ function SettingsScreen() {
       {solarOpen && (
         <SolarPanelsModal
           t={t}
-          value={solarConfig}
+          value={settings}
           eyebrow={translate("settings.eyebrow.solar")}
-          onChange={applySolar}
+          onChange={(next) => updateSettings(settingsPatchFromSolar(next, settings))}
           onClose={() => setSolarOpen(false)}
         />
       )}
       {shadingOpen && (
         <ShadingModal
           t={t}
-          value={shadingSetupFromSettings(settings)}
+          value={settings}
           eyebrow={translate("settings.eyebrow.shading")}
-          onChange={(setup) => updateSettings(shadingSettingsFromSetup(setup))}
+          onChange={updateSettings}
           onClose={() => setShadingOpen(false)}
         />
       )}

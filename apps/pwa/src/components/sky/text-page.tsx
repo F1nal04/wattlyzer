@@ -60,10 +60,7 @@ export function TextPage({
   const t = skyTheme(themeHour);
   const { t: translate } = useI18n();
   return (
-    <SkyScreen
-      background={`linear-gradient(180deg, ${t.sky[0]} 0%, ${t.sky[1]} 55%, ${t.sky[2]} 100%)`}
-      color={t.fg}
-    >
+    <SkyScreen t={t}>
       <Hills t={t} height="26%" opacity={0.55} />
       <div
         style={{

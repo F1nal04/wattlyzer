@@ -1,9 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { FONT_DISPLAY, skyTheme, type SkyTheme } from "@wattlyzer/theme";
+import { skyTheme, type SkyTheme } from "@wattlyzer/theme";
 import { frostedGlass } from "@/components/sky/glass";
 import { InstGlyph, type InstGlyphKind } from "@/components/sky/icons";
 import {
+  CircleNum,
   Hills,
   SkyPageHead,
   SkyScreen,
@@ -13,30 +14,6 @@ import { useI18n, type MessageKey } from "@/lib/i18n";
 import { Em, richParts } from "@/lib/i18n/rich";
 
 const INST_HOUR = 11;
-
-function InstNum({ n, t }: { n: number; t: SkyTheme }) {
-  return (
-    <div
-      style={{
-        width: 44,
-        height: 44,
-        borderRadius: 999,
-        flexShrink: 0,
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: t.mode === "dark" ? "rgba(255,255,255,0.92)" : "#1a1410",
-        color: t.mode === "dark" ? "#1a1410" : "#fff8e7",
-        fontFamily: FONT_DISPLAY,
-        fontSize: 20,
-        fontWeight: 500,
-        letterSpacing: "-0.02em",
-      }}
-    >
-      {n}
-    </div>
-  );
-}
 
 function InstChip({ glyph, t }: { glyph: InstGlyphKind; t: SkyTheme }) {
   return (
@@ -76,7 +53,7 @@ function InstRow({
 }) {
   return (
     <div style={{ display: "flex", gap: 14, padding: "14px 0", alignItems: "flex-start" }}>
-      <InstNum n={n} t={t} />
+      <CircleNum n={n} t={t} />
       <div style={{ minWidth: 0, flex: 1 }}>
         <div
           style={{
@@ -92,26 +69,6 @@ function InstRow({
         </div>
         <div style={{ fontSize: 13, color: t.fgDim, lineHeight: 1.45 }}>{body}</div>
       </div>
-    </div>
-  );
-}
-
-function InstHead(props: {
-  t: SkyTheme;
-  eyebrow: string;
-  title: ReactNode;
-  lede: string;
-}) {
-  return (
-    <div
-      style={{
-        position: "absolute",
-        top: "calc(env(safe-area-inset-top, 0px) + 96px)",
-        left: 28,
-        right: 28,
-      }}
-    >
-      <SkyPageHead {...props} />
     </div>
   );
 }
@@ -135,23 +92,25 @@ function InstPage({
   const { t: translate } = useI18n();
   const key = (suffix: string) => `install.${platform}.${suffix}` as MessageKey;
   return (
-    <SkyScreen
-      background={`linear-gradient(180deg, ${t.sky[0]} 0%, ${t.sky[1]} 55%, ${t.sky[2]} 100%)`}
-      color={t.fg}
-    >
+    <SkyScreen t={t}>
       <Hills t={t} height="26%" opacity={0.55} />
-      <InstHead
-        t={t}
-        eyebrow={translate(key("eyebrow"))}
-        title={richParts(translate(key("title")), {
-          em: (
-            <Em>
-              {translate(key("titleEm"))}
-            </Em>
-          ),
-        })}
-        lede={translate(key("lede"))}
-      />
+      <div
+        style={{
+          position: "absolute",
+          top: "calc(env(safe-area-inset-top, 0px) + 96px)",
+          left: 28,
+          right: 28,
+        }}
+      >
+        <SkyPageHead
+          t={t}
+          eyebrow={translate(key("eyebrow"))}
+          title={richParts(translate(key("title")), {
+            em: <Em>{translate(key("titleEm"))}</Em>,
+          })}
+          lede={translate(key("lede"))}
+        />
+      </div>
       <div
         style={{
           position: "absolute",
@@ -212,10 +171,7 @@ export function InstallChooser() {
   const t = skyTheme(useSkyHour(INST_HOUR));
   const { t: translate } = useI18n();
   return (
-    <SkyScreen
-      background={`linear-gradient(180deg, ${t.sky[0]} 0%, ${t.sky[1]} 55%, ${t.sky[2]} 100%)`}
-      color={t.fg}
-    >
+    <SkyScreen t={t}>
       <Hills t={t} height="26%" opacity={0.55} />
       <main style={{ position: "relative", padding: "96px 28px 32px" }}>
         <SkyPageHead

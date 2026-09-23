@@ -6,16 +6,12 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 import { DEFAULT_LOCALE, LOCALES, isLocale } from '@wattlyzer/i18n';
 
 interface Props {
-  title?: string;
-  description?: string;
+  title: string;
+  description: string;
   canonicalPath?: string;
 }
 
-const {
-  title = 'Wattlyzer · Run it when the sky says so.',
-  description = 'Wattlyzer reads the sun, the spot price, and your roof — then tells you the one best window today to start the dishwasher, the heat pump, the wall box.',
-  canonicalPath = '/',
-} = Astro.props;
+const { title, description, canonicalPath = '/' } = Astro.props;
 
 // Same locale model the PWA uses, from the shared package.
 const locale = isLocale(Astro.currentLocale) ? Astro.currentLocale : DEFAULT_LOCALE;
