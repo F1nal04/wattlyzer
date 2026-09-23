@@ -280,4 +280,9 @@ export const de: Record<MessageKey, string> = {
   "privacy.retention.title": "Speicherdauer",
   "privacy.retention.body":
     "Zwischengespeicherte Daten bleiben auf deinem Gerät und können manuell gelöscht werden. Auf Wattlyzer-Servern werden keine personenbezogenen Daten gespeichert.",
+
+  // ── Update ─────────────────────────────────────────────────
+  "update.available": "Eine neue Version von wattlyzer ist bereit.",
+  "update.reload": "Neu laden",
+  "update.dismiss": "Später",
 };

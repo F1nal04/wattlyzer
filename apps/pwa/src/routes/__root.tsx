@@ -13,6 +13,8 @@ import { DEFAULT_LOCALE } from "@wattlyzer/i18n";
 import { DATA_STALE_TIME_MS } from "@wattlyzer/api-client";
 import { localeFromSearch, setLocale, useLocale } from "@/lib/locale";
 import { useI18n } from "@/lib/i18n";
+import { APP_VERSION } from "@/lib/update";
+import { UpdatePrompt } from "@/components/sky/update-prompt";
 import appCss from "@/styles/app.css?url";
 
 const FONTS_URL =
@@ -90,9 +92,14 @@ function RootComponent() {
   return (
     <PersistQueryClientProvider
       client={queryClient}
-      persistOptions={{ persister, maxAge: DATA_STALE_TIME_MS }}
+      persistOptions={{
+        persister,
+        maxAge: DATA_STALE_TIME_MS,
+        buster: APP_VERSION,
+      }}
     >
       <DocumentLanguage />
+      <UpdatePrompt />
       <Outlet />
     </PersistQueryClientProvider>
   );

@@ -280,6 +280,11 @@ export const en = {
   "privacy.retention.title": "Retention",
   "privacy.retention.body":
     "Cached data remains on your device and can be cleared manually. No personal data is retained on Wattlyzer servers.",
+
+  // ── Update ─────────────────────────────────────────────────
+  "update.available": "A new version of wattlyzer is ready.",
+  "update.reload": "Reload",
+  "update.dismiss": "Later",
 } as const;
 
 export type MessageKey = keyof typeof en;
