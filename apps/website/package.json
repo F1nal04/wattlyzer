@@ -17,14 +17,14 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/sitemap": "^3.7.2",
+    "@astrojs/sitemap": "^3.7.4",
     "@wattlyzer/i18n": "workspace:*",
     "@wattlyzer/legal": "workspace:*",
     "@wattlyzer/theme": "workspace:*",
-    "astro": "^6.1.10"
+    "astro": "^7"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.4"
+    "@astrojs/check": "^0.9.10"
   },
   "nx": {
     "name": "website",

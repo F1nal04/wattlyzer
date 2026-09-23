@@ -9,28 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
-import { Route as LegalRouteImport } from './routes/legal'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LegalRouteImport } from './routes/legal'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as InstallIndexRouteImport } from './routes/install.index'
-import { Route as InstallIosRouteImport } from './routes/install.ios'
 import { Route as InstallAndroidRouteImport } from './routes/install.android'
+import { Route as InstallIosRouteImport } from './routes/install.ios'
 
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LegalRoute = LegalRouteImport.update({
@@ -38,9 +28,19 @@ const LegalRoute = LegalRouteImport.update({
   path: '/legal',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InstallIndexRoute = InstallIndexRouteImport.update({
@@ -48,14 +48,14 @@ const InstallIndexRoute = InstallIndexRouteImport.update({
   path: '/install/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const InstallIosRoute = InstallIosRouteImport.update({
-  id: '/install/ios',
-  path: '/install/ios',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const InstallAndroidRoute = InstallAndroidRouteImport.update({
   id: '/install/android',
   path: '/install/android',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InstallIosRoute = InstallIosRouteImport.update({
+  id: '/install/ios',
+  path: '/install/ios',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -136,25 +136,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/legal': {
@@ -164,11 +150,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegalRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/install/': {
@@ -178,18 +178,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InstallIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/install/ios': {
-      id: '/install/ios'
-      path: '/install/ios'
-      fullPath: '/install/ios'
-      preLoaderRoute: typeof InstallIosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/install/android': {
       id: '/install/android'
       path: '/install/android'
       fullPath: '/install/android'
       preLoaderRoute: typeof InstallAndroidRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/install/ios': {
+      id: '/install/ios'
+      path: '/install/ios'
+      fullPath: '/install/ios'
+      preLoaderRoute: typeof InstallIosRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
