@@ -28,12 +28,12 @@
     "@nx/devkit": "latest",
     "@nx/eslint-plugin": "latest",
     "@types/bun": "^1.4.2",
-    "@types/node": "^25.9.8",
-    "eslint": "^10.11.0",
+    "@types/node": "^26.6.5",
+    "eslint": "^10.12.0",
     "eslint-plugin-astro": "latest",
     "nx": "latest",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.70.1"
+    "typescript": "^7.0.2",
+    "typescript-eslint": "^8.71.1"
   },
   "trustedDependencies": [
     "unrs-resolver"
