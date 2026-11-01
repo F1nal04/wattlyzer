@@ -25,13 +25,13 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@nx/devkit": "^24.0.0",
-    "@nx/eslint-plugin": "^24.0.0",
+    "@nx/devkit": "^24.0.1",
+    "@nx/eslint-plugin": "^24.0.1",
     "@types/bun": "^1.4.4",
     "@types/node": "^26.6.5",
     "eslint": "^10.13.0",
     "eslint-plugin-astro": "latest",
-    "nx": "^24.0.0",
+    "nx": "^24.0.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.0"
   },
