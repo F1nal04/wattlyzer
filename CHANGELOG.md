@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/F1nal04/wattlyzer/compare/v2.0.0...v2.0.1) (2026-11-01)
+
+
+### Bug Fixes
+
+* **legal:** update the impressum contact email ([0055d6d](https://github.com/F1nal04/wattlyzer/commit/0055d6d8c75d84c914868dafebf6e83a62202980))
+
 ## [2.0.0](https://github.com/F1nal04/wattlyzer/compare/v1.8.0...v2.0.0) (2026-09-23)
 
 
