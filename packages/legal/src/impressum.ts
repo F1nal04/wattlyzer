@@ -8,7 +8,7 @@ export const IMPRESSUM = {
   name: "Leon Bojanowski",
   street: "Marienstraße 3b",
   city: "14532 Stahnsdorf",
-  email: "leongaborbojanowski@proton.me",
+  email: "wattlyzer@protonmail.com",
 } as const;
 
 export const en = {

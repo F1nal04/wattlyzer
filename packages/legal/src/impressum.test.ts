@@ -14,7 +14,7 @@ describe("IMPRESSUM", () => {
   it("publishes the proton contact address", () => {
     // Regression: the PWA and the website drifted apart and shipped two
     // different contact addresses for the same operator.
-    expect(IMPRESSUM.email).toBe("leongaborbojanowski@proton.me");
+    expect(IMPRESSUM.email).toBe("wattlyzer@protonmail.com");
   });
 
   it("carries the operator details § 5 TMG requires", () => {

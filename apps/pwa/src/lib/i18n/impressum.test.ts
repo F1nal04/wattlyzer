@@ -23,7 +23,7 @@ describe("PWA impressum", () => {
       "Leon Bojanowski",
       "Marienstraße",
       "Stahnsdorf",
-      "@proton.me",
+      "@protonmail.com",
       "@gmail.com",
       "+49",
     ]) {
@@ -32,7 +32,7 @@ describe("PWA impressum", () => {
   });
 
   it("publishes the proton address in both languages", () => {
-    expect(IMPRESSUM.email).toBe("leongaborbojanowski@proton.me");
+    expect(IMPRESSUM.email).toBe("wattlyzer@protonmail.com");
     expect(IMPRESSUM.email).not.toContain("gmail");
   });
 
