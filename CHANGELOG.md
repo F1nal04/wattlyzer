@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/F1nal04/wattlyzer/compare/v2.0.1...v2.1.0) (2026-11-12)
+
+
+### Features
+
+* **brand:** switch website and PWA icons to approved sunset artwork ([#112](https://github.com/F1nal04/wattlyzer/issues/112)) ([bf69c0c](https://github.com/F1nal04/wattlyzer/commit/bf69c0c123447bb3bb8bdcd33ad8730738f0d742))
+
 ## [2.0.1](https://github.com/F1nal04/wattlyzer/compare/v2.0.0...v2.0.1) (2026-11-01)
 
 
