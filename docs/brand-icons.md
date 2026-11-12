@@ -1,38 +1,42 @@
 # Wattlyzer brand icons
 
-The browser favicon set uses the purple and yellow Wattlyzer “W + lightning”
-artwork. The installed-app icons retain the clock, energy curve, and lightning
-artwork. The adaptive favicon SVG is the reusable source asset and lives at
-`apps/pwa/public/favicon.svg`; the website copy at
-`apps/website/public/favicon.svg` must stay byte-for-byte identical.
+The brand mark is a sun rising behind a ribbon “W”, in its sunset palette:
+a warm yellow sun with four rays above the W, which cuts a gap into the sun's
+lower edge. The mark is used only as the website favicon and the PWA's
+favicon and app icons, not inside either app's pages. The vector sources live
+in `docs/brand/`:
+
+| Source | Purpose |
+| --- | --- |
+| `favicon.svg` | Coral-to-rose W and orange sun on a white rounded tile, for browser tabs |
+| `app-icon.svg` | Cream W on a full-bleed orange-to-plum sunset tile, mark at 74 %, for iOS |
+| `app-icon-maskable.svg` | Same tile, mark at 64 % so it stays inside the maskable safe zone |
 
 ## Published variants
 
-| Asset | Published by | Purpose |
+| Asset | Published by | Rendered from |
 | --- | --- | --- |
-| `favicon.svg` | PWA and website | Adaptive light/dark browser icon and source artwork |
-| `favicon.ico` | PWA and website | 16, 32, and 48 px browser fallback |
-| `favicon-96x96.png` | PWA and website | 96 px PNG browser fallback |
-| `apple-touch-icon.png` | PWA | 180 px iOS home-screen icon |
-| `web-app-manifest-192x192.png` | PWA | 192 px maskable launcher icon |
-| `web-app-manifest-512x512.png` | PWA | 512 px maskable launcher icon |
+| `favicon.svg` | PWA and website | copy of `docs/brand/favicon.svg` |
+| `favicon.ico` | PWA and website | `favicon.svg` at 16, 32, and 48 px (PNG entries) |
+| `favicon-96x96.png` | PWA and website | `favicon.svg` at 96 px |
+| `apple-touch-icon.png` | PWA | `app-icon.svg` at 180 px |
+| `web-app-manifest-192x192.png` | PWA | `app-icon-maskable.svg` at 192 px |
+| `web-app-manifest-512x512.png` | PWA | `app-icon-maskable.svg` at 512 px |
 
-The launcher images include the required padding around the artwork and are
-declared `maskable` in `apps/pwa/public/site.webmanifest`. Do not crop or scale
-the artwork to the image edges.
+The two apps' copies of `favicon.svg`, `favicon.ico`, and `favicon-96x96.png`
+must stay byte-for-byte identical. The launcher images are declared
+`maskable` in `apps/pwa/public/site.webmanifest`; do not scale the artwork
+past the safe zone.
 
 ## Updating the set
 
-1. Open the current `favicon.svg` in
-   [RealFaviconGenerator](https://realfavicongenerator.net/) and replace its
-   artwork with the approved source design.
-2. Use `#59326c` for the theme and background colors. Keep the launcher
-   artwork inside the maskable safe area.
-3. Generate SVG, ICO, 96 px PNG, 180 px Apple touch, and 192/512 px maskable
-   PNG variants with the filenames in the table above.
-4. Replace both apps' shared favicon files and the PWA-only files. Preserve
-   the manifest's `/` `id` and `start_url` fields.
-5. Run `bun run check`, then inspect a browser tab and a freshly installed PWA
+1. Edit the SVG sources in `docs/brand/`.
+2. Rasterize each published PNG from its source at the listed size with any
+   SVG renderer (for example a headless Chromium screenshot or
+   `rsvg-convert`), and pack the 16/32/48 px favicon PNGs into `favicon.ico`.
+3. Copy the shared favicon files into both apps' `public/` directories.
+   Preserve the manifest's `/` `id` and `start_url` fields.
+4. Run `bun run check`, then inspect a browser tab and a freshly installed PWA
    on both a rounded and square launcher mask.
 
 Browsers and operating systems cache favicons and installed-app icons
@@ -40,8 +44,3 @@ aggressively. An existing install can keep the previous artwork after a normal
 refresh; close all tabs and clear site data for browser-icon testing, and
 uninstall/reinstall the PWA or home-screen shortcut when verifying launcher
 icons.
-
-The repository audit for issue #92 found no other image-based Wattlyzer mark.
-The website navigation/footer wordmarks are styled text, while PWA interface
-icons and the website background illustration are product UI artwork rather
-than brand-icon copies.
