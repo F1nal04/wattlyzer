@@ -1,16 +1,18 @@
 # Wattlyzer brand icons
 
 The brand mark is a sun rising behind a ribbon “W”, in its sunset palette:
-a warm yellow sun with four rays above the W, which cuts a gap into the sun's
-lower edge. The mark is used only as the website favicon and the PWA's
+a warm yellow sun with four rays above the W, which cuts a shaded bite into
+the sun's lower edge. The W is one folded ribbon: the stroke descending from
+the middle peak lies over the rising one and casts a crease shadow, and the
+whole W casts a soft drop shadow. The mark is used only as the website favicon and the PWA's
 favicon and app icons, not inside either app's pages. The vector sources live
 in `docs/brand/`:
 
 | Source | Purpose |
 | --- | --- |
 | `favicon.svg` | Coral-to-rose W and orange sun on a white rounded tile, for browser tabs |
-| `app-icon.svg` | Cream W on a full-bleed orange-to-plum sunset tile, mark at 74 %, for iOS |
-| `app-icon-maskable.svg` | Same tile, mark at 64 % so it stays inside the maskable safe zone |
+| `app-icon.svg` | Cream W on a full-bleed orange-to-plum sunset tile, mark at full size, for iOS |
+| `app-icon-maskable.svg` | Same tile, mark at 86 % so it stays inside the maskable safe zone |
 
 ## Published variants
 
