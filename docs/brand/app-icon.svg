@@ -1,56 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs>
-    <linearGradient id="rays" x1="0" y1="22" x2="0" y2="72" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#ffe27e"/><stop offset="1" stop-color="#ffcb5c"/>
-    </linearGradient>
-    <linearGradient id="sun" x1="100" y1="49" x2="112" y2="123" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#ffdb63"/><stop offset="0.55" stop-color="#fbae45"/><stop offset="1" stop-color="#f0833a"/>
-    </linearGradient>
-    <linearGradient id="w" x1="0" y1="82" x2="0" y2="158" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#fff6ea"/><stop offset="1" stop-color="#f9cfc0"/>
-    </linearGradient>
-    <linearGradient id="tint" x1="24" y1="0" x2="92" y2="0" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#fffbf2" stop-opacity="0.85"/><stop offset="1" stop-color="#fffbf2" stop-opacity="0"/>
-    </linearGradient>
-    <mask id="cut" maskUnits="userSpaceOnUse" x="0" y="0" width="200" height="200">
-      <rect width="200" height="200" fill="#fff"/>
-      <path d="M40 96 72 143 104 113 128 143 162 93" fill="none" stroke="#000" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
-    </mask>
-    <!-- Soft shadow the W casts onto the tile. -->
-    <filter id="drop" filterUnits="userSpaceOnUse" x="-20" y="-20" width="240" height="240" color-interpolation-filters="sRGB">
-      <feDropShadow dx="0" dy="3.5" stdDeviation="3.5" flood-color="#6a1a4c" flood-opacity="0.32"/>
-    </filter>
-    <!-- Tighter shadow where the second V folds over the first. -->
-    <filter id="fold" filterUnits="userSpaceOnUse" x="-20" y="-20" width="240" height="240" color-interpolation-filters="sRGB">
-      <feDropShadow dx="-2.5" dy="1" stdDeviation="2" flood-color="#6a1a4c" flood-opacity="0.44"/>
-    </filter>
-    <!-- Darkens the sun along the edge the W bites into it. -->
-    <filter id="sunshade" filterUnits="userSpaceOnUse" x="-20" y="-20" width="240" height="240" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="4.5"/></filter>
-    <clipPath id="sunclip"><circle cx="106" cy="86" r="37"/></clipPath>
-    <radialGradient id="glow" cx="106" cy="86" r="64" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#ffd27a" stop-opacity="0.45"/><stop offset="1" stop-color="#ffd27a" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="sky" x1="0" y1="0" x2="0.3" y2="1">
-      <stop offset="0" stop-color="#fdb34e"/><stop offset="0.28" stop-color="#f68a4c"/>
-      <stop offset="0.6" stop-color="#df5a68"/><stop offset="1" stop-color="#83306c"/>
-    </linearGradient>
-    <radialGradient id="warm" cx="0.15" cy="0.05" r="0.7">
-      <stop offset="0" stop-color="#ffd06a" stop-opacity="0.55"/><stop offset="1" stop-color="#ffd06a" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fff" stop-opacity="0.16"/><stop offset="0.35" stop-color="#fff" stop-opacity="0"/>
-    </linearGradient></defs><rect width="200" height="200" fill="url(#sky)"/><rect width="200" height="200" fill="url(#warm)"/><rect width="200" height="200" fill="url(#sheen)"/><g transform="translate(100 100) scale(1) translate(-100 -100)">
-    <circle cx="106" cy="86" r="64" fill="url(#glow)"/>
-    <path d="M106 24v17M72 36l9 13M140 36l-9 13M48 61l14 8" stroke="url(#rays)" stroke-width="7" stroke-linecap="round"/>
-    <g mask="url(#cut)">
-      <circle cx="106" cy="86" r="37" fill="url(#sun)"/>
-      <g clip-path="url(#sunclip)" opacity="0.4">
-        <path d="M40 96 72 143 104 113 128 143 162 93" fill="none" stroke="#c8433a" stroke-width="55" stroke-linecap="round" stroke-linejoin="round" filter="url(#sunshade)"/>
-      </g>
-    </g>
-    <g fill="none" stroke-width="29" stroke-linecap="round" stroke-linejoin="round">
-      <g filter="url(#drop)">
-        <path d="M40 96 72 143 104 113 128 143 162 93" stroke="url(#w)"/>
-        <path d="M40 96 72 143 104 113 128 143 162 93" stroke="url(#tint)"/>
-      </g>
-      <path d="M104 113 128 143" stroke="url(#w)" filter="url(#fold)"/>
-    </g></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 256 256">
+ <defs>
+  <linearGradient id="bg" x1="0.1" y1="0" x2="0.86" y2="1" gradientUnits="objectBoundingBox">
+   <stop offset="0" stop-color="#ffb75c"/><stop offset="0.28" stop-color="#ff9659"/><stop offset="0.57" stop-color="#e86e72"/><stop offset="0.78" stop-color="#b34879"/><stop offset="1" stop-color="#792a79"/>
+  </linearGradient>
+  <linearGradient id="sun" x1="0.2" y1="0" x2="0.7" y2="1">
+   <stop offset="0" stop-color="#ffe48c"/><stop offset="0.48" stop-color="#ffbd55"/><stop offset="1" stop-color="#f58442"/>
+  </linearGradient>
+  <linearGradient id="cream" x1="0" y1="0" x2="0.65" y2="1">
+   <stop offset="0" stop-color="#fff6dd"/><stop offset="1" stop-color="#ffd5b7"/>
+  </linearGradient>
+ </defs>
+ <rect width="256" height="256" fill="url(#bg)"/>
+ <path d="M 62 87 L 70 92 M 85 60 L 93 72 M 125 48 L 125 66 M 165 61 L 157 73" fill="none" stroke="#ffe68a" stroke-width="10" stroke-linecap="round"/>
+ <path d="M 91 143 C 81 130 84 108 98 93 C 111 78 133 74 151 84 C 162 90 170 99 175 109 C 165 109 157 114 151 124 C 140 111 130 108 120 114 C 106 119 99 132 91 143 Z" fill="url(#sun)"/>
+ <path d="M 53 131 C 65 149 76 172 87 187 C 92 194 99 195 105 186 L 128 151 C 133 143 138 143 143 151 L 161 181 C 167 191 173 191 179 181 L 204 130" fill="none" stroke="url(#cream)" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
