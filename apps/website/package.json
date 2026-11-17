@@ -17,11 +17,11 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/sitemap": "^3.7.4",
+    "@astrojs/sitemap": "^3.7.5",
     "@wattlyzer/i18n": "workspace:*",
     "@wattlyzer/legal": "workspace:*",
     "@wattlyzer/theme": "workspace:*",
-    "astro": "^7.4.2"
+    "astro": "^7.4.12"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12"
